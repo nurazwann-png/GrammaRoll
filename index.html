@@ -70,6 +70,26 @@ body {
   flex-shrink:0;
 }
 
+/* POWER-UP HUD */
+#powerup-bar {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+.pu-badge {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem;
+  border: 1.5px solid rgba(255,255,255,.3);
+  animation: comboPulse 1s ease-in-out infinite alternate;
+  cursor: default;
+}
+.pu-badge.shield { background: rgba(139,92,246,.35); border-color: rgba(139,92,246,.7); }
+.pu-badge.time   { background: rgba(59,130,246,.35); border-color: rgba(59,130,246,.7); }
+.pu-badge.hint   { background: rgba(234,179,8,.35);  border-color: rgba(234,179,8,.7); }
+
 /* COMBO DISPLAY */
 #combo-display {
   display: none;
@@ -535,6 +555,7 @@ body {
   </div>
   <div id="question-box">Pilih tahap untuk bermain!</div>
   <div id="hud-right" style="display:flex;align-items:center;gap:8px;">
+    <div id="powerup-bar"></div>
     <div id="combo-display">🔥 <span id="combo-count">2×</span></div>
     <div id="world-badge">🌍 Dunia 1</div>
     <div id="hud-score">0</div>
@@ -1051,6 +1072,65 @@ class Enemy {
 }
 
 // ══════════════════════════════════════════════
+//  POWER-UP CLASS
+// ══════════════════════════════════════════════
+const PU_TYPES = {
+  shield: { icon:'🛡️', label:'Perisai',   color:'#8B5CF6', glow:'rgba(139,92,246,.7)'  },
+  time:   { icon:'⏱️', label:'+5 Saat',   color:'#3B82F6', glow:'rgba(59,130,246,.7)'  },
+  hint:   { icon:'💡', label:'Petunjuk',  color:'#EAB308', glow:'rgba(234,179,8,.7)'   },
+};
+
+class PowerUp {
+  constructor(x, y, type) {
+    this.x=x; this.y=y; this.type=type;
+    this.collected=false; this.dead=false;
+    this.bobPhase=Math.random()*Math.PI*2;
+    this.glowPhase=Math.random()*Math.PI*2;
+    this.r=18;
+  }
+  update() {
+    this.bobPhase  += 0.055;
+    this.glowPhase += 0.08;
+  }
+  draw(ctx, camX, camY) {
+    if (this.collected || this.dead) return;
+    const sx = this.x - camX;
+    const sy = this.y - camY + Math.sin(this.bobPhase)*5;
+    const info = PU_TYPES[this.type];
+    const pulse = 0.5 + Math.sin(this.glowPhase)*0.5;
+
+    ctx.save();
+    ctx.shadowBlur  = 18*pulse;
+    ctx.shadowColor = info.glow;
+
+    // Circle bg
+    const grad = ctx.createRadialGradient(sx,sy,2,sx,sy,this.r);
+    grad.addColorStop(0, info.color+'99');
+    grad.addColorStop(1, info.color+'22');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, this.r, 0, Math.PI*2);
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = info.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(sx, sy, this.r, 0, Math.PI*2);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+
+    // Icon
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(info.icon, sx, sy);
+    ctx.restore();
+  }
+}
+
+// ══════════════════════════════════════════════
 //  LEVEL GENERATOR
 // ══════════════════════════════════════════════
 function buildLevel(key) {
@@ -1059,6 +1139,8 @@ function buildLevel(key) {
   const platforms = [];
   const enemies   = [];
   const coins     = [];
+  const powerups  = [];
+  const puTypes   = ['shield','time','hint'];
 
   const GH = 420; // ground height in world
   const PLAT_W = 130;
@@ -1114,6 +1196,10 @@ function buildLevel(key) {
     curX += totalW + 80;
     // Platform after cluster
     platforms.push(new Platform(curX, GH - 30, 200, 40, 'solid'));
+
+    // Spawn one power-up above this platform (cycle through types)
+    powerups.push(new PowerUp(curX + 100, GH - 80, puTypes[qi % 3]));
+
     curX += 250;
   });
 
@@ -1122,7 +1208,7 @@ function buildLevel(key) {
   platforms.push(new Platform(curX+160, GH, 60, 60+GH%60, 'goal'));
   const worldW = curX + 500;
 
-  return { platforms, enemies, coins, questions, worldW, groundY: GH, key };
+  return { platforms, enemies, coins, powerups, questions, worldW, groundY: GH, key };
 }
 
 // ══════════════════════════════════════════════
@@ -1144,6 +1230,8 @@ function createGame(key) {
     textParticles: [],
     answeredQuestions: new Set(),
     combo: 0,
+    // Power-up inventory
+    inv: { shield:false, time:false, hint:false },
     checkpoint: null,
     checkpointPlaced: false,
 
@@ -1358,6 +1446,17 @@ function updateGame(g) {
     }
   }
 
+  // Power-up collection
+  for (const pu of level.powerups) {
+    if (pu.collected) continue;
+    const dx=g.px-pu.x, dy=g.py-pu.y;
+    if (dx*dx+dy*dy < (BALL_R+pu.r)*(BALL_R+pu.r)) {
+      pu.collected=true;
+      collectPowerUp(g, pu.type);
+    }
+    pu.update();
+  }
+
   // Coin collection
   for (const c of level.coins) {
     if (c.collected) continue;
@@ -1521,8 +1620,17 @@ function showMCQ(g) {
   // Update ball preview in MCQ modal
   updateBallThumb();
 
+  // Auto-consume stored power-ups before showing
+  applyMCQPowerUps(g);
+
   document.getElementById('mcq-overlay').classList.remove('hidden');
-  startMCQTimer();
+  startMCQTimer(g);
+
+  // Apply hint after buttons rendered
+  if (g.useHint) {
+    g.useHint = false;
+    requestAnimationFrame(applyHintToButtons);
+  }
 }
 
 function hideMCQ() {
@@ -1530,9 +1638,12 @@ function hideMCQ() {
   stopMCQTimer();
 }
 
-function startMCQTimer() {
+function startMCQTimer(g) {
   stopMCQTimer();
-  let remaining = MCQ_TIME;
+  const bonus = (g && g.bonusTime) || 0;
+  if (g) g.bonusTime = 0;
+  let remaining = MCQ_TIME + bonus;
+  const maxTime = remaining;
   const CIRC = 138.2; // 2π×22
 
   const arc = document.getElementById('mcq-timer-arc');
@@ -1550,7 +1661,7 @@ function startMCQTimer() {
   requestAnimationFrame(() => {
     mcqTimerId = setInterval(() => {
       remaining--;
-      const pct = remaining / MCQ_TIME;
+      const pct = remaining / maxTime;
       arc.style.strokeDashoffset = CIRC * (1 - pct);
       bar.style.width = (pct * 100) + '%';
       num.textContent = remaining;
@@ -1695,7 +1806,10 @@ function processAnswerResult(g, label, isCorrect, plat) {
     spawnParticles(g.px, g.py, '#EF476F', 14, 5);
     spawnTextParticle(g.px, g.py-30, 'Salah! ✗', '#EF476F');
     g.state = 'playing';
-    playerTakeDamage(g);
+    // Shield absorbs one wrong answer
+    if (!tryShield(g)) {
+      playerTakeDamage(g);
+    }
   }
 }
 
@@ -1958,6 +2072,9 @@ function render(g) {
   // Coins
   for (const c of g.level.coins) drawCoin(ctx, c, g.camX, g.camY);
 
+  // Power-ups
+  for (const pu of g.level.powerups) pu.draw(ctx, g.camX, g.camY);
+
   // Enemies
   for (const e of g.level.enemies) e.draw(ctx, g.camX, g.camY);
 
@@ -2114,6 +2231,81 @@ async function showSelfieScreen() {
     alert('Kamera tidak dapat diakses. Sila benarkan akses kamera.');
     screen.classList.add('hidden');
   }
+}
+
+// ══════════════════════════════════════════════
+//  POWER-UP SYSTEM
+// ══════════════════════════════════════════════
+function collectPowerUp(g, type) {
+  const info = PU_TYPES[type];
+  Audio.star();
+  spawnParticles(g.px, g.py, info.color, 14, 5);
+  spawnTextParticle(g.px, g.py-40, `${info.icon} ${info.label}!`, info.color);
+
+  if (type === 'shield') {
+    g.inv.shield = true;
+  } else {
+    // time & hint stored, auto-used on next MCQ open
+    g.inv[type] = true;
+  }
+  updatePowerUpHUD(g);
+}
+
+function updatePowerUpHUD(g) {
+  const bar = document.getElementById('powerup-bar');
+  bar.innerHTML = '';
+  ['shield','time','hint'].forEach(t => {
+    if (g.inv[t]) {
+      const info = PU_TYPES[t];
+      const badge = document.createElement('div');
+      badge.className = `pu-badge ${t}`;
+      badge.title = info.label;
+      badge.textContent = info.icon;
+      bar.appendChild(badge);
+    }
+  });
+}
+
+// Called in processAnswerResult when answer is WRONG
+function tryShield(g) {
+  if (g.inv.shield) {
+    g.inv.shield = false;
+    updatePowerUpHUD(g);
+    spawnParticles(g.px, g.py, '#8B5CF6', 16, 6);
+    spawnTextParticle(g.px, g.py-40, '🛡️ Perisai Aktif!', '#8B5CF6');
+    Audio.checkpoint();
+    return true; // absorbed damage
+  }
+  return false;
+}
+
+// Called in showMCQ — auto-consume stored power-ups
+function applyMCQPowerUps(g) {
+  if (g.inv.time) {
+    g.inv.time = false;
+    updatePowerUpHUD(g);
+    // Will be read by startMCQTimer via g.bonusTime
+    g.bonusTime = 5;
+  }
+  if (g.inv.hint) {
+    g.inv.hint = false;
+    updatePowerUpHUD(g);
+    g.useHint = true;
+  }
+}
+
+function applyHintToButtons() {
+  // Grey out one random wrong answer button
+  const wrongIdxs = mcqShuffled
+    .map((c,i) => ({c,i}))
+    .filter(({c}) => !c.isCorrect)
+    .map(({i}) => i);
+  if (wrongIdxs.length === 0) return;
+  const pick = wrongIdxs[Math.floor(Math.random()*wrongIdxs.length)];
+  const btn = document.getElementById(`mcq-btn-${pick}`);
+  btn.disabled = true;
+  btn.style.opacity = '0.3';
+  btn.style.textDecoration = 'line-through';
 }
 
 // ══════════════════════════════════════════════
