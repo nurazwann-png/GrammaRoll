@@ -1346,6 +1346,7 @@ const BALL_R   = 22;
 // ══════════════════════════════════════════════
 let game = null;
 let selfieCanvas  = null;
+let selfieDataURL = null;
 let cameraStream  = null;
 let currentLevelKey = "1-1";
 let totalScore = 0;
@@ -3440,6 +3441,7 @@ function captureSelfie() {
   tc.beginPath(); tc.arc(SIZE/2,SIZE/2,SIZE/2,0,Math.PI*2); tc.fill();
 
   selfieCanvas = tmp;
+  selfieDataURL = tmp.toDataURL('image/jpeg', 0.6);
   updateBallThumb();
 
   if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
@@ -3621,6 +3623,17 @@ function showMultiplayer() {
   document.getElementById('mp-step-waiting').style.display = 'none';
   document.getElementById('mp-error').textContent = '';
   document.getElementById('mp-overlay').classList.remove('hidden');
+  // Show connecting status while socket connects
+  if (!mpConnected) {
+    document.getElementById('mp-error').textContent = '⏳ Menyambung ke server...';
+    const waitId = setInterval(() => {
+      if (mpConnected) {
+        document.getElementById('mp-error').textContent = '';
+        clearInterval(waitId);
+      }
+    }, 300);
+    setTimeout(() => { clearInterval(waitId); }, 5000);
+  }
 }
 
 function closeMultiplayer() {
@@ -3630,7 +3643,10 @@ function closeMultiplayer() {
 function mpCreateRoom() {
   const name = document.getElementById('mp-name-input').value.trim();
   if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
-  if (!mpConnected) { document.getElementById('mp-error').textContent = 'Server belum bersambung. Cuba sebentar lagi.'; return; }
+  if (!socket || !socket.connected) {
+    document.getElementById('mp-error').textContent = '⏳ Masih menyambung... cuba lagi sebentar.';
+    setTimeout(mpCreateRoom, 800); return;
+  }
 
   const avatar = selfieDataURL || null;
   socket.emit('createRoom', { name, avatar }, ({ ok, code, error }) => {
@@ -3647,7 +3663,7 @@ function mpJoinRoom() {
   const code = document.getElementById('mp-join-code').value.trim().toUpperCase();
   if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
   if (code.length !== 4) { document.getElementById('mp-error').textContent = 'Kod bilik mesti 4 huruf.'; return; }
-  if (!mpConnected) { document.getElementById('mp-error').textContent = 'Server belum bersambung. Cuba sebentar lagi.'; return; }
+  if (!socket || !socket.connected) { document.getElementById('mp-error').textContent = '⏳ Masih menyambung... cuba lagi sebentar.'; return; }
 
   const avatar = selfieDataURL || null;
   socket.emit('joinRoom', { code, name, avatar }, ({ ok, error, opponent: oppData }) => {
