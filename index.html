@@ -70,6 +70,55 @@ body {
   flex-shrink:0;
 }
 
+/* COMBO DISPLAY */
+#combo-display {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, rgba(255,140,66,.25), rgba(255,60,60,.2));
+  border: 1.5px solid rgba(255,140,66,.5);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 0.9rem;
+  color: #FFD166;
+  white-space: nowrap;
+  flex-shrink: 0;
+  animation: comboPulse 0.8s ease-in-out infinite alternate;
+}
+#combo-display.active { display: flex; }
+@keyframes comboPulse {
+  from { box-shadow: 0 0 6px rgba(255,140,66,.3); }
+  to   { box-shadow: 0 0 18px rgba(255,140,66,.7); }
+}
+
+/* PRAISE POPUP */
+#praise-popup {
+  position: fixed;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  z-index: 165;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(2rem, 8vw, 4rem);
+  color: #fff;
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 0 40px rgba(255,209,102,.8), 0 4px 0 rgba(0,0,0,.4);
+  transition: transform .2s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0;
+}
+#praise-popup.show {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+#praise-sub {
+  display: block;
+  font-size: 0.45em;
+  color: var(--gold);
+  margin-top: 4px;
+  letter-spacing: 1px;
+}
+
 /* ── CANVAS ── */
 #game-canvas {
   flex: 1;
@@ -485,7 +534,8 @@ body {
     <div class="heart-icon" id="h3">❤️</div>
   </div>
   <div id="question-box">Pilih tahap untuk bermain!</div>
-  <div id="hud-right" style="display:flex;align-items:center;gap:10px;">
+  <div id="hud-right" style="display:flex;align-items:center;gap:8px;">
+    <div id="combo-display">🔥 <span id="combo-count">2×</span></div>
     <div id="world-badge">🌍 Dunia 1</div>
     <div id="hud-score">0</div>
   </div>
@@ -509,6 +559,7 @@ body {
   <div id="selfie-thumb">😊</div>
 </div>
 
+<div id="praise-popup"><span id="praise-main"></span><span id="praise-sub"></span></div>
 <div id="checkpoint-flash"></div>
 <div id="damage-flash"></div>
 
@@ -1092,6 +1143,7 @@ function createGame(key) {
     particles: [],
     textParticles: [],
     answeredQuestions: new Set(),
+    combo: 0,
     checkpoint: null,
     checkpointPlaced: false,
 
@@ -1538,6 +1590,7 @@ function onTimerExpired() {
   document.getElementById('mcq-hint').style.color = '#EF476F';
 
   Audio.wrong();
+  if (game) { game.combo = 0; updateComboHUD(0); }
   setTimeout(() => {
     document.getElementById('mcq-hint').style.color = '';
     hideMCQ();
@@ -1613,18 +1666,31 @@ function processAnswerResult(g, label, isCorrect, plat) {
 
   if (isCorrect) {
     g.answeredQuestions.add(qIdx);
+    g.combo++;
+
+    // Score with multiplier
+    const multiplier = g.combo >= 3 ? 2 : 1;
+    const base = 100;
+    const earned = base * multiplier;
+    g.score += earned;
+
     Audio.correct();
     spawnParticles(g.px, g.py, '#06D6A0', 18, 7);
-    spawnTextParticle(g.px, g.py-40, '+100 ⭐', '#06D6A0');
-    g.score += 100;
+    spawnTextParticle(g.px, g.py-40,
+      multiplier > 1 ? `+${earned} ⚡ ${multiplier}×!` : `+${earned} ⭐`, '#06D6A0');
+
+    // Show praise
+    showPraise(g.combo);
+    updateComboHUD(g.combo);
+
     g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
     updateQuestionUI(g);
     updateHUD(g);
-    // Small bounce on landing
-    g.pvy = -5;
-    g.pvx = 0;
+    g.pvy = -5; g.pvx = 0;
     g.state = 'playing';
   } else {
+    g.combo = 0;
+    updateComboHUD(0);
     if (plat) { plat.crumbling = true; }
     spawnParticles(g.px, g.py, '#EF476F', 14, 5);
     spawnTextParticle(g.px, g.py-30, 'Salah! ✗', '#EF476F');
@@ -2047,6 +2113,51 @@ async function showSelfieScreen() {
   } catch(e) {
     alert('Kamera tidak dapat diakses. Sila benarkan akses kamera.');
     screen.classList.add('hidden');
+  }
+}
+
+// ══════════════════════════════════════════════
+//  COMBO SYSTEM
+// ══════════════════════════════════════════════
+const PRAISE = [
+  null,                                  // 0 — no praise
+  { main:'Betul! ✓',  sub:'',                   color:'#06D6A0' }, // 1
+  { main:'Hebat! 🔥', sub:'2 betul berturut!',  color:'#FFD166' }, // 2
+  { main:'Luar Biasa! ⚡', sub:'2× Mata!',      color:'#FF8C42' }, // 3
+  { main:'Cemerlang! 🌟', sub:'2× Mata!',       color:'#FF8C42' }, // 4
+  { main:'Genius! 🚀',    sub:'2× Mata! Teruskan!', color:'#EF476F' }, // 5+
+];
+
+let praiseTimer = null;
+
+function showPraise(combo) {
+  const idx = Math.min(combo, PRAISE.length-1);
+  const p   = PRAISE[idx];
+  if (!p) return;
+
+  const popup = document.getElementById('praise-popup');
+  const main  = document.getElementById('praise-main');
+  const sub   = document.getElementById('praise-sub');
+
+  main.textContent = p.main;
+  sub.textContent  = p.sub;
+  popup.style.color = p.color;
+  popup.style.textShadow = `0 0 40px ${p.color}88, 0 4px 0 rgba(0,0,0,.4)`;
+
+  popup.classList.add('show');
+  if (praiseTimer) clearTimeout(praiseTimer);
+  praiseTimer = setTimeout(() => popup.classList.remove('show'), 1200);
+}
+
+function updateComboHUD(combo) {
+  const el    = document.getElementById('combo-display');
+  const count = document.getElementById('combo-count');
+  if (combo >= 2) {
+    const mult = combo >= 3 ? '2×' : '';
+    count.textContent = `${combo} Combo${mult ? ' ' + mult : ''}`;
+    el.classList.add('active');
+  } else {
+    el.classList.remove('active');
   }
 }
 
