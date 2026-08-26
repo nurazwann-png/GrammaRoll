@@ -520,6 +520,42 @@ body {
   transition:opacity .4s;
 }
 
+/* CORRECT FLASH */
+#correct-flash {
+  position:fixed; inset:0; z-index:100;
+  background: radial-gradient(ellipse at center, rgba(6,214,160,0.28) 0%, transparent 70%);
+  pointer-events:none; opacity:0;
+  transition:opacity .5s;
+}
+
+/* BIG CORRECT BANNER */
+#correct-banner {
+  position:fixed; left:50%; top:38%;
+  transform: translate(-50%,-50%) scale(0) rotate(-4deg);
+  z-index:166;
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(3rem,10vw,5.5rem);
+  color:#fff;
+  text-align:center;
+  pointer-events:none;
+  text-shadow: 0 0 60px rgba(6,214,160,.9), 0 6px 0 rgba(0,80,50,.5);
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+  opacity:0;
+  line-height:1.1;
+}
+#correct-banner.show {
+  transform: translate(-50%,-50%) scale(1) rotate(0deg);
+  opacity:1;
+}
+#correct-banner-sub {
+  display:block;
+  font-size:0.38em;
+  color: #06D6A0;
+  letter-spacing:2px;
+  text-shadow: none;
+  margin-top:4px;
+}
+
 @keyframes float {
   0%,100% { transform:translateY(0); }
   50% { transform:translateY(-12px); }
@@ -583,6 +619,8 @@ body {
 <div id="praise-popup"><span id="praise-main"></span><span id="praise-sub"></span></div>
 <div id="checkpoint-flash"></div>
 <div id="damage-flash"></div>
+<div id="correct-flash"></div>
+<div id="correct-banner"><span id="correct-banner-main"></span><span id="correct-banner-sub"></span></div>
 
 <!-- MENU SCREEN -->
 <div class="screen" id="menu-screen">
@@ -731,7 +769,12 @@ const Audio = (() => {
   return {
     jump()    { tone(320,  'sine',   .12, .25); tone(480, 'sine', .1, .2, .06); },
     land()    { tone(180,  'sine',   .08, .2); },
-    correct() { [0,.12,.24].forEach((d,i)=>tone([523,659,784][i],'sine',.18,.3,d)); },
+    correct(combo=1) {
+      // Longer arpeggio for higher combos
+      const notes  = combo>=3 ? [523,659,784,988,1319] : [523,659,784];
+      const delays = combo>=3 ? [0,.1,.2,.3,.42]       : [0,.12,.24];
+      delays.forEach((d,i)=>tone(notes[i],'sine',.22,.32,d));
+    },
     wrong()   { tone(180, 'sawtooth',.2,.3); tone(120,'sawtooth',.3,.2,.1); },
     collect() { tone(880, 'sine',.1,.2); tone(1100,'sine',.1,.15,.08); },
     death()   { tone(300,'sawtooth',.15,.3);tone(200,'sawtooth',.2,.25,.12);tone(100,'square',.4,.2,.25); },
@@ -778,6 +821,96 @@ let totalScore = 0;
 
 const keys = { left:false, right:false, up:false };
 const ctrlState = { left:false, right:false, jump:false };
+
+// ══════════════════════════════════════════════
+//  CONFETTI SYSTEM
+// ══════════════════════════════════════════════
+const CONFETTI_COLORS = ['#06D6A0','#FFD166','#FF8C42','#EF476F','#4A90D9','#8B5CF6','#fff'];
+
+class Confetti {
+  constructor(x, y) {
+    this.x = x; this.y = y;
+    this.vx = (Math.random()-0.5) * 14;
+    this.vy = -10 - Math.random()*8;
+    this.w  = 6 + Math.random()*8;
+    this.h  = 3 + Math.random()*5;
+    this.rot   = Math.random()*Math.PI*2;
+    this.rotV  = (Math.random()-0.5)*0.35;
+    this.color = CONFETTI_COLORS[Math.floor(Math.random()*CONFETTI_COLORS.length)];
+    this.life  = 70 + Math.random()*40;
+    this.maxLife = this.life;
+    this.shape = Math.random() < 0.4 ? 'circle' : 'rect'; // mix of shapes
+  }
+  update() {
+    this.x  += this.vx;
+    this.y  += this.vy;
+    this.vy += 0.38;           // gravity
+    this.vx *= 0.97;           // air drag
+    this.rot += this.rotV;
+    this.life--;
+  }
+  draw(ctx, camX, camY) {
+    const a = Math.min(1, this.life / (this.maxLife * 0.4));
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = this.color;
+    ctx.translate(this.x - camX, this.y - camY);
+    ctx.rotate(this.rot);
+    if (this.shape === 'circle') {
+      ctx.beginPath();
+      ctx.arc(0, 0, this.w/2, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(-this.w/2, -this.h/2, this.w, this.h);
+    }
+    ctx.restore();
+  }
+}
+
+let confettiList = [];
+
+function spawnConfetti(x, y, count=35) {
+  for (let i=0; i<count; i++) confettiList.push(new Confetti(x, y));
+}
+
+// Screen-space confetti burst (fixed position, no camera offset)
+function spawnScreenConfetti(count=50) {
+  const cx = CW/2, cy = CH*0.45;
+  for (let i=0; i<count; i++) {
+    const c = new Confetti(cx, cy);
+    // Wider spread for screen burst
+    c.vx = (Math.random()-0.5)*20;
+    c.vy = -8 - Math.random()*10;
+    confettiList.push(c);
+  }
+}
+
+let correctBannerTimer = null;
+
+function showCorrectBanner(combo, multiplier) {
+  const TEXTS = [
+    ['Betul! ✓',        ''],
+    ['Hebat! 🔥',       '2 betul berturut-turut!'],
+    ['Luar Biasa! ⚡',   `${multiplier}× Mata!`],
+    ['Cemerlang! 🌟',   `${multiplier}× Mata!`],
+    ['Genius! 🚀',      'Teruskan semangat tu!'],
+  ];
+  const idx = Math.min(combo-1, TEXTS.length-1);
+  const [main, sub] = TEXTS[idx];
+
+  document.getElementById('correct-banner-main').textContent = main;
+  document.getElementById('correct-banner-sub').textContent  = sub;
+
+  const banner = document.getElementById('correct-banner');
+  banner.classList.add('show');
+  if (correctBannerTimer) clearTimeout(correctBannerTimer);
+  correctBannerTimer = setTimeout(() => banner.classList.remove('show'), 1100);
+
+  // Screen flash
+  const flash = document.getElementById('correct-flash');
+  flash.style.opacity = '1';
+  setTimeout(() => flash.style.opacity = '0', 400);
+}
 
 // ══════════════════════════════════════════════
 //  PARTICLE SYSTEM
@@ -1509,6 +1642,13 @@ function updateGame(g) {
   for (const tp of g.textParticles) { tp.y+=tp.vy; tp.vy*=0.95; tp.life--; }
   g.textParticles = g.textParticles.filter(t=>t.life>0);
 
+  // Confetti
+  for (const c of confettiList) c.update();
+  confettiList = confettiList.filter(c=>c.life>0);
+
+  // Ball correct glow countdown
+  if (g.correctGlow > 0) g.correctGlow--;
+
   // Camera
   g.targetCamX = g.px - CW*0.35;
   g.targetCamX = Math.max(0, Math.min(level.worldW - CW, g.targetCamX));
@@ -1785,12 +1925,20 @@ function processAnswerResult(g, label, isCorrect, plat) {
     const earned = base * multiplier;
     g.score += earned;
 
-    Audio.correct();
-    spawnParticles(g.px, g.py, '#06D6A0', 18, 7);
-    spawnTextParticle(g.px, g.py-40,
+    Audio.correct(g.combo);
+    // World-space particles at ball position
+    spawnParticles(g.px, g.py, '#06D6A0', 20, 8);
+    spawnConfetti(g.px, g.py, g.combo >= 3 ? 50 : 30);
+    spawnTextParticle(g.px, g.py-50,
       multiplier > 1 ? `+${earned} ⚡ ${multiplier}×!` : `+${earned} ⭐`, '#06D6A0');
 
-    // Show praise
+    // Screen-level celebrations
+    showCorrectBanner(g.combo, multiplier);
+    if (g.combo >= 3) spawnScreenConfetti(40);
+
+    // Ball glow burst
+    g.correctGlow = 30; // frames of green glow on ball
+
     showPraise(g.combo);
     updateComboHUD(g.combo);
 
@@ -2033,6 +2181,20 @@ function drawPlayer(g) {
   ctx.arc(0,0,BALL_R-1,0,Math.PI*2);
   ctx.stroke();
 
+  // Green glow after correct answer
+  if (g.correctGlow > 0) {
+    const t = g.correctGlow / 30;
+    ctx.shadowBlur = 30 * t;
+    ctx.shadowColor = '#06D6A0';
+    ctx.strokeStyle = `rgba(6,214,160,${t})`;
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(0,0,BALL_R+4,0,Math.PI*2); ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Scale pulse
+    const scale = 1 + 0.15 * Math.sin(t * Math.PI);
+    ctx.scale(scale, scale);
+  }
+
   // Glow when invincible
   if (g.invincible>0) {
     ctx.strokeStyle=`rgba(255,209,102,${(g.invincible%12)/12})`;
@@ -2086,6 +2248,12 @@ function render(g) {
 
   // Text particles
   drawTextParticles(g);
+
+  // Confetti (world-space)
+  for (const c of confettiList) c.draw(ctx, g.camX, g.camY);
+
+  // Screen-space confetti (no camera offset)
+  // (already drawn above with camX/camY of 0 for screen-burst ones)
 
   // Answering / animating dim
   if (g.state==='answering') {
@@ -2177,6 +2345,7 @@ function restartLevel() {
   document.getElementById('mcq-overlay').classList.add('hidden');
   // Small delay so overlay fade-out doesn't fight the new game state
   setTimeout(() => {
+    confettiList = [];
     game = createGame(currentLevelKey);
     updateQuestionUI(game);
     updateHUD(game);
