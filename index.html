@@ -474,6 +474,83 @@ body {
 }
 #ctrl-jump { background:rgba(6,214,160,.25); border-color:rgba(6,214,160,.5); }
 
+/* LEADERBOARD */
+#leaderboard-overlay {
+  background: rgba(5,12,40,0.92);
+  backdrop-filter: blur(20px);
+}
+#lb-card {
+  background: linear-gradient(160deg,#0f2060,#1a3080);
+  border: 2px solid rgba(99,179,237,.3);
+  border-radius: 24px;
+  padding: 28px 24px;
+  max-width: 460px; width: 100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+#lb-title {
+  font-family:'Fredoka One',cursive;
+  font-size: 1.8rem; color:#fff;
+  text-align:center; margin-bottom:6px;
+}
+#lb-subtitle {
+  text-align:center; color:rgba(255,255,255,.5);
+  font-size:.85rem; margin-bottom:20px;
+}
+#lb-list { list-style:none; display:flex; flex-direction:column; gap:8px; margin-bottom:20px; }
+.lb-row {
+  display:flex; align-items:center; gap:12px;
+  background: rgba(255,255,255,.06);
+  border-radius:12px; padding:10px 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  transition: background .2s;
+}
+.lb-row.top1 { background:rgba(255,209,102,.12); border-color:rgba(255,209,102,.3); }
+.lb-row.top2 { background:rgba(192,192,192,.1);  border-color:rgba(192,192,192,.25); }
+.lb-row.top3 { background:rgba(205,127,50,.1);   border-color:rgba(205,127,50,.25); }
+.lb-rank {
+  font-family:'Fredoka One',cursive;
+  font-size:1.3rem; min-width:32px; text-align:center;
+}
+.lb-name { flex:1; font-weight:800; color:#fff; font-size:.95rem; }
+.lb-stars { font-size:1rem; letter-spacing:1px; }
+.lb-score {
+  font-family:'Fredoka One',cursive;
+  color:var(--gold); font-size:1rem; min-width:50px; text-align:right;
+}
+.lb-date { font-size:.7rem; color:rgba(255,255,255,.35); }
+#lb-empty { text-align:center; color:rgba(255,255,255,.4); padding:20px; font-size:.95rem; }
+
+/* NAME INPUT MODAL */
+#name-overlay {
+  background: rgba(5,12,40,0.88);
+  backdrop-filter: blur(16px);
+}
+#name-card {
+  background: linear-gradient(160deg,#0f2060,#1a3080);
+  border: 2px solid rgba(255,209,102,.3);
+  border-radius: 24px;
+  padding: 32px 28px;
+  max-width: 380px; width:100%;
+  text-align:center;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+#name-card h2 {
+  font-family:'Fredoka One',cursive;
+  font-size:1.8rem; color:#fff; margin-bottom:6px;
+}
+#name-card p { color:rgba(255,255,255,.55); font-size:.9rem; margin-bottom:20px; }
+#name-input {
+  width:100%; padding:14px 18px;
+  border-radius:14px; border:2px solid rgba(255,209,102,.4);
+  background:rgba(255,255,255,.08);
+  font-family:'Fredoka One',cursive; font-size:1.3rem;
+  color:#fff; text-align:center; outline:none;
+  transition:border-color .2s;
+  margin-bottom:16px;
+}
+#name-input:focus { border-color:var(--gold); }
+#name-input::placeholder { color:rgba(255,255,255,.3); }
+
 /* PAUSE BUTTON */
 #pause-btn {
   position:fixed; top:78px; right:16px; z-index:80;
@@ -636,6 +713,7 @@ body {
   </div>
   <button class="btn btn-primary" onclick="startLevel(1,1)" style="margin-top:4px;">Mula Bermain! 🎮</button>
   <button class="btn btn-secondary" onclick="showSelfieScreen()" style="margin-top:0;">📸 Ambil Selfie</button>
+  <button class="btn btn-secondary" onclick="showLeaderboard(currentLevelKey)" style="margin-top:0;font-size:0.95rem;">🏆 Papan Skor</button>
 </div>
 
 <!-- SELFIE SCREEN -->
@@ -649,6 +727,31 @@ body {
   <div id="selfie-btns">
     <button class="btn btn-primary" id="capture-btn" onclick="captureSelfie()">📷 Snap!</button>
     <button class="btn btn-secondary" onclick="closeSelfie()">Batal</button>
+  </div>
+</div>
+
+<!-- NAME INPUT MODAL -->
+<div class="overlay hidden" id="name-overlay">
+  <div id="name-card">
+    <div style="font-size:3rem;margin-bottom:8px;">🏆</div>
+    <h2>Tahniah!</h2>
+    <p>Masukkan nama kamu untuk simpan rekod</p>
+    <input type="text" id="name-input" maxlength="20" placeholder="Nama kamu...">
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="submitName()">💾 Simpan Rekod</button>
+    <button class="btn btn-secondary" style="width:100%;font-size:0.9rem;" onclick="skipName()">Langkau</button>
+  </div>
+</div>
+
+<!-- LEADERBOARD OVERLAY -->
+<div class="overlay hidden" id="leaderboard-overlay">
+  <div id="lb-card">
+    <div id="lb-title">🏆 Papan Skor</div>
+    <div id="lb-subtitle">Top 5 Juara Kelas</div>
+    <ul id="lb-list"></ul>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="clearLeaderboard()">🗑️ Reset</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="closeLeaderboard()">Tutup</button>
+    </div>
   </div>
 </div>
 
@@ -693,8 +796,12 @@ body {
   <div class="overlay-title" style="color:var(--gold);">Tahniah!</div>
   <div class="stars-row" id="stars-row">⭐⭐⭐</div>
   <div class="overlay-sub" id="win-msg">Kamu dah jawab semua soalan dengan betul!</div>
+  <div id="win-lb-preview" style="width:100%;max-width:360px;margin:0 auto 16px;"></div>
   <button class="btn btn-primary" onclick="nextLevel()">Tahap Seterusnya ▶</button>
-  <button class="btn btn-secondary" onclick="showMenu()" style="margin-top:10px;">🏠 Menu</button>
+  <div style="display:flex;gap:10px;margin-top:10px;">
+    <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="showLeaderboard(currentLevelKey)">🏆 Skor</button>
+    <button class="btn btn-secondary" style="flex:1;" onclick="showMenu()">🏠 Menu</button>
+  </div>
 </div>
 
 <script>
@@ -2016,8 +2123,14 @@ function triggerWin(g) {
   document.getElementById('win-msg').textContent =
     `Skor: ${g.score} | Masa: ${Math.round(elapsed)}s | ${g.hearts} ❤️ tinggal`;
 
+  // Clear win preview until name submitted
+  const prev = document.getElementById('win-lb-preview');
+  if (prev) prev.innerHTML = '';
+
   setTimeout(()=>{
     document.getElementById('win-overlay').classList.remove('hidden');
+    // Prompt for name after short delay
+    setTimeout(() => promptPlayerName(g.level.key, g.score, stars), 600);
   },800);
 }
 
@@ -2320,6 +2433,123 @@ function loop(ts) {
 }
 
 // ══════════════════════════════════════════════
+//  LEADERBOARD  (localStorage)
+// ══════════════════════════════════════════════
+const LB_MAX = 5;
+
+function lbKey(levelKey) { return `gr_lb_${levelKey}`; }
+
+function getLB(levelKey) {
+  try {
+    return JSON.parse(localStorage.getItem(lbKey(levelKey)) || '[]');
+  } catch { return []; }
+}
+
+function saveLB(levelKey, entries) {
+  try { localStorage.setItem(lbKey(levelKey), JSON.stringify(entries)); } catch {}
+}
+
+function addLBEntry(levelKey, name, score, stars) {
+  const entries = getLB(levelKey);
+  const date = new Date().toLocaleDateString('ms-MY', {day:'2-digit',month:'short'});
+  entries.push({ name, score, stars, date });
+  entries.sort((a,b) => b.score - a.score);
+  const trimmed = entries.slice(0, LB_MAX);
+  saveLB(levelKey, trimmed);
+  return trimmed;
+}
+
+function renderLBList(entries, container) {
+  container.innerHTML = '';
+  if (!entries.length) {
+    container.innerHTML = '<div id="lb-empty">Belum ada rekod lagi.<br>Jadilah yang pertama! 🏆</div>';
+    return;
+  }
+  const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+  entries.forEach((e,i) => {
+    const li = document.createElement('li');
+    li.className = `lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''}`;
+    li.innerHTML = `
+      <span class="lb-rank">${MEDALS[i]}</span>
+      <span class="lb-name">${e.name}</span>
+      <span class="lb-stars">${'⭐'.repeat(e.stars)}${'☆'.repeat(3-e.stars)}</span>
+      <span class="lb-score">${e.score}</span>
+      <span class="lb-date">${e.date}</span>`;
+    container.appendChild(li);
+  });
+}
+
+function showLeaderboard(levelKey) {
+  const data = GRAMMAR_DB[levelKey] || GRAMMAR_DB['1-1'];
+  document.getElementById('lb-subtitle').textContent =
+    `Top ${LB_MAX} Juara — ${data.world}`;
+  const entries = getLB(levelKey);
+  renderLBList(entries, document.getElementById('lb-list'));
+  document.getElementById('leaderboard-overlay').classList.remove('hidden');
+}
+
+function closeLeaderboard() {
+  document.getElementById('leaderboard-overlay').classList.add('hidden');
+}
+
+function clearLeaderboard() {
+  if (!confirm('Padam semua rekod untuk tahap ini?')) return;
+  try { localStorage.removeItem(lbKey(currentLevelKey)); } catch {}
+  renderLBList([], document.getElementById('lb-list'));
+}
+
+// Pending win data for name input
+let pendingWin = null;
+
+function promptPlayerName(levelKey, score, stars) {
+  pendingWin = { levelKey, score, stars };
+  const input = document.getElementById('name-input');
+  input.value = '';
+  document.getElementById('name-overlay').classList.remove('hidden');
+  setTimeout(() => input.focus(), 100);
+}
+
+function submitName() {
+  if (!pendingWin) return;
+  const input = document.getElementById('name-input');
+  const name  = input.value.trim() || 'Murid';
+  document.getElementById('name-overlay').classList.add('hidden');
+  const entries = addLBEntry(pendingWin.levelKey, name, pendingWin.score, pendingWin.stars);
+  // Show mini leaderboard in win screen
+  showWinLBPreview(entries);
+  pendingWin = null;
+}
+
+function skipName() {
+  document.getElementById('name-overlay').classList.add('hidden');
+  pendingWin = null;
+}
+
+function showWinLBPreview(entries) {
+  const container = document.getElementById('win-lb-preview');
+  if (!container) return;
+  // Compact top-3 preview
+  container.innerHTML = `
+    <div style="font-family:'Fredoka One',cursive;font-size:.85rem;color:rgba(255,255,255,.5);
+      text-align:center;margin-bottom:8px;letter-spacing:1px;">— PAPAN SKOR —</div>`;
+  const ul = document.createElement('ul');
+  ul.style.cssText='list-style:none;display:flex;flex-direction:column;gap:6px;';
+  renderLBList(entries.slice(0,3), ul);
+  // Shrink the rows slightly
+  ul.querySelectorAll('.lb-row').forEach(r=>{
+    r.style.padding='7px 10px'; r.style.borderRadius='10px';
+  });
+  container.appendChild(ul);
+}
+
+// Enter key submits name
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('name-input')?.addEventListener('keydown', e => {
+    if (e.key==='Enter') submitName();
+  });
+});
+
+// ══════════════════════════════════════════════
 //  PUBLIC API (called from HTML buttons)
 // ══════════════════════════════════════════════
 function startLevel(world, level) {
@@ -2371,6 +2601,8 @@ function showMenu() {
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
   document.getElementById('mcq-overlay').classList.add('hidden');
+  document.getElementById('name-overlay').classList.add('hidden');
+  document.getElementById('leaderboard-overlay').classList.add('hidden');
   document.getElementById('pause-btn').style.display='none';
   document.getElementById('selfie-indicator').style.display='none';
   game = null;
