@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <title>Grammar Roll</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap">
 
@@ -553,6 +554,92 @@ body {
 }
 #review-perfect p { color:rgba(255,255,255,.6); font-size:.95rem; }
 
+/* MULTIPLAYER */
+#mp-overlay {
+  background: rgba(5,12,40,0.96);
+  backdrop-filter: blur(24px);
+  overflow-y: auto;
+  padding: 20px;
+}
+#mp-card {
+  background: linear-gradient(160deg,#0f2060,#1a3080);
+  border-radius: 24px;
+  padding: 28px 24px;
+  max-width: 400px; width:100%;
+  border: 2px solid rgba(99,179,237,.25);
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+#mp-card h2 {
+  font-family:'Fredoka One',cursive;
+  font-size:1.9rem; color:#fff;
+  text-align:center; margin-bottom:6px;
+}
+#mp-card p.mp-sub { color:rgba(255,255,255,.5); font-size:.85rem; text-align:center; margin-bottom:20px; }
+.mp-field { margin-bottom:14px; }
+.mp-field label { display:block; font-size:.8rem; color:rgba(255,255,255,.6); margin-bottom:5px; font-weight:800; }
+.mp-field input {
+  width:100%; background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.15);
+  color:#fff; border-radius:12px;
+  padding:11px 14px;
+  font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700;
+}
+.mp-field input:focus { outline:none; border-color:var(--gold); }
+.mp-field input::placeholder { color:rgba(255,255,255,.3); }
+#mp-divider {
+  display:flex; align-items:center; gap:10px;
+  margin:16px 0; color:rgba(255,255,255,.35); font-size:.85rem;
+}
+#mp-divider::before, #mp-divider::after {
+  content:''; flex:1; height:1px; background:rgba(255,255,255,.1);
+}
+#mp-code-display {
+  text-align:center; margin:16px 0;
+}
+#mp-code-val {
+  font-family:'Fredoka One',cursive;
+  font-size:3rem; color:var(--gold);
+  letter-spacing:10px;
+  text-shadow: 0 0 20px rgba(255,209,102,.5);
+}
+#mp-code-hint { color:rgba(255,255,255,.4); font-size:.8rem; margin-top:4px; }
+#mp-status {
+  text-align:center; padding:12px;
+  color:rgba(255,255,255,.6); font-size:.9rem;
+  min-height:40px;
+}
+#mp-status.waiting { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+#mp-error { color:var(--red); text-align:center; font-size:.85rem; min-height:20px; margin-bottom:8px; }
+
+/* Ghost opponent ball */
+#opponent-hud {
+  position:absolute; top:76px; right:10px;
+  background:rgba(10,20,50,.85); backdrop-filter:blur(8px);
+  border-radius:16px; padding:8px 12px;
+  border:1.5px solid rgba(255,255,255,.1);
+  display:none; align-items:center; gap:10px; z-index:40;
+}
+#opponent-hud.visible { display:flex; }
+#opp-avatar { width:34px; height:34px; border-radius:50%; overflow:hidden;
+  border:2px solid rgba(255,255,255,.3); font-size:1.1rem;
+  display:flex; align-items:center; justify-content:center; background:#1a3080; }
+#opp-avatar img { width:100%; height:100%; object-fit:cover; }
+#opp-info { display:flex; flex-direction:column; }
+#opp-name { font-family:'Fredoka One',cursive; color:#fff; font-size:.85rem; }
+#opp-score { color:var(--gold); font-size:.78rem; font-family:'Fredoka One',cursive; }
+#opp-q { color:rgba(255,255,255,.5); font-size:.72rem; }
+
+/* Race result banner */
+#race-result {
+  position:fixed; inset:0; z-index:200;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  background:rgba(5,12,40,.92); backdrop-filter:blur(20px);
+}
+#race-result.hidden { display:none; }
+#race-result h2 { font-family:'Fredoka One',cursive; font-size:2.5rem; color:var(--gold); }
+#race-result p { color:rgba(255,255,255,.6); margin:8px 0 24px; }
+
 /* MOD GURU */
 #guru-overlay {
   background: rgba(5,12,40,0.96);
@@ -909,6 +996,7 @@ body {
   <button class="btn btn-primary" onclick="startLevel(1,1)" style="margin-top:4px;">Mula Bermain! 🎮</button>
   <button class="btn btn-secondary" onclick="showSelfieScreen()" style="margin-top:0;">📸 Ambil Selfie</button>
   <button class="btn btn-secondary" onclick="showLeaderboard(currentLevelKey)" style="margin-top:0;font-size:0.95rem;">🏆 Papan Skor</button>
+  <button class="btn btn-secondary" onclick="showMultiplayer()" style="margin-top:0;font-size:0.95rem;background:rgba(6,182,212,.2);border-color:rgba(6,182,212,.5);">⚔️ Mod Multiplayer</button>
   <button class="btn btn-secondary" onclick="showGuruMode()" style="margin-top:0;font-size:0.9rem;background:rgba(124,58,237,.25);border-color:rgba(124,58,237,.5);">🧑‍🏫 Mod Guru</button>
 </div>
 
@@ -953,6 +1041,67 @@ body {
     </div>
     <button class="btn btn-primary" style="width:100%;max-width:500px;margin:0 auto;display:block;" onclick="closeReview()">Teruskan ▶</button>
   </div>
+</div>
+
+<!-- MULTIPLAYER LOBBY OVERLAY -->
+<div class="overlay hidden" id="mp-overlay">
+  <div id="mp-card">
+    <h2>⚔️ Mod Multiplayer</h2>
+    <p class="mp-sub">Lawan rakan dalam masa nyata!</p>
+
+    <!-- Step 1: Enter name -->
+    <div id="mp-step-name">
+      <div class="mp-field">
+        <label>Nama Kamu</label>
+        <input type="text" id="mp-name-input" maxlength="20" placeholder="Nama kamu...">
+      </div>
+      <div class="mp-field">
+        <label>Level</label>
+        <select id="mp-level-select" style="width:100%;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);color:#fff;border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;">
+          <option value="1-1">L1-1 — am/is/are</option>
+          <option value="1-2">L1-2 — a/an/the</option>
+          <option value="1-3">Boss — Simple Present</option>
+          <option value="2-1">W2 — Present Continuous</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="mpCreateRoom()">🏠 Cipta Bilik</button>
+      <div id="mp-divider">atau</div>
+      <div class="mp-field">
+        <label>Masukkan Kod Bilik</label>
+        <input type="text" id="mp-join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:1.3rem;">
+      </div>
+      <button class="btn btn-secondary" style="width:100%;" onclick="mpJoinRoom()">🚪 Sertai Bilik</button>
+    </div>
+
+    <!-- Step 2: Waiting / room code display -->
+    <div id="mp-step-waiting" style="display:none;">
+      <div id="mp-code-display">
+        <div id="mp-code-val">----</div>
+        <div id="mp-code-hint">Kongsi kod ini dengan rakan kamu</div>
+      </div>
+      <div id="mp-status" class="waiting">⏳ Menunggu rakan...</div>
+    </div>
+
+    <div id="mp-error"></div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="closeMultiplayer()">✕ Batal</button>
+  </div>
+</div>
+
+<!-- OPPONENT HUD (shown during multiplayer game) -->
+<div id="opponent-hud">
+  <div id="opp-avatar">👤</div>
+  <div id="opp-info">
+    <div id="opp-name">Lawan</div>
+    <div id="opp-score">0 mata</div>
+    <div id="opp-q">Soalan 0</div>
+  </div>
+</div>
+
+<!-- RACE RESULT overlay -->
+<div id="race-result" class="hidden">
+  <h2 id="race-result-title">🏆 Tahniah!</h2>
+  <p id="race-result-sub">Kamu menang perlumbaan!</p>
+  <button class="btn btn-primary" onclick="closeRaceResult()">Kembali ke Menu</button>
 </div>
 
 <!-- MOD GURU OVERLAY -->
@@ -2335,6 +2484,7 @@ function processAnswerResult(g, label, isCorrect, plat) {
     g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
     updateQuestionUI(g);
     updateHUD(g);
+    mpSendScore(g);
     g.pvy = -5; g.pvx = 0;
     g.state = 'playing';
   } else {
@@ -2412,6 +2562,8 @@ function triggerWin(g) {
   if (elapsed < 60 && answeredAll && g.hearts>1) stars=Math.max(stars,2);
 
   totalScore += g.score;
+  // Notify multiplayer opponent that we won
+  mpSendWin(g);
   document.getElementById('stars-row').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
   document.getElementById('win-msg').textContent =
     `Skor: ${g.score} | Masa: ${Math.round(elapsed)}s | ${g.hearts} ❤️ tinggal`;
@@ -2649,6 +2801,9 @@ function render(g) {
   // Particles
   for (const p of g.particles) p.draw(ctx, g.camX, g.camY);
 
+  // Ghost opponent (multiplayer)
+  drawOpponent(ctx, g.camX, g.camY);
+
   // Player
   drawPlayer(g);
 
@@ -2721,6 +2876,7 @@ function loop(ts) {
   if (game) {
     if (game.state==='playing' || game.state==='animating') updateGame(game);
     render(game);
+    mpSendPosition(game);
   }
   loopId=requestAnimationFrame(loop);
 }
@@ -3349,4 +3505,239 @@ function roundRect(ctx, x, y, w, h, r=6) {
 document.getElementById('pause-btn').style.display='none';
 document.getElementById('selfie-indicator').style.display='none';
 requestAnimationFrame(loop);
+
+// ══════════════════════════════════════════════
+//  MULTIPLAYER
+// ══════════════════════════════════════════════
+const MP_SERVER = 'http://localhost:3000';
+let socket = null;
+let mpRoom = null;       // current room code
+let mpRole = null;       // 'host' | 'guest'
+let mpConnected = false;
+
+// Ghost opponent state (lerp target)
+const opponent = {
+  x: 0, y: 0,
+  vx: 0, vy: 0,
+  rot: 0,
+  targetX: 0, targetY: 0, targetRot: 0,
+  name: 'Lawan',
+  avatar: null,   // HTMLImageElement or null
+  score: 0, currentQ: 0, hearts: 3,
+  active: false,
+};
+
+function mpConnect() {
+  if (socket && socket.connected) return;
+  socket = io(MP_SERVER, { transports: ['websocket'] });
+
+  socket.on('connect', () => {
+    mpConnected = true;
+    console.log('[MP] Connected to server');
+  });
+
+  socket.on('disconnect', () => {
+    mpConnected = false;
+    console.log('[MP] Disconnected');
+  });
+
+  socket.on('opponentJoined', ({ name, avatar }) => {
+    mpSetOpponent(name, avatar);
+    document.getElementById('mp-status').textContent = `${name} telah sertai! Permainan bermula...`;
+    document.getElementById('mp-status').classList.remove('waiting');
+    setTimeout(() => {
+      closeMultiplayer();
+      const levelKey = document.getElementById('mp-level-select').value;
+      startLevel(...levelKey.split('-').map(Number));
+    }, 1500);
+  });
+
+  socket.on('opponentDataUpdate', ({ name, avatar }) => mpSetOpponent(name, avatar));
+
+  socket.on('opponentPosition', ({ x, y, vx, vy, rot }) => {
+    opponent.targetX = x; opponent.targetY = y;
+    opponent.vx = vx; opponent.vy = vy;
+    opponent.targetRot = rot;
+  });
+
+  socket.on('opponentScore', ({ score, currentQ, hearts }) => {
+    opponent.score = score; opponent.currentQ = currentQ; opponent.hearts = hearts;
+    updateOpponentHUD();
+  });
+
+  socket.on('opponentReady', ({ levelKey }) => {
+    // Guest: start same level
+    closeMultiplayer();
+    startLevel(...levelKey.split('-').map(Number));
+  });
+
+  socket.on('raceResult', ({ winner, score, stars }) => {
+    const isMe = winner === document.getElementById('mp-name-input').value.trim();
+    document.getElementById('race-result-title').textContent = isMe ? '🏆 Kamu Menang!' : '😢 Kamu Kalah';
+    document.getElementById('race-result-sub').textContent = isMe
+      ? `Tahniah! Skor: ${score}`
+      : `${winner} menang dengan skor ${score}!`;
+    document.getElementById('race-result').classList.remove('hidden');
+  });
+
+  socket.on('opponentLeft', () => {
+    opponent.active = false;
+    document.getElementById('opponent-hud').classList.remove('visible');
+    showBanner('Lawan telah keluar bilik', '#EF476F');
+  });
+
+  socket.on('connect_error', () => {
+    document.getElementById('mp-error').textContent = 'Tidak dapat sambung ke server. Pastikan server berjalan.';
+  });
+}
+
+function mpSetOpponent(name, avatarB64) {
+  opponent.name = name;
+  opponent.active = true;
+  if (avatarB64) {
+    const img = new Image();
+    img.src = avatarB64;
+    img.onload = () => { opponent.avatar = img; };
+  }
+  updateOpponentHUD();
+  document.getElementById('opponent-hud').classList.add('visible');
+}
+
+function updateOpponentHUD() {
+  document.getElementById('opp-name').textContent = opponent.name;
+  document.getElementById('opp-score').textContent = `${opponent.score} mata`;
+  document.getElementById('opp-q').textContent = `Soalan ${opponent.currentQ + 1}`;
+  const avatarEl = document.getElementById('opp-avatar');
+  if (opponent.avatar) {
+    avatarEl.innerHTML = `<img src="${opponent.avatar.src}" alt="">`;
+  } else {
+    avatarEl.textContent = '👤';
+  }
+}
+
+function showMultiplayer() {
+  mpConnect();
+  document.getElementById('mp-step-name').style.display = '';
+  document.getElementById('mp-step-waiting').style.display = 'none';
+  document.getElementById('mp-error').textContent = '';
+  document.getElementById('mp-overlay').classList.remove('hidden');
+}
+
+function closeMultiplayer() {
+  document.getElementById('mp-overlay').classList.add('hidden');
+}
+
+function mpCreateRoom() {
+  const name = document.getElementById('mp-name-input').value.trim();
+  if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
+  if (!mpConnected) { document.getElementById('mp-error').textContent = 'Server belum bersambung. Cuba sebentar lagi.'; return; }
+
+  const avatar = selfieDataURL || null;
+  socket.emit('createRoom', { name, avatar }, ({ ok, code, error }) => {
+    if (!ok) { document.getElementById('mp-error').textContent = error; return; }
+    mpRoom = code; mpRole = 'host';
+    document.getElementById('mp-code-val').textContent = code;
+    document.getElementById('mp-step-name').style.display = 'none';
+    document.getElementById('mp-step-waiting').style.display = '';
+  });
+}
+
+function mpJoinRoom() {
+  const name = document.getElementById('mp-name-input').value.trim();
+  const code = document.getElementById('mp-join-code').value.trim().toUpperCase();
+  if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
+  if (code.length !== 4) { document.getElementById('mp-error').textContent = 'Kod bilik mesti 4 huruf.'; return; }
+  if (!mpConnected) { document.getElementById('mp-error').textContent = 'Server belum bersambung. Cuba sebentar lagi.'; return; }
+
+  const avatar = selfieDataURL || null;
+  socket.emit('joinRoom', { code, name, avatar }, ({ ok, error, opponent: oppData }) => {
+    if (!ok) { document.getElementById('mp-error').textContent = error; return; }
+    mpRoom = code; mpRole = 'guest';
+    if (oppData) mpSetOpponent(oppData.name, oppData.avatar);
+    // Tell host we're ready, start same level
+    socket.emit('levelReady', { levelKey: '1-1' });
+    closeMultiplayer();
+    startLevel(1, 1);
+  });
+}
+
+function closeRaceResult() {
+  document.getElementById('race-result').classList.add('hidden');
+  opponent.active = false;
+  document.getElementById('opponent-hud').classList.remove('visible');
+  showMenu();
+}
+
+// Broadcast position every frame during multiplayer
+let mpLastPosTick = 0;
+function mpSendPosition(g) {
+  if (!socket || !mpRoom || !opponent.active) return;
+  const now = Date.now();
+  if (now - mpLastPosTick < 50) return; // 20Hz
+  mpLastPosTick = now;
+  socket.emit('positionUpdate', { x: g.px, y: g.py, vx: g.pvx, vy: g.pvy, rot: g.pRot });
+}
+
+function mpSendScore(g) {
+  if (!socket || !mpRoom) return;
+  socket.emit('scoreUpdate', { score: g.score, currentQ: g.currentQ, hearts: g.hearts });
+}
+
+function mpSendWin(g) {
+  if (!socket || !mpRoom) return;
+  const name = document.getElementById('mp-name-input').value.trim() || 'Murid';
+  socket.emit('playerWon', { name, score: g.score, stars: g.hearts });
+}
+
+// Draw ghost opponent on canvas
+function drawOpponent(ctx, camX, camY) {
+  if (!opponent.active) return;
+  // Lerp toward target
+  opponent.x += (opponent.targetX - opponent.x) * 0.2;
+  opponent.y += (opponent.targetY - opponent.y) * 0.2;
+  opponent.rot += (opponent.targetRot - opponent.rot) * 0.2;
+
+  const sx = opponent.x - camX;
+  const sy = opponent.y - camY;
+  const r = BALL_R;
+
+  ctx.save();
+  ctx.globalAlpha = 0.65;
+  ctx.translate(sx, sy);
+  ctx.rotate(opponent.rot);
+
+  // Ghost ball (cyan tint)
+  const grad = ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.1,0,0,r);
+  grad.addColorStop(0,'rgba(100,220,255,0.9)');
+  grad.addColorStop(1,'rgba(0,120,200,0.8)');
+  ctx.beginPath();
+  ctx.arc(0,0,r,0,Math.PI*2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Avatar or emoji
+  if (opponent.avatar) {
+    ctx.save();
+    ctx.rotate(-opponent.rot);
+    ctx.beginPath();
+    ctx.arc(0,0,r-2,0,Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(opponent.avatar,-r+2,-r+2,(r-2)*2,(r-2)*2);
+    ctx.restore();
+  } else {
+    ctx.rotate(-opponent.rot);
+    ctx.font = `${r*1.1}px serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('👤',0,2);
+  }
+
+  // Name tag above
+  ctx.rotate(0); // undo rotation for text
+  ctx.font = 'bold 11px Nunito,sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='bottom';
+  ctx.fillStyle='rgba(100,220,255,0.9)';
+  ctx.fillText(opponent.name, 0, -r-4);
+
+  ctx.restore();
+}
 </script>
