@@ -1597,12 +1597,36 @@ class Platform {
         } else {
           baseColor='#3D0A12'; borderColor='#EF476F'; glowColor='rgba(239,71,111,.5)';
         }
+      } else if (this.isHinted) {
+        // Correct answer hint — strong green pulse
+        borderColor='#06D6A0'; glowColor='rgba(6,214,160,.6)';
+        baseColor='#0d3d2a';
+      } else if (this.chosen) {
+        // Player's chosen answer — yellow highlight
+        borderColor='#FFD166'; glowColor='rgba(255,209,102,.6)';
+        baseColor='#2d2200';
       }
       const pulse = Math.sin(this.glowPhase)*0.4+0.6;
 
+      // Arrow indicator pointing down to the platform (for chosen/hinted)
+      if (!revealed && (this.isHinted || this.chosen)) {
+        const arrowColor = this.isHinted ? '#06D6A0' : '#FFD166';
+        ctx.fillStyle = arrowColor;
+        ctx.globalAlpha = 0.7 + Math.sin(this.glowPhase)*0.3;
+        ctx.beginPath();
+        const ax = sx+w/2, ay = sy-14;
+        ctx.moveTo(ax, ay+10);
+        ctx.lineTo(ax-8, ay);
+        ctx.lineTo(ax+8, ay);
+        ctx.closePath();
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+
       // Glow shadow
-      ctx.shadowBlur = 18*pulse;
-      ctx.shadowColor = revealed ? (data.isCorrect?'#06D6A0':'#EF476F') : '#4A90D9';
+      ctx.shadowBlur = (this.isHinted||this.chosen) ? 28*pulse : 18*pulse;
+      ctx.shadowColor = revealed ? (data.isCorrect?'#06D6A0':'#EF476F')
+        : this.isHinted ? '#06D6A0' : this.chosen ? '#FFD166' : '#4A90D9';
 
       // Body
       const grad = ctx.createLinearGradient(sx,sy,sx,sy+h);
@@ -2202,31 +2226,16 @@ function updateGame(g) {
 //  GRAMMAR LOGIC
 // ══════════════════════════════════════════════
 function handleGrammarLand(g, plat) {
-  const { data, questionIdx } = plat.data;
   const qIdx = plat.data.questionIdx;
-
   if (g.answeredQuestions.has(qIdx)) return; // already answered
 
-  if (plat.data.isCorrect) {
-    // Correct!
-    g.answeredQuestions.add(qIdx);
-    Audio.correct();
-    spawnParticles(plat.x+plat.w/2, plat.y,'#06D6A0',16,6);
-    spawnTextParticle(plat.x+plat.w/2, plat.y-30,'+100 ⭐','#06D6A0');
-    g.score += 100;
-    g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
-    updateQuestionUI(g);
-    // Mark wrong siblings as revealed too
-    revealSiblingPlatforms(g, qIdx);
-  } else {
-    // Wrong!
-    plat.crumbling = true;
-    plat.data.shake = true;
-    Audio.wrong();
-    spawnParticles(plat.x+plat.w/2, plat.y+plat.h/2,'#EF476F',14,5);
-    spawnTextParticle(plat.x+plat.w/2, plat.y-20,'Salah! ✗','#EF476F');
-    playerTakeDamage(g);
-  }
+  // Clear highlight flags
+  g.level.platforms.forEach(p => { p.chosen = false; p.isHinted = false; });
+
+  const label = plat.data.label || '';
+  const isCorrect = plat.data.isCorrect;
+  plat.revealed = true;
+  processAnswerResult(g, label, isCorrect, plat);
 }
 
 function revealSiblingPlatforms(g, qIdx) {
@@ -2254,19 +2263,23 @@ function showMCQ(g) {
     p.type==='grammar' && p.data.questionIdx===g.currentQ && !p.crumbling && !p.dead
   );
 
-  // Fallback: build from question data if platforms missing
-  if (platChoices.length < 3) {
+  // Build choices — link platRef when available even if < 3 platforms survive
+  if (platChoices.length === 0) {
     mcqShuffled = [
       {label: q.correct, isCorrect: true, platRef: null},
       {label: q.wrong[0], isCorrect: false, platRef: null},
       {label: q.wrong[1], isCorrect: false, platRef: null},
     ];
   } else {
-    mcqShuffled = platChoices.map(p => ({
-      label: p.data.label,
-      isCorrect: p.data.isCorrect,
-      platRef: p,
-    }));
+    // Use platRefs from surviving platforms; fill in missing ones with null
+    const byLabel = {};
+    platChoices.forEach(p => { byLabel[p.data.label] = p; });
+    const allChoices = [
+      {label: q.correct,   isCorrect: true,  platRef: byLabel[q.correct]   || null},
+      {label: q.wrong[0],  isCorrect: false, platRef: byLabel[q.wrong[0]]  || null},
+      {label: q.wrong[1],  isCorrect: false, platRef: byLabel[q.wrong[1]]  || null},
+    ];
+    mcqShuffled = allChoices;
   }
   // Shuffle
   for (let i=mcqShuffled.length-1;i>0;i--) {
@@ -2401,49 +2414,31 @@ function selectAnswer(idx) {
   for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled=true;
   stopMCQTimer();
 
+  // Flash feedback briefly, then resume game — player must jump to platform manually
   if (choice.isCorrect) {
     btn.classList.add('correct-flash');
     Audio.correct();
-    setTimeout(() => {
-      hideMCQ();
-      flyBallToAnswer(game, choice, true);
-    }, 500);
   } else {
     btn.classList.add('wrong-flash');
     Audio.wrong();
-    // Show correct answer briefly
+    // Briefly show which answer was correct
     mcqShuffled.forEach((c,i) => {
       if (c.isCorrect) document.getElementById(`mcq-btn-${i}`).classList.add('correct-flash');
     });
-    setTimeout(() => {
-      hideMCQ();
-      flyBallToAnswer(game, choice, false);
-    }, 800);
-  }
-}
-
-function flyBallToAnswer(g, choice, isCorrect) {
-  const plat = choice.platRef;
-  // Determine target position
-  let targetX, targetY;
-  if (plat && !plat.dead) {
-    targetX = plat.x + plat.w/2;
-    targetY = plat.y - BALL_R;
-  } else {
-    // No platform reference, just process result without animation
-    processAnswerResult(g, choice.label, isCorrect, null);
-    return;
   }
 
-  g.state = 'animating';
-  g.animTarget = {
-    x: targetX,
-    y: targetY,
-    color: isCorrect ? '#06D6A0' : '#EF476F',
-    onArrive: () => {
-      processAnswerResult(g, choice.label, isCorrect, plat);
+  setTimeout(() => {
+    hideMCQ();
+    // Highlight chosen platform so player knows where to jump
+    if (choice.platRef && !choice.platRef.dead) {
+      choice.platRef.chosen = true;
     }
-  };
+    // Also highlight the correct platform for reference
+    mcqShuffled.forEach(c => {
+      if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
+    });
+    game.state = 'playing';
+  }, choice.isCorrect ? 500 : 900);
 }
 
 function processAnswerResult(g, label, isCorrect, plat) {
