@@ -184,6 +184,132 @@ body {
 }
 #selfie-btns { display:flex; gap:12px; }
 
+/* ── MCQ MODAL ── */
+#mcq-overlay {
+  position:fixed; inset:0; z-index:170;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background: rgba(5,12,35,0.82);
+  backdrop-filter: blur(18px);
+  transition: opacity .25s ease;
+  padding: 20px;
+}
+#mcq-overlay.hidden { opacity:0; pointer-events:none; }
+
+#mcq-card {
+  background: linear-gradient(160deg, #0f2060 0%, #1a3080 100%);
+  border: 2px solid rgba(99,179,237,0.35);
+  border-radius: 28px;
+  padding: 32px 28px 28px;
+  max-width: 520px; width:100%;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 60px rgba(74,144,217,.15);
+  text-align: center;
+}
+
+#mcq-badge {
+  display: inline-block;
+  background: rgba(255,209,102,0.15);
+  border: 1.5px solid rgba(255,209,102,0.4);
+  border-radius: 20px;
+  padding: 4px 16px;
+  font-family:'Fredoka One',cursive;
+  font-size: 0.85rem;
+  color: var(--gold);
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+}
+
+#mcq-question-text {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 6px;
+  text-wrap: balance;
+}
+
+#mcq-blank {
+  color: var(--gold);
+  font-size: 1.15em;
+  text-shadow: 0 0 20px rgba(255,209,102,.6);
+}
+
+#mcq-hint {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,.45);
+  margin-bottom: 28px;
+  font-family: 'Nunito', sans-serif;
+}
+
+#mcq-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mcq-btn {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+  padding: 16px 24px;
+  border: none; border-radius: 16px;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, filter .2s;
+  letter-spacing: .5px;
+  position: relative;
+  overflow: hidden;
+}
+.mcq-btn:hover  { transform: translateY(-3px) scale(1.02); }
+.mcq-btn:active { transform: translateY(1px) scale(0.98); }
+
+.mcq-btn-a {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(37,99,235,.5), 0 2px 0 rgba(0,0,0,.3);
+}
+.mcq-btn-b {
+  background: linear-gradient(135deg, #7C3AED, #6D28D9);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(124,58,237,.5), 0 2px 0 rgba(0,0,0,.3);
+}
+.mcq-btn-c {
+  background: linear-gradient(135deg, #0891B2, #0E7490);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(8,145,178,.5), 0 2px 0 rgba(0,0,0,.3);
+}
+
+.mcq-btn.correct-flash {
+  background: linear-gradient(135deg, #059669, #047857) !important;
+  box-shadow: 0 0 30px rgba(6,214,160,.8) !important;
+  animation: pop .3s ease;
+}
+.mcq-btn.wrong-flash {
+  background: linear-gradient(135deg, #DC2626, #B91C1C) !important;
+  box-shadow: 0 0 30px rgba(239,71,111,.8) !important;
+  animation: shake .35s ease;
+}
+
+#mcq-ball-preview {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #FF8C42, #D64000);
+  box-shadow: 0 0 20px rgba(255,140,66,.5);
+  margin: 0 auto 20px;
+  display:flex; align-items:center; justify-content:center;
+  font-size: 28px;
+  animation: float 2s ease-in-out infinite;
+  overflow: hidden;
+}
+
+#mcq-progress {
+  display:flex; gap:8px; justify-content:center; margin-top:20px;
+}
+.mcq-dot {
+  width:10px; height:10px; border-radius:50%;
+  background: rgba(255,255,255,.2);
+  transition: background .3s;
+}
+.mcq-dot.done { background: var(--green); }
+.mcq-dot.current { background: var(--gold); }
+
 /* GAMEOVER / WIN overlays */
 .overlay {
   position:fixed; inset:0; z-index:160;
@@ -360,6 +486,22 @@ body {
   <div id="selfie-btns">
     <button class="btn btn-primary" id="capture-btn" onclick="captureSelfie()">📷 Snap!</button>
     <button class="btn btn-secondary" onclick="closeSelfie()">Batal</button>
+  </div>
+</div>
+
+<!-- MCQ MODAL -->
+<div id="mcq-overlay" class="hidden">
+  <div id="mcq-card">
+    <div id="mcq-ball-preview">😊</div>
+    <div id="mcq-badge">🎯 Soalan Tatabahasa</div>
+    <div id="mcq-question-text">Soalan akan muncul di sini</div>
+    <div id="mcq-hint">Tekan jawapan yang betul!</div>
+    <div id="mcq-choices">
+      <button class="mcq-btn mcq-btn-a" id="mcq-btn-0" onclick="selectAnswer(0)"></button>
+      <button class="mcq-btn mcq-btn-b" id="mcq-btn-1" onclick="selectAnswer(1)"></button>
+      <button class="mcq-btn mcq-btn-c" id="mcq-btn-2" onclick="selectAnswer(2)"></button>
+    </div>
+    <div id="mcq-progress"></div>
   </div>
 </div>
 
@@ -960,6 +1102,32 @@ function resolvePlayerPlatform(g, plat) {
 //  UPDATE LOOP
 // ══════════════════════════════════════════════
 function updateGame(g) {
+  // Handle ball fly-to-platform animation state
+  if (g.state === 'animating') {
+    if (g.animTarget) {
+      const dx = g.animTarget.x - g.px;
+      const dy = g.animTarget.y - g.py;
+      g.px += dx * 0.18;
+      g.py += dy * 0.18;
+      g.pRot += 0.12;
+      // Update particles for trail effect
+      if (Math.random() < 0.5)
+        spawnParticles(g.px, g.py, g.animTarget.color || '#4A90D9', 2, 2);
+      for (const p of g.particles) p.update();
+      g.particles = g.particles.filter(p=>p.life>0);
+      for (const tp of g.textParticles) { tp.y+=tp.vy; tp.vy*=0.95; tp.life--; }
+      g.textParticles = g.textParticles.filter(t=>t.life>0);
+      g.camX += (Math.max(0, Math.min(g.level.worldW-CW, g.px-CW*0.35)) - g.camX)*0.09;
+      if (Math.abs(dx)<3 && Math.abs(dy)<3) {
+        g.px = g.animTarget.x;
+        g.py = g.animTarget.y;
+        g.pvx = 0; g.pvy = 0;
+        g.animTarget.onArrive();
+        g.animTarget = null;
+      }
+    }
+    return;
+  }
   if (g.state !== 'playing') return;
   const { level } = g;
 
@@ -986,6 +1154,20 @@ function updateGame(g) {
 
   // Execute jump
   if (g.pJumpBuffer>0 && g.pCoyote>0) {
+    // Check if there is a grammar cluster nearby (within 500px horizontally)
+    const nearCluster = g.level.platforms.find(p =>
+      p.type==='grammar' &&
+      !p.revealed && !p.crumbling && !p.dead &&
+      p.data.questionIdx === g.currentQ &&
+      Math.abs((p.x + p.w/2) - g.px) < 500
+    );
+    if (nearCluster && g.answeredQuestions.size < g.level.questions.length) {
+      // Show MCQ instead of normal jump
+      g.pJumpBuffer=0; g.pCoyote=0;
+      showMCQ(g);
+      return;
+    }
+    // Normal jump
     g.pvy = JUMP_VEL;
     g.pCoyote=0; g.pJumpBuffer=0;
     Audio.jump();
@@ -1145,6 +1327,165 @@ function revealSiblingPlatforms(g, qIdx) {
       p.revealed = true;
     }
   });
+}
+
+// ══════════════════════════════════════════════
+//  MCQ SYSTEM
+// ══════════════════════════════════════════════
+let mcqShuffled = []; // [{label, isCorrect, platRef}]
+
+function showMCQ(g) {
+  g.state = 'answering';
+  const q = g.level.questions[g.currentQ];
+  if (!q) { g.state='playing'; return; }
+
+  // Build shuffled choices from actual grammar platforms for this question
+  const platChoices = g.level.platforms.filter(p =>
+    p.type==='grammar' && p.data.questionIdx===g.currentQ && !p.crumbling && !p.dead
+  );
+
+  // Fallback: build from question data if platforms missing
+  if (platChoices.length < 3) {
+    mcqShuffled = [
+      {label: q.correct, isCorrect: true, platRef: null},
+      {label: q.wrong[0], isCorrect: false, platRef: null},
+      {label: q.wrong[1], isCorrect: false, platRef: null},
+    ];
+  } else {
+    mcqShuffled = platChoices.map(p => ({
+      label: p.data.label,
+      isCorrect: p.data.isCorrect,
+      platRef: p,
+    }));
+  }
+  // Shuffle
+  for (let i=mcqShuffled.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [mcqShuffled[i],mcqShuffled[j]]=[mcqShuffled[j],mcqShuffled[i]];
+  }
+
+  // Render question
+  const parts = q.q.split('___');
+  document.getElementById('mcq-question-text').innerHTML =
+    `${parts[0]}<span id="mcq-blank">___</span>${parts[1]||''}`;
+  document.getElementById('mcq-hint').textContent = 'Pilih jawapan yang betul! 👇';
+
+  // Render choices
+  mcqShuffled.forEach((c,i) => {
+    const btn = document.getElementById(`mcq-btn-${i}`);
+    btn.textContent = c.label;
+    btn.className = `mcq-btn mcq-btn-${['a','b','c'][i]}`;
+    btn.disabled = false;
+  });
+
+  // Progress dots
+  const total = g.level.questions.length;
+  const prog  = document.getElementById('mcq-progress');
+  prog.innerHTML = Array.from({length:total},(_,i)=>{
+    const cls = i < g.answeredQuestions.size ? 'done'
+              : i === g.currentQ ? 'current' : '';
+    return `<div class="mcq-dot ${cls}"></div>`;
+  }).join('');
+
+  // Update ball preview with selfie if available
+  const thumb = document.getElementById('mcq-ball-preview');
+  if (selfieCanvas) {
+    thumb.innerHTML=`<img src="${selfieCanvas.toDataURL()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  } else {
+    thumb.innerHTML='😊';
+  }
+
+  document.getElementById('mcq-overlay').classList.remove('hidden');
+}
+
+function hideMCQ() {
+  document.getElementById('mcq-overlay').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (!game || game.state !== 'answering') return;
+  const choice = mcqShuffled[idx];
+  if (!choice) return;
+
+  const btn = document.getElementById(`mcq-btn-${idx}`);
+
+  // Disable all buttons immediately to prevent double-click
+  for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled=true;
+
+  if (choice.isCorrect) {
+    btn.classList.add('correct-flash');
+    Audio.correct();
+    setTimeout(() => {
+      hideMCQ();
+      flyBallToAnswer(game, choice, true);
+    }, 500);
+  } else {
+    btn.classList.add('wrong-flash');
+    Audio.wrong();
+    // Show correct answer briefly
+    mcqShuffled.forEach((c,i) => {
+      if (c.isCorrect) document.getElementById(`mcq-btn-${i}`).classList.add('correct-flash');
+    });
+    setTimeout(() => {
+      hideMCQ();
+      flyBallToAnswer(game, choice, false);
+    }, 800);
+  }
+}
+
+function flyBallToAnswer(g, choice, isCorrect) {
+  const plat = choice.platRef;
+  // Determine target position
+  let targetX, targetY;
+  if (plat && !plat.dead) {
+    targetX = plat.x + plat.w/2;
+    targetY = plat.y - BALL_R;
+  } else {
+    // No platform reference, just process result without animation
+    processAnswerResult(g, choice.label, isCorrect, null);
+    return;
+  }
+
+  g.state = 'animating';
+  g.animTarget = {
+    x: targetX,
+    y: targetY,
+    color: isCorrect ? '#06D6A0' : '#EF476F',
+    onArrive: () => {
+      processAnswerResult(g, choice.label, isCorrect, plat);
+    }
+  };
+}
+
+function processAnswerResult(g, label, isCorrect, plat) {
+  const qIdx = g.currentQ;
+
+  if (plat && !plat.revealed) {
+    plat.revealed = true;
+  }
+  // Reveal all sibling platforms
+  revealSiblingPlatforms(g, qIdx);
+
+  if (isCorrect) {
+    g.answeredQuestions.add(qIdx);
+    Audio.correct();
+    spawnParticles(g.px, g.py, '#06D6A0', 18, 7);
+    spawnTextParticle(g.px, g.py-40, '+100 ⭐', '#06D6A0');
+    g.score += 100;
+    g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
+    updateQuestionUI(g);
+    updateHUD(g);
+    // Small bounce on landing
+    g.pvy = -5;
+    g.pvx = 0;
+    g.state = 'playing';
+  } else {
+    if (plat) { plat.crumbling = true; }
+    spawnParticles(g.px, g.py, '#EF476F', 14, 5);
+    spawnTextParticle(g.px, g.py-30, 'Salah! ✗', '#EF476F');
+    g.state = 'playing';
+    playerTakeDamage(g);
+  }
 }
 
 function playerTakeDamage(g, fell=false) {
@@ -1408,6 +1749,12 @@ function render(g) {
   // Text particles
   drawTextParticles(g);
 
+  // Answering / animating dim
+  if (g.state==='answering') {
+    ctx.fillStyle='rgba(5,12,35,0.5)';
+    ctx.fillRect(0,0,CW,CH);
+  }
+
   // Paused overlay on canvas
   if (g.state==='paused') {
     ctx.fillStyle='rgba(10,22,50,0.7)';
@@ -1460,7 +1807,7 @@ function loop(ts) {
   const dt = Math.min(ts-lastTime, 32)/16.67;
   lastTime=ts;
   if (game) {
-    if (game.state==='playing') updateGame(game);
+    if (game.state==='playing' || game.state==='animating') updateGame(game);
     render(game);
   }
   loopId=requestAnimationFrame(loop);
@@ -1489,6 +1836,7 @@ function startLevel(world, level) {
 function restartLevel() {
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
+  document.getElementById('mcq-overlay').classList.add('hidden');
   // Small delay so overlay fade-out doesn't fight the new game state
   setTimeout(() => {
     game = createGame(currentLevelKey);
@@ -1515,6 +1863,7 @@ function showMenu() {
   document.getElementById('menu-screen').classList.remove('hidden');
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
+  document.getElementById('mcq-overlay').classList.add('hidden');
   document.getElementById('pause-btn').style.display='none';
   document.getElementById('selfie-indicator').style.display='none';
   game = null;
