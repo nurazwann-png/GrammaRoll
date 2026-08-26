@@ -1,4 +1,5 @@
-<title>Grammar Ball</title>
+<meta charset="utf-8">
+<title>Grammar Roll</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap">
 
@@ -299,6 +300,58 @@ body {
   overflow: hidden;
 }
 
+/* TIMER */
+#mcq-timer-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+#mcq-timer-ring {
+  position: relative;
+  width: 56px; height: 56px;
+  flex-shrink: 0;
+}
+#mcq-timer-ring svg {
+  transform: rotate(-90deg);
+}
+#mcq-timer-track {
+  fill: none;
+  stroke: rgba(255,255,255,.1);
+  stroke-width: 5;
+}
+#mcq-timer-arc {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 138.2; /* 2π×22 */
+  stroke-dashoffset: 0;
+  transition: stroke .5s, stroke-dashoffset .95s linear;
+}
+#mcq-timer-arc.urgent { stroke: var(--red); }
+#mcq-timer-num {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  color: #fff;
+}
+#mcq-timer-bar-wrap {
+  flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+#mcq-timer-bar {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), #FF8C42);
+  transition: width .95s linear, background .5s;
+}
+
 #mcq-progress {
   display:flex; gap:8px; justify-content:center; margin-top:20px;
 }
@@ -494,6 +547,18 @@ body {
   <div id="mcq-card">
     <div id="mcq-ball-preview">😊</div>
     <div id="mcq-badge">🎯 Soalan Tatabahasa</div>
+    <div id="mcq-timer-wrap">
+      <div id="mcq-timer-ring">
+        <svg width="56" height="56" viewBox="0 0 56 56">
+          <circle id="mcq-timer-track" cx="28" cy="28" r="22"/>
+          <circle id="mcq-timer-arc"   cx="28" cy="28" r="22"/>
+        </svg>
+        <div id="mcq-timer-num">10</div>
+      </div>
+      <div id="mcq-timer-bar-wrap">
+        <div id="mcq-timer-bar" style="width:100%"></div>
+      </div>
+    </div>
     <div id="mcq-question-text">Soalan akan muncul di sini</div>
     <div id="mcq-hint">Tekan jawapan yang betul!</div>
     <div id="mcq-choices">
@@ -1155,12 +1220,19 @@ function updateGame(g) {
   // Execute jump
   if (g.pJumpBuffer>0 && g.pCoyote>0) {
     // Check if there is a grammar cluster nearby (within 500px horizontally)
-    const nearCluster = g.level.platforms.find(p =>
+    // Find the grammar cluster for current question
+    const clusterPlats = g.level.platforms.filter(p =>
       p.type==='grammar' &&
       !p.revealed && !p.crumbling && !p.dead &&
-      p.data.questionIdx === g.currentQ &&
-      Math.abs((p.x + p.w/2) - g.px) < 500
+      p.data.questionIdx === g.currentQ
     );
+    // Trigger when ball enters the cluster zone:
+    // from 150px before the leftmost platform up to the rightmost platform edge
+    const nearCluster = clusterPlats.length > 0 && (() => {
+      const minX = Math.min(...clusterPlats.map(p => p.x)) - 150;
+      const maxX = Math.max(...clusterPlats.map(p => p.x + p.w));
+      return g.px >= minX && g.px <= maxX;
+    })() ? clusterPlats[0] : null;
     if (nearCluster && g.answeredQuestions.size < g.level.questions.length) {
       // Show MCQ instead of normal jump
       g.pJumpBuffer=0; g.pCoyote=0;
@@ -1248,12 +1320,17 @@ function updateGame(g) {
     c.frame+=0.08;
   }
 
-  // Goal collision
+  // Goal collision — generous trigger zone (includes flag pole area above platform)
   const goalPlat = level.platforms.find(p=>p.type==='goal');
-  if (goalPlat && circleRect(g.px,g.py,BALL_R, goalPlat.x,goalPlat.y,goalPlat.w,goalPlat.h)) {
-    goalPlat.revealed=true;
-    triggerWin(g);
-    return;
+  if (goalPlat && g.state==='playing') {
+    const gCentreX = goalPlat.x + goalPlat.w/2;
+    const inX = Math.abs(g.px - gCentreX) < goalPlat.w + 20;
+    const inY = g.py + BALL_R >= goalPlat.y - 55; // include flag area
+    if (inX && inY) {
+      goalPlat.revealed = true;
+      triggerWin(g);
+      return;
+    }
   }
 
   // Checkpoint (midpoint)
@@ -1333,6 +1410,8 @@ function revealSiblingPlatforms(g, qIdx) {
 //  MCQ SYSTEM
 // ══════════════════════════════════════════════
 let mcqShuffled = []; // [{label, isCorrect, platRef}]
+let mcqTimerId  = null;
+const MCQ_TIME  = 10; // seconds
 
 function showMCQ(g) {
   g.state = 'answering';
@@ -1387,19 +1466,84 @@ function showMCQ(g) {
     return `<div class="mcq-dot ${cls}"></div>`;
   }).join('');
 
-  // Update ball preview with selfie if available
-  const thumb = document.getElementById('mcq-ball-preview');
-  if (selfieCanvas) {
-    thumb.innerHTML=`<img src="${selfieCanvas.toDataURL()}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
-  } else {
-    thumb.innerHTML='😊';
-  }
+  // Update ball preview in MCQ modal
+  updateBallThumb();
 
   document.getElementById('mcq-overlay').classList.remove('hidden');
+  startMCQTimer();
 }
 
 function hideMCQ() {
   document.getElementById('mcq-overlay').classList.add('hidden');
+  stopMCQTimer();
+}
+
+function startMCQTimer() {
+  stopMCQTimer();
+  let remaining = MCQ_TIME;
+  const CIRC = 138.2; // 2π×22
+
+  const arc = document.getElementById('mcq-timer-arc');
+  const num = document.getElementById('mcq-timer-num');
+  const bar = document.getElementById('mcq-timer-bar');
+
+  // Reset visuals
+  arc.style.strokeDashoffset = '0';
+  arc.classList.remove('urgent');
+  bar.style.width = '100%';
+  bar.style.background = 'linear-gradient(90deg,#FFD166,#FF8C42)';
+  num.textContent = remaining;
+
+  // Kick off first tick after brief delay so CSS transition fires
+  requestAnimationFrame(() => {
+    mcqTimerId = setInterval(() => {
+      remaining--;
+      const pct = remaining / MCQ_TIME;
+      arc.style.strokeDashoffset = CIRC * (1 - pct);
+      bar.style.width = (pct * 100) + '%';
+      num.textContent = remaining;
+
+      if (remaining <= 3) {
+        arc.classList.add('urgent');
+        bar.style.background = 'linear-gradient(90deg,#EF476F,#FF8C42)';
+        num.style.color = '#EF476F';
+        // Pulse the card
+        document.getElementById('mcq-card').style.borderColor = 'rgba(239,71,111,0.6)';
+      }
+
+      if (remaining <= 0) {
+        stopMCQTimer();
+        onTimerExpired();
+      }
+    }, 1000);
+  });
+}
+
+function stopMCQTimer() {
+  if (mcqTimerId) { clearInterval(mcqTimerId); mcqTimerId = null; }
+  // Reset urgent styling
+  const arc = document.getElementById('mcq-timer-arc');
+  const num = document.getElementById('mcq-timer-num');
+  if (arc) { arc.classList.remove('urgent'); }
+  if (num) { num.style.color = '#fff'; }
+  const card = document.getElementById('mcq-card');
+  if (card) card.style.borderColor = '';
+}
+
+function onTimerExpired() {
+  if (!game || game.state !== 'answering') return;
+  // Flash red, disable buttons, show timeout message
+  for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled = true;
+  document.getElementById('mcq-hint').textContent = '⏱️ Masa habis! Cuba lagi...';
+  document.getElementById('mcq-hint').style.color = '#EF476F';
+
+  Audio.wrong();
+  setTimeout(() => {
+    document.getElementById('mcq-hint').style.color = '';
+    hideMCQ();
+    game.state = 'playing';
+    playerTakeDamage(game);
+  }, 900);
 }
 
 function selectAnswer(idx) {
@@ -1409,8 +1553,9 @@ function selectAnswer(idx) {
 
   const btn = document.getElementById(`mcq-btn-${idx}`);
 
-  // Disable all buttons immediately to prevent double-click
+  // Disable all buttons + stop timer immediately
   for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled=true;
+  stopMCQTimer();
 
   if (choice.isCorrect) {
     btn.classList.add('correct-flash');
@@ -1665,38 +1810,48 @@ function drawPlayer(g) {
   ctx.ellipse(0, BALL_R+2, BALL_R*0.9, BALL_R*0.3, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // Ball body
+  // Ball body — always draw orange base
+  const grad = ctx.createRadialGradient(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.1, 0,0,BALL_R);
+  grad.addColorStop(0,'#FFA040');
+  grad.addColorStop(0.6,'#FF6B00');
+  grad.addColorStop(1,'#C04000');
+  ctx.fillStyle=grad;
+  ctx.beginPath();
+  ctx.arc(0,0,BALL_R,0,Math.PI*2);
+  ctx.fill();
+
   if (selfieCanvas) {
+    // Draw selfie counter-rotated so face stays upright
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(0, 0, BALL_R, 0, Math.PI*2);
+    ctx.arc(0, 0, BALL_R-1, 0, Math.PI*2);
     ctx.clip();
+    ctx.rotate(-g.pRot); // counter-rotate → face stays upright
     ctx.drawImage(selfieCanvas, -BALL_R, -BALL_R, BALL_R*2, BALL_R*2);
+    ctx.restore();
   } else {
-    const grad = ctx.createRadialGradient(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.1, 0,0,BALL_R);
-    grad.addColorStop(0,'#FFA040');
-    grad.addColorStop(0.6,'#FF6B00');
-    grad.addColorStop(1,'#C04000');
-    ctx.fillStyle=grad;
-    ctx.beginPath();
-    ctx.arc(0,0,BALL_R,0,Math.PI*2);
-    ctx.fill();
-
-    // Shine
-    ctx.fillStyle='rgba(255,255,255,0.35)';
-    ctx.beginPath();
-    ctx.arc(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.35,0,Math.PI*2);
-    ctx.fill();
-
-    // Face (upright - compensate rotation)
+    // Emoji face — counter-rotated to stay upright
+    ctx.save();
     ctx.rotate(-g.pRot);
     ctx.fillStyle='#1a0a00';
     ctx.beginPath(); ctx.arc(-6,-4,4,0,Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(6,-4,4,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='#1a0a00'; ctx.lineWidth=2;
-    ctx.beginPath();
-    ctx.arc(0, 4, 6, 0, Math.PI);
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 4, 6, 0, Math.PI); ctx.stroke();
+    ctx.restore();
   }
+
+  // Shine on top (always, gives "ball" feel even with selfie)
+  ctx.fillStyle='rgba(255,255,255,0.28)';
+  ctx.beginPath();
+  ctx.arc(-BALL_R*0.28,-BALL_R*0.28,BALL_R*0.32,0,Math.PI*2);
+  ctx.fill();
+  // Rolling edge highlight
+  ctx.strokeStyle='rgba(255,255,255,0.15)';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.arc(0,0,BALL_R-1,0,Math.PI*2);
+  ctx.stroke();
 
   // Glow when invincible
   if (g.invincible>0) {
@@ -1895,6 +2050,26 @@ async function showSelfieScreen() {
   }
 }
 
+function updateBallThumb() {
+  // Updates all ball preview elements (HUD thumb, MCQ preview, menu preview)
+  const els = [
+    document.getElementById('selfie-thumb'),
+    document.getElementById('mcq-ball-preview'),
+    document.getElementById('menu-ball-preview'),
+  ];
+  if (selfieCanvas) {
+    const dataUrl = selfieCanvas.toDataURL();
+    const imgTag = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+    els.forEach(el => { if (el) el.innerHTML = imgTag; });
+  } else {
+    document.getElementById('selfie-thumb').innerHTML = '😊';
+    const mcqPrev = document.getElementById('mcq-ball-preview');
+    if (mcqPrev) mcqPrev.innerHTML = '😊';
+    const menuPrev = document.getElementById('menu-ball-preview');
+    if (menuPrev) menuPrev.innerHTML = '😊';
+  }
+}
+
 function captureSelfie() {
   const video = document.getElementById('camera-video');
   const SIZE = 100;
@@ -1908,11 +2083,7 @@ function captureSelfie() {
   tc.beginPath(); tc.arc(SIZE/2,SIZE/2,SIZE/2,0,Math.PI*2); tc.fill();
 
   selfieCanvas = tmp;
-  // Update thumb
-  const thumb = document.getElementById('selfie-thumb');
-  thumb.innerHTML=`<img src="${tmp.toDataURL()}" alt="selfie">`;
-  // Update menu ball
-  document.getElementById('menu-ball-preview').innerHTML=`<img src="${tmp.toDataURL()}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+  updateBallThumb();
 
   if (cameraStream) { cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
   document.getElementById('selfie-screen').classList.add('hidden');
