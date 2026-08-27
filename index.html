@@ -2115,6 +2115,7 @@ function createGame(key) {
     textParticles: [],
     answeredQuestions: new Set(),
     mcqAnsweredSet: new Set(), // questions whose MCQ has been shown+answered (no re-trigger)
+    mcqCorrectSet: new Set(),  // questions answered CORRECTLY via MCQ
     combo: 0,
     // Power-up inventory
     inv: { shield:false, time:false, hint:false },
@@ -2418,8 +2419,17 @@ function updateGame(g) {
 function handleGrammarLand(g, plat) {
   const qIdx = plat.data.questionIdx;
   if (g.answeredQuestions.has(qIdx)) return; // already answered correctly
-  // If MCQ already answered correctly, wrong platforms have no effect
+  // Wrong platforms always harmless after MCQ answered
   if (g.mcqAnsweredSet.has(qIdx) && !plat.data.isCorrect) return;
+  // MCQ was answered WRONG — correct platform gives no reward, just clears and moves on
+  if (g.mcqAnsweredSet.has(qIdx) && !g.mcqCorrectSet.has(qIdx) && plat.data.isCorrect) {
+    g.answeredQuestions.add(qIdx);
+    g.level.platforms.forEach(p => { p.chosen=false; p.isHinted=false; p.wrongAnswered=false; });
+    revealSiblingPlatforms(g, qIdx);
+    g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
+    updateQuestionUI(g);
+    return;
+  }
 
   // Clear highlight flags
   g.level.platforms.forEach(p => { p.chosen = false; p.isHinted = false; p.wrongAnswered = false; });
@@ -2624,6 +2634,7 @@ function selectAnswer(idx) {
     hideMCQ();
     // Mark this question as MCQ-answered so jump won't re-trigger MCQ
     if (game) game.mcqAnsweredSet.add(game.currentQ);
+    if (game && choice.isCorrect) game.mcqCorrectSet.add(game.currentQ);
 
     // Highlight chosen platform so player knows where to jump
     if (choice.platRef && !choice.platRef.dead) {
