@@ -1763,6 +1763,18 @@ class Platform {
     }
 
     if (type === 'grammar') {
+      // Ghost/passable wrong platforms — faded, ball passes through
+      if (this.passable) {
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+        ctx.strokeStyle = '#EF476F';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6,4]);
+        ctx.strokeRect(sx+2, sy+2, w-4, h-4);
+        ctx.setLineDash([]);
+        ctx.restore();
+        return;
+      }
       // Determine color based on state
       let baseColor='#1E3A5F', borderColor='#4A90D9', glowColor='rgba(74,144,217,.4)';
       if (revealed) {
@@ -2099,6 +2111,7 @@ function createGame(key) {
     particles: [],
     textParticles: [],
     answeredQuestions: new Set(),
+    mcqAnsweredSet: new Set(), // questions whose MCQ has been shown+answered (no re-trigger)
     combo: 0,
     // Power-up inventory
     inv: { shield:false, time:false, hint:false },
@@ -2133,6 +2146,7 @@ function circleRect(cx,cy,r, rx,ry,rw,rh) {
 }
 
 function resolvePlayerPlatform(g, plat) {
+  if (plat.passable) return false; // wrong-answer platforms are non-solid
   const { px, py, pvx, pvy } = g;
   const { x, y, w, h } = plat;
   if (!circleRect(px, py, BALL_R, x, y, w, h)) return false;
@@ -2244,7 +2258,7 @@ function updateGame(g) {
       const maxX = Math.max(...clusterPlats.map(p => p.x + p.w));
       return g.px >= minX && g.px <= maxX;
     })() ? clusterPlats[0] : null;
-    if (nearCluster && g.answeredQuestions.size < g.level.questions.length) {
+    if (nearCluster && !g.mcqAnsweredSet.has(g.currentQ)) {
       // Show MCQ instead of normal jump
       g.pJumpBuffer=0; g.pCoyote=0;
       showMCQ(g);
@@ -2562,7 +2576,6 @@ function stopMCQTimer() {
 
 function onTimerExpired() {
   if (!game || game.state !== 'answering') return;
-  // Flash red, disable buttons, show timeout message
   for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled = true;
   document.getElementById('mcq-hint').textContent = '⏱️ Masa habis! Cuba lagi...';
   document.getElementById('mcq-hint').style.color = '#EF476F';
@@ -2572,6 +2585,12 @@ function onTimerExpired() {
   setTimeout(() => {
     document.getElementById('mcq-hint').style.color = '';
     hideMCQ();
+    // Prevent MCQ re-triggering after timeout too
+    if (game) game.mcqAnsweredSet.add(game.currentQ);
+    // Make wrong platforms passable
+    mcqShuffled.forEach(c => {
+      if (!c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.passable = true;
+    });
     game.state = 'playing';
     playerTakeDamage(game);
   }, 900);
@@ -2603,13 +2622,22 @@ function selectAnswer(idx) {
 
   setTimeout(() => {
     hideMCQ();
+    // Mark this question as MCQ-answered so jump won't re-trigger MCQ
+    if (game) game.mcqAnsweredSet.add(game.currentQ);
+
     // Highlight chosen platform so player knows where to jump
     if (choice.platRef && !choice.platRef.dead) {
       choice.platRef.chosen = true;
     }
-    // Also highlight the correct platform for reference
+    // Highlight correct platform
     mcqShuffled.forEach(c => {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
+    });
+    // Make wrong answer platforms passable instantly — ball flies through
+    mcqShuffled.forEach(c => {
+      if (!c.isCorrect && c.platRef && !c.platRef.dead) {
+        c.platRef.passable = true;
+      }
     });
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
