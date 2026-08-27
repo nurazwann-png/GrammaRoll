@@ -1065,30 +1065,51 @@ body {
 
 /* BIG CORRECT BANNER */
 #correct-banner {
-  position:fixed; left:50%; top:38%;
-  transform: translate(-50%,-50%) scale(0) rotate(-4deg);
-  z-index:166;
-  font-family:'Fredoka One',cursive;
-  font-size: clamp(3rem,10vw,5.5rem);
-  color:#fff;
-  text-align:center;
-  pointer-events:none;
-  text-shadow: 0 0 60px rgba(6,214,160,.9), 0 6px 0 rgba(0,80,50,.5);
-  transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .35s;
-  opacity:0;
-  line-height:1.1;
+  position: fixed; left: 50%; top: 38%;
+  transform: translate(-50%, -50%) scale(0) rotate(-6deg);
+  z-index: 166;
+  font-family: 'Fredoka One', cursive;
+  text-align: center;
+  pointer-events: none;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  opacity: 0;
+  background: rgba(10, 14, 40, 0.82);
+  backdrop-filter: blur(12px);
+  border: 3px solid rgba(255,209,102,0.6);
+  border-radius: 24px;
+  padding: 18px 40px 20px;
+  box-shadow: 0 0 60px rgba(255,209,102,0.35), 0 8px 32px rgba(0,0,0,0.5);
+  min-width: 260px;
 }
 #correct-banner.show {
-  transform: translate(-50%,-50%) scale(1) rotate(0deg);
-  opacity:1;
+  transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  opacity: 1;
+}
+#correct-banner-main {
+  display: block;
+  font-size: clamp(2.4rem, 8vw, 4.2rem);
+  background: linear-gradient(135deg, #FFD166 0%, #FF8C42 60%, #FF6B9D 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+  filter: drop-shadow(0 3px 8px rgba(255,140,66,0.5));
+}
+#correct-banner-divider {
+  display: block;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(6,214,160,0.8), transparent);
+  margin: 10px auto 8px;
+  border-radius: 2px;
 }
 #correct-banner-sub {
-  display:block;
-  font-size:0.38em;
+  display: block;
+  font-size: clamp(1rem, 4vw, 1.5rem);
   color: #06D6A0;
-  letter-spacing:2px;
-  text-shadow: none;
-  margin-top:4px;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 20px rgba(6,214,160,0.7);
+  margin-top: 0;
 }
 
 @keyframes float {
@@ -1165,7 +1186,11 @@ body {
 <div id="checkpoint-flash"></div>
 <div id="damage-flash"></div>
 <div id="correct-flash"></div>
-<div id="correct-banner"><span id="correct-banner-main"></span><span id="correct-banner-sub"></span></div>
+<div id="correct-banner">
+  <span id="correct-banner-main"></span>
+  <span id="correct-banner-divider"></span>
+  <span id="correct-banner-sub"></span>
+</div>
 
 <!-- MENU SCREEN -->
 <div class="screen" id="menu-screen">
@@ -1618,6 +1643,7 @@ function showCorrectBanner(combo, multiplier) {
 
   document.getElementById('correct-banner-main').textContent = main;
   document.getElementById('correct-banner-sub').textContent  = sub;
+  document.getElementById('correct-banner-divider').style.display = sub ? 'block' : 'none';
 
   const banner = document.getElementById('correct-banner');
   banner.classList.add('show');
