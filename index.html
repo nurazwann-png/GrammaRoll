@@ -1763,18 +1763,6 @@ class Platform {
     }
 
     if (type === 'grammar') {
-      // Ghost/passable wrong platforms — faded, ball passes through
-      if (this.passable) {
-        ctx.save();
-        ctx.globalAlpha = 0.25;
-        ctx.strokeStyle = '#EF476F';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([6,4]);
-        ctx.strokeRect(sx+2, sy+2, w-4, h-4);
-        ctx.setLineDash([]);
-        ctx.restore();
-        return;
-      }
       // Determine color based on state
       let baseColor='#1E3A5F', borderColor='#4A90D9', glowColor='rgba(74,144,217,.4)';
       if (revealed) {
@@ -2146,7 +2134,6 @@ function circleRect(cx,cy,r, rx,ry,rw,rh) {
 }
 
 function resolvePlayerPlatform(g, plat) {
-  if (plat.passable) return false; // wrong-answer platforms are non-solid
   const { px, py, pvx, pvy } = g;
   const { x, y, w, h } = plat;
   if (!circleRect(px, py, BALL_R, x, y, w, h)) return false;
@@ -2629,14 +2616,6 @@ function selectAnswer(idx) {
     mcqShuffled.forEach(c => {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
     });
-    // Only freeze wrong platforms when answered correctly — ball can pass through freely
-    if (choice.isCorrect) {
-      mcqShuffled.forEach(c => {
-        if (!c.isCorrect && c.platRef && !c.platRef.dead) {
-          c.platRef.passable = true;
-        }
-      });
-    }
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
 }
