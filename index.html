@@ -200,16 +200,6 @@ body {
   overflow: hidden;
 }
 #menu-screen::before {
-  content: '⭐✨🌟💫⭐✨🌟💫⭐✨🌟💫';
-  position: absolute;
-  top: 8%; left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.4rem;
-  letter-spacing: 8px;
-  animation: starTwinkle 2s ease-in-out infinite;
-  pointer-events: none;
-}
-#menu-screen::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -217,6 +207,21 @@ body {
               radial-gradient(ellipse at 80% 80%, rgba(6,214,160,.2) 0%, transparent 50%),
               radial-gradient(ellipse at 20% 80%, rgba(255,107,157,.2) 0%, transparent 50%);
   pointer-events: none;
+}
+/* Floating star particles */
+.menu-star {
+  position: absolute;
+  pointer-events: none;
+  animation: starFloat linear infinite;
+  opacity: 0;
+  font-size: 1.2rem;
+  z-index: 0;
+}
+@keyframes starFloat {
+  0%   { opacity:0; transform: translateY(0) rotate(0deg) scale(0.5); }
+  15%  { opacity:1; }
+  85%  { opacity:0.8; }
+  100% { opacity:0; transform: translateY(-120px) rotate(360deg) scale(1.2); }
 }
 #menu-title {
   font-family:'Fredoka One',cursive;
@@ -3306,6 +3311,7 @@ function showWinLBPreview(entries) {
 
 // Enter key submits name
 document.addEventListener('DOMContentLoaded', () => {
+  spawnMenuStars();
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();
   });
@@ -3358,6 +3364,27 @@ function nextLevel() {
   }
 }
 
+function spawnMenuStars() {
+  const menu = document.getElementById('menu-screen');
+  // Remove old stars
+  menu.querySelectorAll('.menu-star').forEach(s => s.remove());
+  const icons = ['⭐','✨','🌟','💫','🌙','⚡','🎉','🌈'];
+  const count = 18;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('span');
+    el.className = 'menu-star';
+    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+    el.style.cssText = [
+      `left:${5 + Math.random()*90}%`,
+      `top:${10 + Math.random()*80}%`,
+      `font-size:${0.8 + Math.random()*1.2}rem`,
+      `animation-duration:${3 + Math.random()*5}s`,
+      `animation-delay:${Math.random()*4}s`,
+    ].join(';');
+    menu.appendChild(el);
+  }
+}
+
 function showMenu() {
   document.getElementById('menu-screen').classList.remove('hidden');
   document.getElementById('gameover-overlay').classList.add('hidden');
@@ -3368,6 +3395,7 @@ function showMenu() {
   document.getElementById('pause-btn').style.display='none';
   document.getElementById('selfie-indicator').style.display='none';
   game = null;
+  spawnMenuStars();
 }
 
 // ══════════════════════════════════════════════
