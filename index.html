@@ -1771,6 +1771,9 @@ class Platform {
         } else {
           baseColor='#3D0A12'; borderColor='#EF476F'; glowColor='rgba(239,71,111,.5)';
         }
+      } else if (this.wrongAnswered) {
+        // Wrong platform after correct MCQ answer — red, no effect on land
+        baseColor='#3D0A12'; borderColor='#EF476F'; glowColor='rgba(239,71,111,.4)';
       } else if (this.isHinted) {
         // Correct answer hint — strong green pulse
         borderColor='#06D6A0'; glowColor='rgba(6,214,160,.6)';
@@ -2402,10 +2405,12 @@ function updateGame(g) {
 // ══════════════════════════════════════════════
 function handleGrammarLand(g, plat) {
   const qIdx = plat.data.questionIdx;
-  if (g.answeredQuestions.has(qIdx)) return; // already answered
+  if (g.answeredQuestions.has(qIdx)) return; // already answered correctly
+  // If MCQ already answered correctly, wrong platforms have no effect
+  if (g.mcqAnsweredSet.has(qIdx) && !plat.data.isCorrect) return;
 
   // Clear highlight flags
-  g.level.platforms.forEach(p => { p.chosen = false; p.isHinted = false; });
+  g.level.platforms.forEach(p => { p.chosen = false; p.isHinted = false; p.wrongAnswered = false; });
 
   const label = plat.data.label || '';
   const isCorrect = plat.data.isCorrect;
@@ -2612,9 +2617,10 @@ function selectAnswer(idx) {
     if (choice.platRef && !choice.platRef.dead) {
       choice.platRef.chosen = true;
     }
-    // Highlight correct platform
+    // Highlight correct platform; mark wrong platforms red (no effect on land)
     mcqShuffled.forEach(c => {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
+      if (!c.isCorrect && c.platRef && !c.platRef.dead && choice.isCorrect) c.platRef.wrongAnswered = true;
     });
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
