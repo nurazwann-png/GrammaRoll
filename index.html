@@ -75,9 +75,20 @@ body {
   gap: 8px;
 }
 #hud-hearts { display:flex; gap:5px; align-items:center; min-width:90px; }
-.heart-icon { font-size:28px; transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .3s; }
-.heart-icon.lost { opacity:0.18; transform:scale(0.75); filter:grayscale(1); }
-.heart-icon.half { opacity:0.8; transform:scale(0.9); }
+.heart-icon {
+  font-size:28px;
+  transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+  color: #FF4D6D;
+  -webkit-text-fill-color: #FF4D6D;
+}
+.heart-icon.lost { opacity:0.2; transform:scale(0.75); color:#888; -webkit-text-fill-color:#888; }
+.heart-icon.half {
+  background: linear-gradient(to right, #FF4D6D 50%, #888 50%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transform: scale(0.95);
+}
 #question-box {
   flex:1; text-align:center;
   font-family:'Fredoka One', cursive;
@@ -1109,9 +1120,9 @@ body {
 <!-- HUD -->
 <div id="hud">
   <div id="hud-hearts">
-    <div class="heart-icon" id="h1">❤️</div>
-    <div class="heart-icon" id="h2">❤️</div>
-    <div class="heart-icon" id="h3">❤️</div>
+    <div class="heart-icon" id="h1">♥</div>
+    <div class="heart-icon" id="h2">♥</div>
+    <div class="heart-icon" id="h3">♥</div>
   </div>
   <div id="question-box">Pilih tahap untuk bermain!</div>
   <div id="hud-right" style="display:flex;align-items:center;gap:8px;">
@@ -2776,7 +2787,7 @@ function updateHUD(g) {
     const half = !full && g.hearts >= i - 0.5;
     h.classList.toggle('lost', !full && !half);
     h.classList.toggle('half', half);
-    h.textContent = half ? '🩶' : '❤️';
+    h.textContent = '♥';
   }
 }
 
