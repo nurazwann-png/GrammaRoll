@@ -1715,6 +1715,21 @@ class Platform {
   update(dt) {
     this.glowPhase += 0.06;
     this.bobOffset += 0.025;
+    // Moving platform oscillation
+    this._vx = 0; this._vy = 0;
+    if (this.moving) {
+      this.movePhase = (this.movePhase||0) + (this.moveSpeed||0.03);
+      const delta = Math.sin(this.movePhase) * (this.moveRange||60);
+      if (this.moveAxis === 'y') {
+        const newY = this._baseY + delta;
+        this._vy = newY - this.y;
+        this.y = newY;
+      } else {
+        const newX = this._baseX + delta;
+        this._vx = newX - this.x;
+        this.x = newX;
+      }
+    }
     if (this.crumbling) {
       this.crumbleTimer++;
       if (this.crumbleTimer > 50) this.dead = true;
@@ -1762,6 +1777,22 @@ class Platform {
       ctx.beginPath();
       roundRect(ctx, sx+4, sy+h-6, w-8, 6, [0,0,6,6]);
       ctx.fill();
+      // Moving platform indicator: yellow arrows on the side
+      if (this.moving) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,220,50,0.85)';
+        const arrowDir = this.moveAxis === 'x' ? '↔' : '↕';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(arrowDir, sx + w/2, sy - 4);
+        // Glowing border
+        ctx.strokeStyle = 'rgba(255,220,50,0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        roundRect(ctx, sx+1, sy+1, w-2, h-2, 6);
+        ctx.stroke();
+        ctx.restore();
+      }
       return;
     }
 
@@ -2061,9 +2092,17 @@ function buildLevel(key) {
   let curX = 380;
 
   questions.forEach((q, qi) => {
-    // Gap + stepping stones
-    platforms.push(new Platform(curX, GH - 80,  PLAT_W, PLAT_H, 'solid'));
-    platforms.push(new Platform(curX+160, GH - 140, PLAT_W, PLAT_H, 'solid'));
+    // Gap + stepping stones — alternate moving axes per question
+    const p1 = new Platform(curX, GH - 80, PLAT_W, PLAT_H, 'solid');
+    p1.moving=true; p1.moveAxis='x'; p1.moveRange=55; p1.moveSpeed=0.028+(qi%3)*0.006;
+    p1._baseX=curX; p1._baseY=GH-80; p1.movePhase=qi*1.1;
+    platforms.push(p1);
+
+    const p2 = new Platform(curX+160, GH - 140, PLAT_W, PLAT_H, 'solid');
+    p2.moving=true; p2.moveAxis= qi%2===0 ? 'y' : 'x';
+    p2.moveRange=40; p2.moveSpeed=0.035+(qi%2)*0.008;
+    p2._baseX=curX+160; p2._baseY=GH-140; p2.movePhase=qi*0.7+1;
+    platforms.push(p2);
     curX += 340;
 
     // Enemy on approach
@@ -2199,6 +2238,8 @@ function resolvePlayerPlatform(g, plat) {
         if (Math.abs(g.pvy)<1) g.pvy=0;
       }
       g.pOnGround = true;
+      // Carry ball with moving platform
+      if (plat.moving) { g.px += plat._vx; g.py += plat._vy; }
       if (!plat._landed) { plat._landed=true; Audio.land(); }
       return 'top';
     } else {
