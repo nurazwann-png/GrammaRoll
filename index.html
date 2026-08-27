@@ -951,6 +951,52 @@ body {
 #name-input:focus { border-color:var(--gold); }
 #name-input::placeholder { color:rgba(255,255,255,.3); }
 
+/* PAUSE OVERLAY */
+#pause-overlay {
+  position:fixed; inset:0; z-index:155;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background: rgba(5,10,40,0.88);
+  backdrop-filter: blur(20px);
+  transition: opacity .25s ease;
+  gap: 0;
+}
+#pause-overlay.hidden { opacity:0; pointer-events:none; }
+#pause-card {
+  background: linear-gradient(160deg, #1a0a4a 0%, #0f1e70 100%);
+  border: 3px solid rgba(168,85,247,0.5);
+  border-radius: 32px;
+  padding: 36px 40px 32px;
+  min-width: 280px;
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(0,0,0,.7), 0 0 60px rgba(168,85,247,.2);
+}
+#pause-card h2 {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(2rem,6vw,3rem);
+  color: #fff;
+  margin-bottom: 6px;
+  text-shadow: 0 0 20px rgba(168,85,247,.6);
+}
+#pause-card p {
+  color: rgba(255,255,255,.6);
+  font-size: .95rem;
+  margin-bottom: 28px;
+}
+#pause-btn-resume {
+  background: linear-gradient(135deg, #06D6A0, #059669);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(6,214,160,.45);
+  margin-bottom: 14px;
+  width: 100%;
+}
+#pause-btn-quit {
+  background: linear-gradient(135deg, #EF476F, #DC2626);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(239,71,111,.4);
+  width: 100%;
+}
+
 /* PAUSE BUTTON */
 #pause-btn {
   position:fixed; top:78px; right:16px; z-index:80;
@@ -1089,6 +1135,16 @@ body {
 </div>
 
 <button id="pause-btn" title="Pause">⏸</button>
+
+<!-- PAUSE OVERLAY -->
+<div class="overlay hidden" id="pause-overlay">
+  <div id="pause-card">
+    <h2>⏸ Rehat</h2>
+    <p>Game sedang berhenti sebentar</p>
+    <button class="btn" id="pause-btn-resume" onclick="togglePause()">▶ Teruskan!</button>
+    <button class="btn" id="pause-btn-quit" onclick="quitToMenu()">🏠 Keluar ke Menu</button>
+  </div>
+</div>
 <div id="selfie-indicator" title="Ambil selfie">
   <div id="selfie-thumb">😊</div>
 </div>
@@ -3393,6 +3449,8 @@ function showMenu() {
   document.getElementById('name-overlay').classList.add('hidden');
   document.getElementById('leaderboard-overlay').classList.add('hidden');
   document.getElementById('pause-btn').style.display='none';
+  document.getElementById('pause-btn').textContent='⏸';
+  document.getElementById('pause-overlay').classList.add('hidden');
   document.getElementById('selfie-indicator').style.display='none';
   game = null;
   spawnMenuStars();
@@ -3404,8 +3462,17 @@ function showMenu() {
 document.getElementById('pause-btn').addEventListener('click', togglePause);
 function togglePause() {
   if (!game) return;
-  game.state = game.state==='playing' ? 'paused' : 'playing';
-  document.getElementById('pause-btn').textContent = game.state==='playing' ? '⏸' : '▶';
+  const isPausing = game.state === 'playing';
+  game.state = isPausing ? 'paused' : 'playing';
+  document.getElementById('pause-btn').textContent = isPausing ? '▶' : '⏸';
+  document.getElementById('pause-overlay').classList.toggle('hidden', !isPausing);
+}
+
+function quitToMenu() {
+  if (game) game.state = 'playing'; // stop paused draw loop weirdness
+  document.getElementById('pause-overlay').classList.add('hidden');
+  document.getElementById('pause-btn').textContent = '⏸';
+  showMenu();
 }
 
 // ══════════════════════════════════════════════
