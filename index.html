@@ -77,6 +77,7 @@ body {
 #hud-hearts { display:flex; gap:5px; align-items:center; min-width:90px; }
 .heart-icon { font-size:28px; transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .3s; }
 .heart-icon.lost { opacity:0.18; transform:scale(0.75); filter:grayscale(1); }
+.heart-icon.half { opacity:0.8; transform:scale(0.9); }
 #question-box {
   flex:1; text-align:center;
   font-family:'Fredoka One', cursive;
@@ -2580,7 +2581,7 @@ function onTimerExpired() {
     // Prevent MCQ re-triggering after timeout too
     if (game) game.mcqAnsweredSet.add(game.currentQ);
     game.state = 'playing';
-    playerTakeDamage(game);
+    playerTakeDamage(game, false, 0.5);
   }, 900);
 }
 
@@ -2622,6 +2623,7 @@ function selectAnswer(idx) {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
       if (!c.isCorrect && c.platRef && !c.platRef.dead && choice.isCorrect) c.platRef.wrongAnswered = true;
     });
+    if (!choice.isCorrect) playerTakeDamage(game, false, 0.5);
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
 }
@@ -2692,9 +2694,9 @@ function processAnswerResult(g, label, isCorrect, plat) {
   }
 }
 
-function playerTakeDamage(g, fell=false) {
+function playerTakeDamage(g, fell=false, amount=1) {
   if (g.invincible > 0) return;
-  g.hearts = Math.max(0, g.hearts-1);
+  g.hearts = Math.max(0, g.hearts-amount);
   g.invincible = 90;
   Audio.death();
   spawnParticles(g.px, g.py,'#EF476F',20,7);
@@ -2770,7 +2772,11 @@ function updateHUD(g) {
 
   for (let i=1;i<=3;i++) {
     const h=document.getElementById('h'+i);
-    h.classList.toggle('lost', i > g.hearts);
+    const full = g.hearts >= i;
+    const half = !full && g.hearts >= i - 0.5;
+    h.classList.toggle('lost', !full && !half);
+    h.classList.toggle('half', half);
+    h.textContent = half ? '🩶' : '❤️';
   }
 }
 
