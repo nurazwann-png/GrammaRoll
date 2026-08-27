@@ -1,0 +1,19 @@
+{
+  "name": "Grammar Ball!",
+  "short_name": "Grammar Ball",
+  "description": "English Adventure · CEFR Malaysia — Platform game untuk belajar tatabahasa",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0a1628",
+  "theme_color": "#1a0533",
+  "categories": ["education", "games"],
+  "lang": "ms",
+  "icons": [
+    { "src": "/logo.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any" },
+    { "src": "/logo.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "/logo.jpg", "sizes": "1060x1060", "type": "image/jpeg", "form_factor": "narrow" }
+  ]
+}

@@ -3,6 +3,11 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Grammar Ball">
+<meta name="theme-color" content="#1a0533">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/logo.jpg">
+<link rel="icon" type="image/jpeg" href="/logo.jpg">
 <title>Grammar Roll</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4215,6 +4220,11 @@ function showWinLBPreview(entries) {
 
 // Enter key submits name
 document.addEventListener('DOMContentLoaded', () => {
+  // Register service worker for PWA
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
   // Detect mobile device and apply class for CSS targeting
   const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.screen.width < 768;
   if (isMobile) document.body.classList.add('is-mobile');

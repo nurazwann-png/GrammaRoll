@@ -4,13 +4,36 @@ const path = require('path');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
-const INDEX = path.join(__dirname, 'index.html');
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8',
+  '.js':   'application/javascript',
+  '.json': 'application/json',
+  '.jpg':  'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png':  'image/png',
+  '.ico':  'image/x-icon',
+};
+
+// Static files served from __dirname
+const STATIC = ['index.html', 'manifest.json', 'sw.js', 'logo.jpg'];
 
 const server = http.createServer((req, res) => {
-  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
-    fs.readFile(INDEX, (err, data) => {
-      if (err) { res.writeHead(500); res.end('Server error'); return; }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  if (req.method !== 'GET') { res.writeHead(405); res.end(); return; }
+
+  let urlPath = req.url.split('?')[0];
+  if (urlPath === '/') urlPath = '/index.html';
+  const filename = urlPath.slice(1); // strip leading /
+
+  if (STATIC.includes(filename)) {
+    const ext  = path.extname(filename);
+    const mime = MIME[ext] || 'application/octet-stream';
+    fs.readFile(path.join(__dirname, filename), (err, data) => {
+      if (err) { res.writeHead(404); res.end('Not found'); return; }
+      res.writeHead(200, {
+        'Content-Type': mime,
+        'Cache-Control': filename === 'sw.js' ? 'no-cache' : 'public, max-age=3600',
+      });
       res.end(data);
     });
   } else {
