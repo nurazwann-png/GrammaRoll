@@ -2682,8 +2682,6 @@ function processAnswerResult(g, label, isCorrect, plat) {
 
     // Ball glow burst
     g.correctGlow = 30; // frames of green glow on ball
-
-    showPraise(g.combo);
     updateComboHUD(g.combo);
 
     g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
