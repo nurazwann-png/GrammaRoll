@@ -1,4 +1,4 @@
-# GrammaRoll 🎮
+# Grammar Ball 🎮
 
 **Educational 2D Rolling Ball Platformer** — CEFR English Grammar for Malaysian Primary School (Year 1–5)
 
