@@ -2587,10 +2587,6 @@ function onTimerExpired() {
     hideMCQ();
     // Prevent MCQ re-triggering after timeout too
     if (game) game.mcqAnsweredSet.add(game.currentQ);
-    // Make wrong platforms passable
-    mcqShuffled.forEach(c => {
-      if (!c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.passable = true;
-    });
     game.state = 'playing';
     playerTakeDamage(game);
   }, 900);
@@ -2633,12 +2629,14 @@ function selectAnswer(idx) {
     mcqShuffled.forEach(c => {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
     });
-    // Make wrong answer platforms passable instantly — ball flies through
-    mcqShuffled.forEach(c => {
-      if (!c.isCorrect && c.platRef && !c.platRef.dead) {
-        c.platRef.passable = true;
-      }
-    });
+    // Only freeze wrong platforms when answered correctly — ball can pass through freely
+    if (choice.isCorrect) {
+      mcqShuffled.forEach(c => {
+        if (!c.isCorrect && c.platRef && !c.platRef.dead) {
+          c.platRef.passable = true;
+        }
+      });
+    }
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
 }
