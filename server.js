@@ -1,10 +1,21 @@
 const http = require('http');
+const fs   = require('fs');
+const path = require('path');
 const { Server } = require('socket.io');
 
 const PORT = process.env.PORT || 3000;
+const INDEX = path.join(__dirname, 'index.html');
+
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Grammar Roll Multiplayer Server');
+  if (req.method === 'GET' && (req.url === '/' || req.url === '/index.html')) {
+    fs.readFile(INDEX, (err, data) => {
+      if (err) { res.writeHead(500); res.end('Server error'); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(data);
+    });
+  } else {
+    res.writeHead(404); res.end('Not found');
+  }
 });
 
 const io = new Server(server, {

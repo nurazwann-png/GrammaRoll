@@ -1,0 +1,36 @@
+# MULTIPLAYER & GCP CLOUD RUN INTEGRATION PROMPT FOR CLAUDE (MCP)
+# Project: Grammar Platformer (CEFR English Year 1-5)
+
+Hello Claude! We are expanding our Unity 2D Grammar Platformer to include real-time 1v1 multiplayer capabilities. The backend will be hosted on Google Cloud Run. I need you to write the backend server code and the corresponding Unity client scripts.
+
+=========================================================
+MULTIPLAYER ARCHITECTURE (GCP CLOUD RUN + UNITY)
+=========================================================
+- Backend: Node.js with Socket.IO (or standard WebSockets), containerized via Docker, deployed to Google Cloud Run.
+- Unity Client: Needs to connect to the Cloud Run WebSocket URL.
+- Matchmaking: Simple Room-based system (Player A creates a room and gets a 4-digit code. Player B enters the code to join).
+- Data Synced: 
+  1. Player Name (String)
+  2. Player Profile Picture (Texture2D converted to Base64 string to be sent over network).
+  3. Real-time Position (X, Y) and Current Score/Grammar Progress.
+
+Please execute the following tasks sequentially:
+
+TASK 6: NODE.JS BACKEND & DOCKERFILE FOR CLOUD RUN
+- Create a `server.js` file using Node.js and Socket.IO.
+- Implement logic for:
+  - `createRoom` (generates a random 4-character room code).
+  - `joinRoom` (validates the code and joins the socket to the room).
+  - `playerDataUpdate` (receives Player Name and Base64 image, broadcasts it to the other player in the room).
+  - `positionUpdate` (receives X,Y coordinates and broadcasts to the opponent).
+- Create a `package.json` file with necessary dependencies.
+- Create a `Dockerfile` optimized for Google Cloud Run (exposing port 8080).
+
+TASK 7: UNITY WEBSOCKET CLIENT & SYNCING
+- Provide a C# script (e.g., `MultiplayerManager.cs`) for Unity to connect to the Node.js server. 
+  - (Assume I will import a Unity Socket.IO client library; please specify which one you recommend, e.g., SocketIOUnity).
+- Write a C# method to convert a cropped `Texture2D` (the player's selfie) into a Base64 string and send it to the server.
+- Write a C# method to receive the opponent's Base64 string, convert it back to a `Texture2D`, and apply it to the opponent's SpriteRenderer (the "Ghost" player).
+- Write logic to smoothly interpolate the opponent's position based on server updates.
+
+Please confirm you understand this architecture and provide the code for TASK 6 first.

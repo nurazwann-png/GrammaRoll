@@ -1,4 +1,8 @@
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Grammar Roll</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -301,6 +305,58 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,.25);
 }
 .btn-secondary:hover { background:rgba(255,255,255,0.22); }
+.menu-play-btn {
+  width: min(440px, 90vw);
+  font-size: clamp(1.2rem,4vw,1.7rem);
+  padding: 18px 0;
+  margin: 6px 0 14px;
+  letter-spacing: 1px;
+}
+.menu-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  width: min(440px, 90vw);
+  position: relative; z-index:1;
+}
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 10px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Fredoka One', cursive;
+  transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .15s;
+  border-bottom: 4px solid rgba(0,0,0,.25);
+}
+.menu-card:hover { transform: translateY(-4px) scale(1.05); }
+.menu-card:active { transform: translateY(2px) scale(0.97); border-bottom-width:1px; }
+.menu-card-icon { font-size: 2rem; line-height:1; }
+.menu-card-label { font-size: clamp(.85rem,2.5vw,1.05rem); font-weight:900; letter-spacing:.3px; }
+.menu-card-pink {
+  background: linear-gradient(135deg, #FF6B9D, #C0226A);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(255,107,157,.5);
+}
+.menu-card-gold {
+  background: linear-gradient(135deg, #FFD166, #F59E0B);
+  color: #4a2000;
+  box-shadow: 0 6px 20px rgba(255,209,102,.5);
+}
+.menu-card-blue {
+  background: linear-gradient(135deg, #38BDF8, #0284C7);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(56,189,248,.5);
+}
+.menu-card-purple {
+  background: linear-gradient(135deg, #A855F7, #7C3AED);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(168,85,247,.5);
+}
 #menu-worlds {
   display:flex; gap:10px; margin:18px 0;
   position: relative; z-index:1;
@@ -572,37 +628,146 @@ body {
 
 /* MOBILE CONTROLS */
 #mobile-controls {
-  position:fixed; bottom:18px; left:0; right:0;
-  display:flex; justify-content:space-between; align-items:flex-end;
-  padding:0 24px; pointer-events:none; z-index:80;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 12px 20px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  pointer-events: none;
+  z-index: 80;
+  background: linear-gradient(to top, rgba(5,10,30,0.7) 0%, transparent 100%);
 }
-.ctrl-group { display:flex; gap:12px; pointer-events:all; }
+.ctrl-group { display:flex; gap:10px; pointer-events:all; align-items:flex-end; }
 .ctrl-btn {
-  width:66px; height:66px; border-radius:50%;
-  background: rgba(255,255,255,0.18);
-  backdrop-filter:blur(12px);
-  border:3px solid rgba(255,255,255,0.3);
-  border-bottom: 5px solid rgba(0,0,0,.2);
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.7rem; color:#fff; cursor:pointer;
-  touch-action:none;
-  transition:transform .1s, background .1s;
-  -webkit-tap-highlight-color:transparent;
-  box-shadow: 0 4px 16px rgba(0,0,0,.3);
+  width: 76px; height: 76px; border-radius: 22px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2px solid rgba(255,255,255,0.28);
+  border-bottom: 5px solid rgba(0,0,0,.25);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #fff; cursor: pointer;
+  touch-action: none;
+  transition: transform .08s, background .1s, box-shadow .1s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 20px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.15);
+  user-select: none;
 }
 .ctrl-btn:active, .ctrl-btn.pressed {
-  background:rgba(255,255,255,0.35);
-  transform:scale(0.92);
-  border-bottom-width:2px;
+  background: rgba(255,255,255,0.32);
+  transform: scale(0.9) translateY(2px);
+  border-bottom-width: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
-#ctrl-left  { background:rgba(251,146,60,.3);  border-color:rgba(251,146,60,.6); }
-#ctrl-right { background:rgba(56,189,248,.3);  border-color:rgba(56,189,248,.6); }
-#ctrl-jump  {
-  width:74px; height:74px; font-size:1.9rem;
-  background:linear-gradient(135deg,rgba(6,214,160,.5),rgba(5,150,105,.5));
-  border-color:rgba(6,214,160,.8);
-  box-shadow: 0 0 20px rgba(6,214,160,.4), 0 4px 16px rgba(0,0,0,.3);
-  animation: kidsBounce 2.5s ease-in-out infinite;
+#ctrl-left {
+  background: linear-gradient(135deg, rgba(251,146,60,.4), rgba(234,88,12,.3));
+  border-color: rgba(251,146,60,.7);
+  box-shadow: 0 4px 20px rgba(251,146,60,.25), inset 0 1px 0 rgba(255,255,255,.15);
+}
+#ctrl-right {
+  background: linear-gradient(135deg, rgba(56,189,248,.4), rgba(2,132,199,.3));
+  border-color: rgba(56,189,248,.7);
+  box-shadow: 0 4px 20px rgba(56,189,248,.25), inset 0 1px 0 rgba(255,255,255,.15);
+}
+#ctrl-jump {
+  width: 88px; height: 88px; font-size: 2.2rem; border-radius: 26px;
+  background: linear-gradient(135deg, rgba(6,214,160,.55), rgba(5,150,105,.5));
+  border-color: rgba(6,214,160,.85);
+  box-shadow: 0 0 24px rgba(6,214,160,.45), 0 4px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2);
+  animation: jumpGlow 2s ease-in-out infinite;
+}
+@keyframes jumpGlow {
+  0%,100% { box-shadow: 0 0 20px rgba(6,214,160,.4), 0 4px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+  50%      { box-shadow: 0 0 36px rgba(6,214,160,.7), 0 6px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.2); }
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE — Phone portrait  ≤ 480px
+   ═══════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* Menu */
+  #menu-screen {
+    justify-content: space-evenly;
+    padding: max(16px, env(safe-area-inset-top)) 18px max(16px, env(safe-area-inset-bottom));
+  }
+  #menu-title      { font-size: clamp(2.8rem,14vw,4.5rem); line-height:0.95; margin:0; }
+  #menu-subtitle   { font-size:0.7rem; letter-spacing:1.5px; padding:4px 12px; margin-top:0; }
+  #menu-ball-preview { width:96px; height:96px; font-size:44px; margin:0; }
+  #menu-worlds     { gap:8px; margin:0; flex-wrap:wrap; justify-content:center; }
+  .world-btn       { width:62px; height:62px; border-radius:16px; font-size:1.45rem; }
+  .world-btn span  { font-size:0.58rem; }
+  .menu-play-btn   { width:100%; max-width:340px; padding:17px 0; font-size:1.2rem; margin:0; }
+  .menu-grid       { width:100%; max-width:340px; gap:9px; margin:0; }
+  .menu-card       { padding:16px 10px; border-radius:18px; }
+  .menu-card-icon  { font-size:1.8rem; }
+  .menu-card-label { font-size:0.84rem; }
+
+  /* MCQ — sits above the game controls */
+  #mcq-overlay {
+    padding: 8px;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: max(115px, calc(env(safe-area-inset-bottom) + 110px));
+  }
+  #mcq-card        { padding:18px 14px 20px; border-radius:22px; width:100%; }
+  #mcq-badge       { font-size:0.78rem; padding:4px 12px; }
+  #mcq-question-text { font-size:clamp(1.1rem,5vw,1.4rem); margin:6px 0; }
+  #mcq-hint        { font-size:0.76rem; }
+  .mcq-btn         { font-size:clamp(0.95rem,4.5vw,1.2rem); padding:15px 16px; border-radius:13px; min-height:54px; }
+  #mcq-choices     { gap:9px; }
+  #mcq-timer-wrap  { gap:7px; margin-bottom:7px; }
+
+  /* HUD */
+  #hud             { padding:6px 10px; gap:5px; }
+  #hud-question    { font-size:0.8rem; }
+  #hud-score       { font-size:0.85rem; }
+  #hud-hearts      { font-size:1rem; letter-spacing:0.5px; }
+  #pause-btn       { width:34px; height:34px; font-size:0.9rem; border-radius:9px; }
+  .overlay-title   { font-size:clamp(2.4rem,12vw,3.8rem); }
+}
+
+/* ═══════════════════════════════════════════
+   Phone landscape / Large phone  481–768px
+   ═══════════════════════════════════════════ */
+@media (min-width: 481px) and (max-width: 768px) {
+  #menu-screen     { justify-content:space-evenly; padding:20px; }
+  #menu-title      { font-size:clamp(3rem,10vw,5rem); line-height:0.95; }
+  #menu-ball-preview { width:110px; height:110px; font-size:50px; margin:0; }
+  #menu-worlds     { gap:10px; margin:0; }
+  .world-btn       { width:68px; height:68px; }
+  .menu-play-btn   { width:90%; max-width:380px; margin:0; }
+  .menu-grid       { width:90%; max-width:380px; margin:0; }
+  .menu-card       { padding:18px 12px; }
+
+  #mcq-overlay {
+    align-items:center; justify-content:flex-end;
+    padding:10px;
+    padding-bottom: max(110px, calc(env(safe-area-inset-bottom) + 105px));
+  }
+  #mcq-card        { width:100%; max-width:480px; }
+  .mcq-btn         { min-height:52px; }
+  #hud             { padding:7px 12px; }
+  #pause-btn       { width:36px; height:36px; }
+}
+
+/* ═══════════════════════════════════════════
+   Tablet  769–1024px
+   ═══════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #menu-title      { font-size:clamp(4rem,8vw,6rem); }
+  #menu-ball-preview { width:130px; height:130px; font-size:58px; }
+  .world-btn       { width:76px; height:76px; font-size:1.8rem; }
+  .menu-play-btn   { max-width:460px; }
+  .menu-grid       { max-width:460px; }
+  .menu-card       { padding:20px 14px; }
+  .menu-card-icon  { font-size:2.2rem; }
+
+  /* Controls bigger on tablet */
+  .ctrl-btn        { width:84px; height:84px; font-size:2.1rem; border-radius:24px; }
+  #ctrl-jump       { width:96px; height:96px; font-size:2.3rem; border-radius:28px; }
+  #mobile-controls { padding:16px 32px; padding-bottom:max(20px,env(safe-area-inset-bottom)); }
 }
 
 /* REVIEW SCREEN */
@@ -1204,11 +1369,25 @@ body {
     <div class="world-btn locked">🦁<span>W2</span></div>
     <div class="world-btn locked">🏙️<span>W3</span></div>
   </div>
-  <button class="btn btn-primary" onclick="startLevel(1,1)" style="margin-top:4px;font-size:clamp(1.15rem,3.5vw,1.6rem);">🎮 Mula Bermain!</button>
-  <button class="btn btn-secondary" onclick="showSelfieScreen()" style="margin-top:0;background:linear-gradient(135deg,rgba(255,107,157,.25),rgba(233,30,140,.2));border-color:rgba(255,107,157,.5);">📸 Ambil Selfie</button>
-  <button class="btn btn-secondary" onclick="showLeaderboard(currentLevelKey)" style="margin-top:0;font-size:0.95rem;background:linear-gradient(135deg,rgba(255,209,102,.2),rgba(251,146,60,.15));border-color:rgba(255,209,102,.5);">🏆 Papan Skor</button>
-  <button class="btn btn-secondary" onclick="showMultiplayer()" style="margin-top:0;font-size:0.95rem;background:linear-gradient(135deg,rgba(56,189,248,.25),rgba(2,132,199,.2));border-color:rgba(56,189,248,.5);">⚔️ Mod Multiplayer</button>
-  <button class="btn btn-secondary" onclick="showGuruMode()" style="margin-top:0;font-size:0.9rem;background:linear-gradient(135deg,rgba(168,85,247,.25),rgba(124,58,237,.2));border-color:rgba(168,85,247,.5);">🧑‍🏫 Mod Guru</button>
+  <button class="btn btn-primary menu-play-btn" onclick="startLevel(1,1)">🎮 Mula Bermain!</button>
+  <div class="menu-grid">
+    <button class="menu-card menu-card-pink" onclick="showSelfieScreen()">
+      <span class="menu-card-icon">📸</span>
+      <span class="menu-card-label">Ambil Selfie</span>
+    </button>
+    <button class="menu-card menu-card-gold" onclick="showLeaderboard(currentLevelKey)">
+      <span class="menu-card-icon">🏆</span>
+      <span class="menu-card-label">Papan Skor</span>
+    </button>
+    <button class="menu-card menu-card-blue" onclick="showMultiplayer()">
+      <span class="menu-card-icon">⚔️</span>
+      <span class="menu-card-label">Multiplayer</span>
+    </button>
+    <button class="menu-card menu-card-purple" onclick="showGuruMode()">
+      <span class="menu-card-icon">🧑‍🏫</span>
+      <span class="menu-card-label">Mod Guru</span>
+    </button>
+  </div>
 </div>
 
 <!-- SELFIE SCREEN -->
@@ -1445,7 +1624,7 @@ body {
 // ══════════════════════════════════════════════
 const GRAMMAR_DB = {
   "1-1": {
-    world:"Playground 🛝", year:1,
+    world:"Playground 🛝", year:1, difficulty:'easy',
     questions:[
       {q:"I ___ a student.",         correct:"am",    wrong:["is","are"]},
       {q:"She ___ my best friend.",  correct:"is",    wrong:["am","are"]},
@@ -1455,7 +1634,7 @@ const GRAMMAR_DB = {
     ]
   },
   "1-2": {
-    world:"Playground 🛝", year:1,
+    world:"Playground 🛝", year:1, difficulty:'easy',
     questions:[
       {q:"This is ___ apple.",       correct:"an",    wrong:["a","the"]},
       {q:"I have ___ cat.",          correct:"a",     wrong:["an","the"]},
@@ -1465,7 +1644,8 @@ const GRAMMAR_DB = {
     ]
   },
   "1-3": {
-    world:"Playground Boss 👑", year:1,
+    world:"Playground Boss 👑", year:1, difficulty:'boss',
+    bossName:"Grammar King",
     questions:[
       {q:"He ___ to school daily.",  correct:"goes",  wrong:["go","going"]},
       {q:"They ___ football.",       correct:"play",  wrong:["plays","played"]},
@@ -1475,7 +1655,7 @@ const GRAMMAR_DB = {
     ]
   },
   "2-1": {
-    world:"Safari 🦁", year:2,
+    world:"Safari 🦁", year:2, difficulty:'medium',
     questions:[
       {q:"I ___ reading a book.",    correct:"am",    wrong:["is","are"]},
       {q:"She ___ singing now.",     correct:"is",    wrong:["am","are"]},
@@ -1906,18 +2086,24 @@ class Platform {
 //  ENEMY CLASS
 // ══════════════════════════════════════════════
 class Enemy {
-  constructor(x,y,patrolL,patrolR,label,isCorrect) {
+  // type: 'ground' (patrol), 'flyer' (sine wave up/down), 'chaser' (speeds up near player)
+  constructor(x,y,patrolL,patrolR,label,isCorrect,type='ground',speed=1.8) {
     this.x=x; this.y=y;
     this.w=50; this.h=50;
-    this.vx=1.8; this.vy=0;
+    this.vx=speed; this.vy=0;
+    this.speed=speed;
     this.patrolL=patrolL; this.patrolR=patrolR;
     this.label=label; this.isCorrect=isCorrect;
+    this.type=type;
+    this.questionIdx = -1; // set after construction to link to a question
     this.alive=true; this.dead=false;
     this.bobPhase=Math.random()*Math.PI*2;
+    this.flyPhase=Math.random()*Math.PI*2;
+    this.baseY=y;
     this.deathTimer=0; this.onGround=false;
     this.eyeDir=1;
   }
-  update() {
+  update(playerX, playerY) {
     if (!this.alive) {
       this.deathTimer++;
       this.vy += 0.5;
@@ -1927,17 +2113,59 @@ class Enemy {
       return;
     }
     this.bobPhase += 0.06;
-    this.x += this.vx;
-    if (this.x <= this.patrolL) { this.x=this.patrolL; this.vx=Math.abs(this.vx); this.eyeDir=1; }
-    if (this.x+this.w >= this.patrolR) { this.x=this.patrolR-this.w; this.vx=-Math.abs(this.vx); this.eyeDir=-1; }
-    // Gravity
-    this.vy += GRAV;
-    if (this.vy > MAX_FALL) this.vy=MAX_FALL;
-    this.y += this.vy;
+
+    // Attack mode: rush straight to target, ignore patrol
+    if (this.attacking) {
+      this.x += this.vx;
+      this.y += this.vy;
+      return; // collision handled separately
+    }
+
+    if (this.type === 'flyer') {
+      // Flyer: horizontal patrol + sine wave vertical, ignores gravity
+      this.flyPhase += 0.04;
+      this.x += this.vx;
+      if (this.x <= this.patrolL) { this.x=this.patrolL; this.vx=Math.abs(this.vx); this.eyeDir=1; }
+      if (this.x+this.w >= this.patrolR) { this.x=this.patrolR-this.w; this.vx=-Math.abs(this.vx); this.eyeDir=-1; }
+      this.y = this.baseY + Math.sin(this.flyPhase)*35;
+    } else if (this.type === 'chaser') {
+      // Chaser: normal patrol but accelerates when player is close
+      const dist = playerX !== undefined ? Math.abs(this.x - playerX) : 999;
+      const boost = dist < 200 ? 1.8 : 1.0;
+      const spd = this.speed * boost;
+      this.vx = this.vx > 0 ? spd : -spd;
+      this.x += this.vx;
+      if (this.x <= this.patrolL) { this.x=this.patrolL; this.vx=Math.abs(spd); this.eyeDir=1; }
+      if (this.x+this.w >= this.patrolR) { this.x=this.patrolR-this.w; this.vx=-Math.abs(spd); this.eyeDir=-1; }
+      this.vy += GRAV;
+      if (this.vy > MAX_FALL) this.vy=MAX_FALL;
+      this.y += this.vy;
+    } else {
+      // Ground patrol (default)
+      this.x += this.vx;
+      if (this.x <= this.patrolL) { this.x=this.patrolL; this.vx=Math.abs(this.vx); this.eyeDir=1; }
+      if (this.x+this.w >= this.patrolR) { this.x=this.patrolR-this.w; this.vx=-Math.abs(this.vx); this.eyeDir=-1; }
+      this.vy += GRAV;
+      if (this.vy > MAX_FALL) this.vy=MAX_FALL;
+      this.y += this.vy;
+    }
   }
-  landOn(py) { this.y = py - this.h; this.vy=0; this.onGround=true; }
+  startAttack(targetX, targetY) {
+    this.attacking = true;
+    this.attackTargetX = targetX;
+    this.attackTargetY = targetY;
+    // Rush toward player at high speed
+    const dx = targetX - this.x;
+    const dy = targetY - this.y;
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const rushSpeed = 7;
+    this.vx = (dx/dist) * rushSpeed;
+    this.vy = (dy/dist) * rushSpeed;
+  }
+  landOn(py) { if (!this.attacking) { this.y = py - this.h; this.vy=0; this.onGround=true; } }
   die(vx=0) {
     this.alive=false;
+    this.attacking=false;
     this.vy=-6;
     this.vx=vx*0.4 || 3*(Math.random()<0.5?1:-1);
   }
@@ -1960,16 +2188,36 @@ class Enemy {
     const ox = this.alive ? 0 : 0;
     const oy = 0;
 
+    // Flyer wings
+    if (this.type === 'flyer') {
+      const wingFlap = Math.sin(this.bobPhase * 3) * 8;
+      ctx.fillStyle = 'rgba(255,220,100,0.7)';
+      ctx.beginPath();
+      ctx.ellipse(ox - 14, oy + h/2 - wingFlap, 14, 9, -0.4, 0, Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(ox + w + 14, oy + h/2 - wingFlap, 14, 9, 0.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+    // Chaser exclamation glow when near (just a red outline pulse)
+    if (this.type === 'chaser' && this.speed > 1.8) {
+      ctx.save();
+      ctx.shadowColor='#FF4D6D'; ctx.shadowBlur=12*(0.5+0.5*Math.sin(this.bobPhase*2));
+      ctx.restore();
+    }
+
     // Body
+    const typeColor0 = this.type==='flyer' ? '#7C3AED' : this.type==='chaser' ? '#DC2626' : (this.isCorrect ? '#2563EB' : '#FF8C42');
+    const typeColor1 = this.type==='flyer' ? '#4C1D95' : this.type==='chaser' ? '#991B1B' : (this.isCorrect ? '#1E40AF' : '#C0451A');
     const bodyGrad = ctx.createLinearGradient(ox,oy,ox,oy+h);
-    bodyGrad.addColorStop(0, this.isCorrect ? '#2563EB' : '#FF8C42');
-    bodyGrad.addColorStop(1, this.isCorrect ? '#1E40AF' : '#C0451A');
+    bodyGrad.addColorStop(0, typeColor0);
+    bodyGrad.addColorStop(1, typeColor1);
     ctx.fillStyle = bodyGrad;
     ctx.beginPath();
     roundRect(ctx, ox, oy, w, h, 10);
     ctx.fill();
     // Border
-    ctx.strokeStyle = this.isCorrect ? '#60A5FA' : '#FFD166';
+    ctx.strokeStyle = this.type==='flyer' ? '#C4B5FD' : this.type==='chaser' ? '#FCA5A5' : (this.isCorrect ? '#60A5FA' : '#FFD166');
     ctx.lineWidth = 2;
     ctx.beginPath();
     roundRect(ctx, ox+1, oy+1, w-2, h-2, 9);
@@ -2001,6 +2249,211 @@ class Enemy {
     ctx.textAlign='center';
     ctx.textBaseline='bottom';
     ctx.fillText(this.label, ox+w/2, oy+h-4);
+
+    ctx.restore();
+  }
+}
+
+// ══════════════════════════════════════════════
+//  BOSS CLASS
+// ══════════════════════════════════════════════
+class Boss {
+  constructor(x, y, name) {
+    this.x = x; this.y = y;
+    this.w = BALL_R * 6;   // 3x ball diameter
+    this.h = BALL_R * 6;
+    this.name = name || 'Grammar King';
+    this.hp = 5; this.maxHp = 5;
+    this.alive = true; this.dead = false;
+    this.bobPhase = 0;
+    this.shakeTimer = 0;
+    this.flashTimer = 0;
+    this.painTimer = 0;   // pain face when hit
+    this.chargeTimer = 0; // charge face before attacking
+    this.deathTimer = 0;
+    this.vx = 1.2; // patrol left-right
+    this.baseX = x;
+    this.patrolRange = 90;
+    this.movePhase = 0;
+    this.attacking = false;
+    this.attackVx = 0; this.attackVy = 0;
+  }
+
+  startAttack(targetX, targetY) {
+    this.attacking = true;
+    const dx = targetX - (this.x + this.w/2);
+    const dy = targetY - (this.y + this.h/2);
+    const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+    const spd = 9;
+    this.attackVx = (dx/dist)*spd;
+    this.attackVy = (dy/dist)*spd;
+  }
+
+  stopAttack() {
+    this.attacking = false;
+    this.attackVx = 0; this.attackVy = 0;
+  }
+
+  takeDamage() {
+    this.hp = Math.max(0, this.hp - 1);
+    this.shakeTimer = 22;
+    this.flashTimer = 18;
+    this.painTimer = 45; // show pain face ~0.75s
+    if (this.hp <= 0) this.die();
+  }
+
+  startCharge() {
+    this.chargeTimer = 30; // show charge face before attacking
+  }
+
+  die() {
+    this.alive = false;
+    this.deathTimer = 0;
+  }
+
+  update() {
+    if (!this.alive) {
+      this.deathTimer++;
+      if (this.deathTimer > 80) this.dead = true;
+      return;
+    }
+    this.bobPhase += 0.04;
+    if (this.shakeTimer > 0) this.shakeTimer--;
+    if (this.flashTimer > 0) this.flashTimer--;
+    if (this.painTimer > 0) this.painTimer--;
+    if (this.chargeTimer > 0) this.chargeTimer--;
+
+    if (this.attacking) {
+      this.x += this.attackVx;
+      this.y += this.attackVy;
+      // Auto-stop if boss drifts too far from base (missed)
+      if (Math.abs(this.x - this.baseX) > 500) this.stopAttack();
+    } else {
+      // Slow patrol oscillation
+      this.movePhase += 0.025;
+      this.x = this.baseX + Math.sin(this.movePhase) * this.patrolRange;
+      this.y += Math.sin(this.bobPhase) * 0.5;
+    }
+  }
+
+  draw(ctx, camX, camY) {
+    if (this.dead) return;
+    const sx = this.x - camX + (this.shakeTimer > 0 ? (Math.random()-0.5)*8 : 0);
+    const sy = this.y - camY;
+    const { w, h } = this;
+    const alpha = this.alive ? 1 : Math.max(0, 1 - this.deathTimer/80);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Glow aura
+    const glowSize = 18 + Math.sin(this.bobPhase*2)*6;
+    const grd = ctx.createRadialGradient(sx+w/2, sy+h/2, w/3, sx+w/2, sy+h/2, w/2+glowSize);
+    grd.addColorStop(0, 'rgba(220,38,38,0.35)');
+    grd.addColorStop(1, 'rgba(220,38,38,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(sx+w/2, sy+h/2, w/2+glowSize, 0, Math.PI*2); ctx.fill();
+
+    // Body
+    const flash = this.flashTimer > 0 && this.flashTimer % 3 < 2;
+    const bodyGrd = ctx.createLinearGradient(sx, sy, sx, sy+h);
+    bodyGrd.addColorStop(0, flash ? '#fff' : '#DC2626');
+    bodyGrd.addColorStop(1, flash ? '#fca5a5' : '#7F1D1D');
+    ctx.fillStyle = bodyGrd;
+    ctx.beginPath(); roundRect(ctx, sx, sy, w, h, 18); ctx.fill();
+
+    // Border
+    ctx.strokeStyle = flash ? '#fff' : '#F87171';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); roundRect(ctx, sx+2, sy+2, w-4, h-4, 16); ctx.stroke();
+
+    // Eyes & mouth — swap expression based on state
+    const eyeY = sy + h*0.3;
+    const isPain   = this.painTimer > 0;
+    const isCharge = !isPain && this.chargeTimer > 0;
+
+    if (isPain) {
+      // Pain face: X eyes + open-mouth "O"
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      // X left eye
+      ctx.beginPath(); ctx.moveTo(sx+w*0.22,eyeY-10); ctx.lineTo(sx+w*0.38,eyeY+6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.38,eyeY-10); ctx.lineTo(sx+w*0.22,eyeY+6); ctx.stroke();
+      // X right eye
+      ctx.beginPath(); ctx.moveTo(sx+w*0.62,eyeY-10); ctx.lineTo(sx+w*0.78,eyeY+6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.78,eyeY-10); ctx.lineTo(sx+w*0.62,eyeY+6); ctx.stroke();
+      // Brows raised (shocked)
+      ctx.strokeStyle='#fff'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(sx+w*0.18,eyeY-18); ctx.lineTo(sx+w*0.42,eyeY-22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.82,eyeY-18); ctx.lineTo(sx+w*0.58,eyeY-22); ctx.stroke();
+      // Mouth open "O"
+      ctx.fillStyle = '#7F1D1D';
+      ctx.beginPath(); ctx.ellipse(sx+w/2, sy+h*0.72, 16, 12, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(sx+w/2, sy+h*0.72, 10, 7, 0, 0, Math.PI*2); ctx.fill();
+    } else if (isCharge) {
+      // Charge face: squinting eyes + gritted teeth (wide angry)
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(sx+w*0.3, eyeY, 14, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(sx+w*0.7, eyeY, 14, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1a1a2e';
+      ctx.beginPath(); ctx.arc(sx+w*0.3+2, eyeY, 7, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx+w*0.7+2, eyeY, 7, 0, Math.PI*2); ctx.fill();
+      // Heavy brows (very angry)
+      ctx.strokeStyle = '#7F1D1D'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sx+w*0.15,eyeY-10); ctx.lineTo(sx+w*0.45,eyeY-2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.85,eyeY-10); ctx.lineTo(sx+w*0.55,eyeY-2); ctx.stroke();
+      // Gritted teeth
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); roundRect(ctx, sx+w*0.25, sy+h*0.65, w*0.5, 14, 4); ctx.fill();
+      ctx.strokeStyle = '#DC2626'; ctx.lineWidth = 2;
+      for (let t=1;t<4;t++) { ctx.beginPath(); ctx.moveTo(sx+w*0.25+t*(w*0.5/4), sy+h*0.65); ctx.lineTo(sx+w*0.25+t*(w*0.5/4), sy+h*0.65+14); ctx.stroke(); }
+    } else {
+      // Normal angry face
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.ellipse(sx+w*0.3, eyeY, 14, 16, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(sx+w*0.7, eyeY, 14, 16, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#1a1a2e';
+      ctx.beginPath(); ctx.arc(sx+w*0.3+2, eyeY+2, 8, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(sx+w*0.7+2, eyeY+2, 8, 0, Math.PI*2); ctx.fill();
+      // Angry brows
+      ctx.strokeStyle = '#7F1D1D'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(sx+w*0.18,eyeY-14); ctx.lineTo(sx+w*0.42,eyeY-8); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(sx+w*0.82,eyeY-14); ctx.lineTo(sx+w*0.58,eyeY-8); ctx.stroke();
+      // Angry frown
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(sx+w/2, sy+h*0.72, 18, Math.PI*0.15, Math.PI*0.85); ctx.stroke();
+    }
+
+    // Crown 👑 atas kepala boss
+    const crownBob = Math.sin(this.bobPhase * 1.5) * 3;
+    ctx.font = `${Math.round(w * 0.45)}px sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.fillText('👑', sx + w/2, sy - 90 + crownBob);
+
+    // Name tag (below crown, above HP bar)
+    ctx.fillStyle = 'rgba(0,0,0,0.72)';
+    ctx.beginPath(); roundRect(ctx, sx+w/2-64, sy-80, 128, 26, 10); ctx.fill();
+    ctx.fillStyle = '#FFD166';
+    ctx.font = "bold 14px 'Fredoka One',cursive";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(this.name, sx+w/2, sy-67);
+
+    // HP bar (below name tag, just above boss body)
+    const barW = w;
+    const barH = 10;
+    const barX = sx;
+    const barY = sy - 52;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath(); roundRect(ctx, barX, barY, barW, barH, 5); ctx.fill();
+    const hpFrac = this.hp / this.maxHp;
+    const hpColor = hpFrac > 0.6 ? '#22C55E' : hpFrac > 0.3 ? '#EAB308' : '#EF4444';
+    ctx.fillStyle = hpColor;
+    ctx.beginPath(); roundRect(ctx, barX, barY, barW*hpFrac, barH, 5); ctx.fill();
+    // HP pips
+    for (let i=1; i<this.maxHp; i++) {
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(barX + (barW/this.maxHp)*i - 1, barY, 2, barH);
+    }
 
     ctx.restore();
   }
@@ -2073,11 +2526,14 @@ function buildLevel(key) {
   // Merge guru custom questions (prepend so guru questions appear first)
   const guruQs = getGuruQuestions(key);
   const questions = guruQs.length > 0 ? [...guruQs, ...data.questions] : data.questions;
+  const difficulty = data.difficulty || 'easy'; // 'easy' | 'medium' | 'boss'
   const platforms = [];
   const enemies   = [];
   const coins     = [];
   const powerups  = [];
+  const lifeups   = []; // extra life pickups (♥)
   const puTypes   = ['shield','time','hint'];
+  let boss = null; // set for boss levels
 
   const GH = 420; // ground height in world
   const PLAT_W = 130;
@@ -2103,14 +2559,30 @@ function buildLevel(key) {
     p2.moveRange=40; p2.moveSpeed=0.035+(qi%2)*0.008;
     p2._baseX=curX+160; p2._baseY=GH-140; p2.movePhase=qi*0.7+1;
     platforms.push(p2);
-    curX += 340;
 
-    // Enemy on approach
-    if (qi % 2 === 0) {
-      const eLabel = q.wrong[0];
-      const isCorr  = false;
-      enemies.push(new Enemy(curX-30, GH-55, curX-90, curX+40, eLabel, isCorr));
+    // Musuh hanya untuk difficulty medium & boss, BUKAN easy
+    if (difficulty !== 'easy') {
+      const eTypes = ['ground','flyer','chaser'];
+      const eType = eTypes[qi % 3];
+      const eSpeed = Math.min(1.5 + qi * 0.1, 3.0);
+      const stonePatrolL = curX - 120;
+      const stonePatrolR = curX + 200;
+      const eY = eType === 'flyer' ? GH - 150 : GH - 105;
+      const guard = new Enemy(curX - 40, eY, stonePatrolL, stonePatrolR, '!', false, eType, eSpeed);
+      guard.questionIdx = qi;
+      enemies.push(guard);
+      // Musuh kedua dari soalan ke-2 ke atas
+      if (qi >= 2) {
+        const e2Type = eTypes[(qi+1) % 3];
+        const e2Speed = Math.min(1.3 + qi * 0.09, 2.6);
+        const e2Y = e2Type === 'flyer' ? GH - 160 : GH - 105;
+        const guard2 = new Enemy(curX + 80, e2Y, stonePatrolL, stonePatrolR + 80, '!', false, e2Type, e2Speed);
+        guard2.questionIdx = qi;
+        enemies.push(guard2);
+      }
     }
+
+    curX += 340;
 
     // Grammar cluster: shuffle 3 platforms
     const cluster = [
@@ -2118,19 +2590,22 @@ function buildLevel(key) {
       {label: q.wrong[0], isCorrect: false},
       {label: q.wrong[1], isCorrect: false},
     ];
-    // Shuffle
     for (let i=cluster.length-1;i>0;i--) {
       const j=Math.floor(Math.random()*(i+1));
       [cluster[i],cluster[j]]=[cluster[j],cluster[i]];
     }
     const clusterY = GH - 160 - (qi%3)*30;
     const totalW = GRAMMAR_W*3 + GRAMMAR_GAP*2;
+    // Store clusterX so we can use it for proximity MCQ trigger
+    const clusterX = curX;
     cluster.forEach((c,i) => {
-      platforms.push(new Platform(
-        curX + i*(GRAMMAR_W+GRAMMAR_GAP), clusterY,
+      const gp = new Platform(
+        clusterX + i*(GRAMMAR_W+GRAMMAR_GAP), clusterY,
         GRAMMAR_W, GRAMMAR_H, 'grammar',
         { label:c.label, isCorrect:c.isCorrect, questionIdx:qi, shake: !c.isCorrect }
-      ));
+      );
+      gp.clusterX = clusterX; // proximity reference
+      platforms.push(gp);
     });
 
     // Coins above the grammar platforms
@@ -2145,15 +2620,31 @@ function buildLevel(key) {
     // Spawn one power-up above this platform (cycle through types)
     powerups.push(new PowerUp(curX + 100, GH - 80, puTypes[qi % 3]));
 
+    // Nyawa tambahan setiap 2 soalan, letakkan di atas platform ini
+    if (qi % 2 === 1) {
+      lifeups.push({ x: curX + 50, y: GH - 85, collected: false, frame: qi * 0.8 });
+    }
+
     curX += 250;
   });
 
   // Final ground + goal
-  platforms.push(new Platform(curX, GH, 400, 40, 'solid'));
-  platforms.push(new Platform(curX+160, GH, 60, 60+GH%60, 'goal'));
-  const worldW = curX + 500;
+  if (difficulty === 'boss') {
+    // Boss arena: wide flat ground, no goal platform — boss takes its place
+    platforms.push(new Platform(curX, GH, 600, 40, 'solid'));
+    // Boss spawns above arena ground
+    const bossX = curX + 220;
+    const bossW = BALL_R * 6;
+    boss = new Boss(bossX, GH - bossW - 10, data.bossName || 'Grammar King');
+    boss.baseX = bossX;
+  } else {
+    // Normal ending
+    platforms.push(new Platform(curX, GH, 400, 40, 'solid'));
+    platforms.push(new Platform(curX+160, GH, 60, 60+GH%60, 'goal'));
+  }
+  const worldW = curX + 600;
 
-  return { platforms, enemies, coins, powerups, questions, worldW, groundY: GH, key };
+  return { platforms, enemies, coins, powerups, lifeups, questions, worldW, groundY: GH, key, boss, difficulty };
 }
 
 // ══════════════════════════════════════════════
@@ -2199,6 +2690,11 @@ function createGame(key) {
     // Camera
     camX: 0, camY: 0,
     targetCamX: 0,
+
+    // Boss fight state
+    bossPhase: 'approach', // 'approach' | 'fight' | 'dead'
+    bossMCQActive: false,
+    bossCurrentQ: 0, // which boss question (0-4)
 
     startTime: Date.now(),
   };
@@ -2328,7 +2824,7 @@ function updateGame(g) {
       const maxX = Math.max(...clusterPlats.map(p => p.x + p.w));
       return g.px >= minX && g.px <= maxX;
     })() ? clusterPlats[0] : null;
-    if (nearCluster && !g.mcqAnsweredSet.has(g.currentQ)) {
+    if (nearCluster && !g.mcqAnsweredSet.has(g.currentQ) && g.bossPhase !== 'fight') {
       // Show MCQ instead of normal jump
       g.pJumpBuffer=0; g.pCoyote=0;
       showMCQ(g);
@@ -2373,30 +2869,29 @@ function updateGame(g) {
     for (const e of level.enemies) {
       if (!e.alive || e.dead) continue;
       if (!circleRect(g.px, g.py, BALL_R-2, e.x, e.y, e.w, e.h)) continue;
+
+      if (e.attacking) {
+        // Attack hit: -0.5 nyawa, musuh hilang dari paparan
+        e.alive = false; e.dead = true;
+        spawnParticles(e.x+e.w/2, e.y+e.h/2, '#FF4D6D', 16, 7);
+        spawnTextParticle(g.px, g.py-30, '-½ ❤', '#FF4D6D');
+        playerTakeDamage(g, false, 0.5);
+        Audio.enemy();
+        continue;
+      }
+
       // Stomp check: player falling + hitting top of enemy
       const stompThresh = e.y + 10;
       if (g.pvy > 0 && g.py < stompThresh) {
-        // Stomp
-        if (!e.isCorrect) {
-          e.die(); Audio.enemy();
-          spawnParticles(e.x+e.w/2, e.y+e.h/2, '#FF8C42', 14, 6);
-          spawnTextParticle(e.x+e.w/2, e.y-20, '+50 ✓', '#06D6A0');
-          g.score += 50;
-          g.pvy = JUMP_VEL * 0.6;
-        } else {
-          // Stomped correct enemy → damage
-          playerTakeDamage(g);
-        }
+        // Stomp → bunuh musuh
+        e.die(); Audio.enemy();
+        spawnParticles(e.x+e.w/2, e.y+e.h/2, '#FF8C42', 14, 6);
+        spawnTextParticle(e.x+e.w/2, e.y-20, '+50 ✓', '#06D6A0');
+        g.score += 50;
+        g.pvy = JUMP_VEL * 0.6;
       } else {
-        // Side hit
-        if (!e.isCorrect) {
-          e.die(g.pvx); Audio.enemy();
-          spawnParticles(e.x+e.w/2, e.y+e.h/2,'#FF8C42',14,6);
-          spawnTextParticle(e.x+e.w/2,e.y-20,'+50 ✓','#06D6A0');
-          g.score += 50;
-        } else {
-          playerTakeDamage(g);
-        }
+        // Side hit → damage bola
+        playerTakeDamage(g);
       }
     }
   }
@@ -2426,8 +2921,33 @@ function updateGame(g) {
     c.frame+=0.08;
   }
 
+  // Life-up collection (♥ tambahan, max 3)
+  if (level.lifeups) {
+    for (const lu of level.lifeups) {
+      if (lu.collected) continue;
+      lu.frame += 0.07;
+      const dx=g.px-lu.x, dy=g.py-lu.y;
+      if (dx*dx+dy*dy < (BALL_R+14)*(BALL_R+14)) {
+        lu.collected=true;
+        if (g.hearts < 3) {
+          g.hearts = Math.min(3, g.hearts + 1);
+          spawnParticles(lu.x,lu.y,'#FF4D6D',14,5);
+          spawnTextParticle(lu.x,lu.y-25,'+1 ❤','#FF4D6D');
+          Audio.correct(1);
+          updateHUD(g);
+        } else {
+          // Penuh — tukar jadi mata
+          spawnParticles(lu.x,lu.y,'#FFD166',10,4);
+          spawnTextParticle(lu.x,lu.y-25,'+50','#FFD166');
+          g.score += 50;
+        }
+      }
+    }
+  }
+
   // Goal collision — generous trigger zone (includes flag pole area above platform)
-  const goalPlat = level.platforms.find(p=>p.type==='goal');
+  // Skip goal for boss levels (win triggered by killing boss instead)
+  const goalPlat = level.difficulty !== 'boss' ? level.platforms.find(p=>p.type==='goal') : null;
   if (goalPlat && g.state==='playing') {
     const gCentreX = goalPlat.x + goalPlat.w/2;
     const inX = Math.abs(g.px - gCentreX) < goalPlat.w + 20;
@@ -2455,8 +2975,66 @@ function updateGame(g) {
   // Platform + enemy update
   for (const p of level.platforms) p.update();
   level.platforms = level.platforms.filter(p=>!p.dead);
-  for (const e of level.enemies) e.update(level);
+  for (const e of level.enemies) e.update(g.px, g.py);
+  // Enemy-platform ground collision (only for ground/chaser types)
+  for (const e of level.enemies) {
+    if (!e.alive || e.type === 'flyer') continue;
+    for (const p of level.platforms) {
+      if (p.dead || p.type==='goal') continue;
+      const overlapX = e.x+e.w > p.x && e.x < p.x+p.w;
+      const prevBottom = e.y + e.h - e.vy;
+      const curBottom = e.y + e.h;
+      if (overlapX && prevBottom <= p.y && curBottom >= p.y) {
+        e.landOn(p.y);
+      }
+    }
+    // Ground floor
+    if (e.y + e.h >= level.groundY) e.landOn(level.groundY);
+  }
   level.enemies = level.enemies.filter(e=>!e.dead);
+
+  // Boss update & fight logic
+  if (level.boss && !level.boss.dead) {
+    level.boss.update();
+
+    // Trigger boss fight when player reaches boss arena
+    if (g.bossPhase === 'approach' && level.boss.alive && g.px >= level.boss.x - 250) {
+      g.bossPhase = 'fight';
+    }
+
+    // Boss fight: show MCQ when player is in arena and not currently answering
+    if (g.bossPhase === 'fight' && level.boss.alive && !g.bossMCQActive && g.state !== 'answering') {
+      g.bossMCQActive = true;
+      setTimeout(() => {
+        if (game && game.bossPhase === 'fight' && game.level.boss && game.level.boss.alive && game.state !== 'answering') {
+          showBossMCQ(game);
+        } else if (game) {
+          game.bossMCQActive = false;
+        }
+      }, 800);
+    }
+
+    // Boss attack collision: boss rushing into ball
+    if (level.boss.alive && level.boss.attacking && g.invincible <= 0) {
+      const bCx = level.boss.x + level.boss.w/2;
+      const bCy = level.boss.y + level.boss.h/2;
+      const dx = g.px - bCx, dy = g.py - bCy;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < BALL_R + level.boss.w/2) {
+        level.boss.stopAttack();
+        spawnParticles(g.px, g.py, '#FF4D6D', 16, 8);
+        spawnTextParticle(g.px, g.py-30, '-½ ❤', '#FF4D6D');
+        playerTakeDamage(g, false, 0.5);
+        Audio.enemy();
+      }
+    }
+
+    // Boss dies → win
+    if (!level.boss.alive && g.bossPhase === 'fight') {
+      g.bossPhase = 'dead';
+      setTimeout(() => { if (game) triggerWin(game); }, 2000);
+    }
+  }
 
   // Particles
   for (const p of g.particles) p.update();
@@ -2475,7 +3053,9 @@ function updateGame(g) {
   g.targetCamX = g.px - CW*0.35;
   g.targetCamX = Math.max(0, Math.min(level.worldW - CW, g.targetCamX));
   g.camX += (g.targetCamX - g.camX) * 0.09;
-  g.camY  = Math.max(0, g.py - CH*0.55);
+  // On mobile, lift camera so ball isn't hidden behind controls
+  const camYOffset = window.innerWidth < 600 ? CH * 0.42 : CH * 0.55;
+  g.camY = Math.max(0, g.py - camYOffset);
 
   updateHUD(g);
 }
@@ -2644,6 +3224,120 @@ function startMCQTimer(g) {
   });
 }
 
+// Boss MCQ — reuses the same MCQ UI but with boss questions (cycles through level questions)
+function showBossMCQ(g) {
+  if (!g.level.boss || !g.level.boss.alive) return;
+  const questions = g.level.questions;
+  if (!questions || questions.length === 0) return;
+  const qi = g.bossCurrentQ % questions.length;
+  const q = questions[qi];
+  g.state = 'answering';
+
+  // Build choices — no platRef needed for boss fight
+  const choices = [
+    {label: q.correct, isCorrect: true, platRef: null},
+    {label: q.wrong[0], isCorrect: false, platRef: null},
+    {label: q.wrong[1], isCorrect: false, platRef: null},
+  ];
+  // Shuffle
+  for (let i=choices.length-1;i>0;i--) {
+    const j=Math.floor(Math.random()*(i+1));
+    [choices[i],choices[j]]=[choices[j],choices[i]];
+  }
+  mcqShuffled = choices;
+
+  const mcqEl = document.getElementById('mcq-overlay');
+  const questionEl = document.getElementById('mcq-question-text');
+  const btnContainer = document.getElementById('mcq-choices');
+  if (!mcqEl || !questionEl || !btnContainer) { g.state='playing'; g.bossMCQActive=false; return; }
+
+  stopMCQTimer();
+
+  // Boss badge on question text
+  questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS SOALAN ${qi+1}/${questions.length}</span><br>${q.q}`;
+  // Update hint
+  const hint = document.getElementById('mcq-hint');
+  if (hint) hint.textContent = 'Serang Grammar King! 👑';
+  // Boss badge
+  const badge = document.getElementById('mcq-badge');
+  if (badge) badge.textContent = '👑 Boss Fight!';
+
+  btnContainer.innerHTML = '';
+  choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.className = `mcq-btn mcq-btn-${['a','b','c'][i]}`;
+    btn.textContent = c.label;
+    btn.onclick = () => selectBossAnswer(c, g);
+    btnContainer.appendChild(btn);
+  });
+  mcqEl.classList.remove('hidden');
+}
+
+function selectBossAnswer(choice, g) {
+  if (!g || !g.level.boss) return;
+  // Highlight chosen button
+  document.querySelectorAll('.mcq-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === choice.label) b.classList.add(choice.isCorrect ? 'correct' : 'wrong');
+  });
+  setTimeout(() => {
+    hideMCQ();
+    g.state = 'playing';
+    g.bossCurrentQ++;
+    const boss = g.level.boss;
+
+    if (choice.isCorrect) {
+      Audio.correct();
+      g.score += 100;
+
+      // Flash screen green
+      const fl = document.getElementById('correct-flash');
+      if (fl) { fl.style.opacity='0.5'; setTimeout(()=>fl.style.opacity='0',300); }
+
+      // Ball rushes toward boss
+      const dx = (boss.x + boss.w/2) - g.px;
+      const dy = (boss.y + boss.h/2) - g.py;
+      const dist = Math.sqrt(dx*dx+dy*dy)||1;
+      g.pvx = (dx/dist) * 18;
+      g.pvy = (dy/dist) * 14;
+      spawnTextParticle(g.px, g.py-35, '⚡ SERANG!', '#FFD166');
+
+      // Ball hits boss after ~260ms — show impact
+      setTimeout(() => {
+        if (!boss || !boss.alive) return;
+        boss.takeDamage();
+        spawnParticles(boss.x+boss.w/2, boss.y+boss.h/2, '#06D6A0', 28, 10);
+        spawnParticles(boss.x+boss.w/2, boss.y+boss.h/2, '#FFD166', 14, 7);
+        spawnTextParticle(boss.x+boss.w/2, boss.y-30, '💥 TERKENA!', '#06D6A0');
+        g.pvx = -g.pvx * 0.5;
+        g.pvy = -8;
+      }, 280);
+
+      // Release after animation fully plays (~1800ms total)
+      setTimeout(() => { g.bossMCQActive = false; }, 1800);
+
+    } else {
+      Audio.wrong();
+
+      // Flash screen red
+      const fl = document.getElementById('damage-flash');
+      if (fl) { fl.style.opacity='0.6'; setTimeout(()=>fl.style.opacity='0',400); }
+
+      // Boss shows charge face then rushes at ball
+      boss.startCharge();
+      spawnTextParticle(boss.x+boss.w/2, boss.y-30, '😤 AMARAH!', '#FF4D6D');
+      setTimeout(() => {
+        if (!boss||!boss.alive) return;
+        boss.startAttack(g.px, g.py);
+        spawnTextParticle(g.px, g.py-40, '💢 Boss serang!', '#FF4D6D');
+      }, 400);
+
+      // Release after boss attack animation (~2500ms total)
+      setTimeout(() => { g.bossMCQActive = false; }, 2500);
+    }
+  }, choice.isCorrect ? 500 : 800);
+}
+
 function stopMCQTimer() {
   if (mcqTimerId) { clearInterval(mcqTimerId); mcqTimerId = null; }
   // Reset urgent styling
@@ -2712,7 +3406,30 @@ function selectAnswer(idx) {
       if (c.isCorrect && c.platRef && !c.platRef.dead) c.platRef.isHinted = true;
       if (!c.isCorrect && c.platRef && !c.platRef.dead && choice.isCorrect) c.platRef.wrongAnswered = true;
     });
-    if (!choice.isCorrect) playerTakeDamage(game, false, 0.5);
+
+    if (choice.isCorrect && game) {
+      // Correct → enemies mati dengan particles
+      const qIdx = game.currentQ;
+      for (const e of game.level.enemies) {
+        if (e.questionIdx === qIdx && e.alive) {
+          e.die(0);
+          spawnParticles(e.x+e.w/2, e.y+e.h/2, '#06D6A0', 12, 5);
+          spawnTextParticle(e.x+e.w/2, e.y-20, '✓ Mati!', '#06D6A0');
+        }
+      }
+    } else if (game) {
+      // Salah → musuh masuk attack mode: terus ke arah bola
+      const qIdx = game.currentQ;
+      const guardEnemies = game.level.enemies.filter(e => e.questionIdx === qIdx && e.alive);
+      if (guardEnemies.length > 0) {
+        // Ada musuh — biar musuh attack
+        for (const e of guardEnemies) e.startAttack(game.px, game.py);
+      } else {
+        // Tiada musuh (easy level) — terus bagi -½ nyawa
+        playerTakeDamage(game, false, 0.5);
+        spawnTextParticle(game.px, game.py - 30, '-½ ❤', '#FF4D6D');
+      }
+    }
     game.state = 'playing';
   }, choice.isCorrect ? 500 : 900);
 }
@@ -2952,6 +3669,31 @@ function drawCoin(ctx, c, camX, camY) {
   ctx.restore();
 }
 
+function drawLifeUp(ctx, lu, camX, camY) {
+  if (lu.collected) return;
+  const sx = lu.x - camX;
+  const sy = lu.y - camY + Math.sin(lu.frame) * 4;
+  const scale = 1 + Math.sin(lu.frame * 1.5) * 0.08;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.scale(scale, scale);
+  // Glow
+  ctx.shadowBlur = 14 + Math.sin(lu.frame*2)*4;
+  ctx.shadowColor = '#FF4D6D';
+  // Circle bg
+  ctx.fillStyle = 'rgba(255,77,109,0.2)';
+  ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#FF4D6D'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI*2); ctx.stroke();
+  // Heart character
+  ctx.shadowBlur = 0;
+  ctx.font = 'bold 18px sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#FF4D6D';
+  ctx.fillText('♥', 0, 1);
+  ctx.restore();
+}
+
 function drawPlayer(g) {
   if (!g) return;
   const ctx = ctx2d;
@@ -3065,12 +3807,14 @@ function render(g) {
 
   // Coins
   for (const c of g.level.coins) drawCoin(ctx, c, g.camX, g.camY);
+  if (g.level.lifeups) for (const lu of g.level.lifeups) drawLifeUp(ctx, lu, g.camX, g.camY);
 
   // Power-ups
   for (const pu of g.level.powerups) pu.draw(ctx, g.camX, g.camY);
 
   // Enemies
   for (const e of g.level.enemies) e.draw(ctx, g.camX, g.camY);
+  if (g.level.boss) g.level.boss.draw(ctx, g.camX, g.camY);
 
   // Particles
   for (const p of g.particles) p.draw(ctx, g.camX, g.camY);
@@ -3471,6 +4215,14 @@ function showWinLBPreview(entries) {
 
 // Enter key submits name
 document.addEventListener('DOMContentLoaded', () => {
+  // Detect mobile device and apply class for CSS targeting
+  const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.screen.width < 768;
+  if (isMobile) document.body.classList.add('is-mobile');
+  window.addEventListener('resize', () => {
+    const m = ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.screen.width < 768;
+    document.body.classList.toggle('is-mobile', m);
+  });
+
   spawnMenuStars();
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();

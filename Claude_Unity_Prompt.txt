@@ -1,0 +1,68 @@
+# GAME DESIGN DOCUMENT & UNITY DEVELOPMENT PROMPT FOR CLAUDE (MCP)
+# Project: Grammar Platformer (CEFR English Year 1-5)
+
+Hello Claude! I am building an educational 2D platformer game using Unity to teach CEFR English Grammar for primary school students (Year 1 to Year 5) in Malaysia. I will be using you via MCP to generate C# scripts, set up components, and guide me through the Unity editor.
+
+Below is the complete Game Design Document (GDD) and specific instructions for what I need you to do.
+
+=========================================================
+PART 1: GAME DESIGN DOCUMENT (GDD) SUMMARY
+=========================================================
+
+1. CORE CONCEPT
+- Genre: 2D Rolling Platformer (similar to Red Ball mechanics).
+- Objective: Navigate a ball character through obstacles while solving grammar questions to progress.
+- Educational Focus: English Grammar based on the Malaysian CEFR Syllabus (Year 1 to Year 5).
+
+2. CHARACTER DESIGN & CAMERA FEATURE
+- The main character is a bouncy, rolling ball (CircleCollider2D).
+- IMPORTANT FEATURE: We need a selfie capture system using WebCamTexture. The player takes a photo, the app crops it into a circle mask, and applies it as the Sprite/Texture of the ball character.
+
+3. WORLD & LEVEL STRUCTURE
+- 5 Worlds (representing Year 1 to Year 5), each with distinct themes (Playground, Safari, City, Museum, Space).
+- 3 Levels per World (Level 1, Level 2, and a Boss Level).
+- Progression System: Levels are locked. Players must earn at least 1 Star to unlock the next level. 
+- Star System (1 to 3 stars based on completion, grammar accuracy, and remaining lives).
+
+4. GAMEPLAY MECHANICS (GRAMMAR INTEGRATION)
+- Life System: The player starts with 3 Hearts. If all hearts are lost, they respawn at the last checkpoint.
+- Grammar Question UI: Displayed clearly at the top center of the screen (e.g., "They ___ playing").
+- Static Obstacles (Branching Paths): Players must jump onto the platform holding the CORRECT answer. Jumping on the wrong platform causes it to crumble or reveal spikes (losing a heart).
+- Moving Enemies (Box Monsters): Square/box-shaped enemies (BoxCollider2D) carrying answers text. 
+  - Stomping/colliding with an enemy holding the WRONG answer = Destroys the enemy.
+  - Stomping on the enemy with the CORRECT answer = Deals damage to the player (losing a heart).
+- No Voice Over: Audio is strictly limited to sound effects (jumping, bouncing, collecting, error sounds).
+
+=========================================================
+PART 2: UNITY DEVELOPMENT INSTRUCTIONS & INITIAL TASKS
+=========================================================
+Please acknowledge this GDD and begin executing the following initial tasks sequentially. For each task, provide the necessary C# scripts and instructions on how to set up the Unity Editor components (Hierarchy, Inspector, Tags, etc.).
+
+TASK 1: CHARACTER MOVEMENT & PHYSICS
+- Create a `PlayerMovement.cs` script.
+- The player is a rolling ball. Use `Rigidbody2D` (AddTorque or physics-based rolling) so it moves organically, rather than static translation.
+- Include jumping mechanics using `CircleCollider2D` and a GroundCheck.
+
+TASK 2: SELFIE CAPTURE & CIRCLE MASK SYSTEM
+- Create a script (e.g., `SelfieCapture.cs`) utilizing `WebCamTexture`.
+- Provide the logic to capture the image from a mobile device/webcam, apply a circular mask to it, and assign this texture to the player's SpriteRenderer or Material. 
+- Explain how to set up the UI Canvas for the camera feed.
+
+TASK 3: GRAMMAR DATA MANAGEMENT (JSON)
+- Create a `GrammarManager.cs` script.
+- Design a system to load grammar questions and answers from a JSON file. 
+- The JSON should structure questions by Year (1-5) and Level (1-3).
+- Provide a sample JSON structure.
+
+TASK 4: ENEMY AND OBSTACLE LOGIC
+- Create `EnemyBox.cs` and `PlatformGrammar.cs` scripts.
+- Implement the logic where the enemy/platform receives its text value (Correct/Wrong answer) from the `GrammarManager`.
+- Implement collision logic: 
+  - Enemy: Hitting the 'Wrong Answer' enemy destroys it. Hitting the 'Correct Answer' enemy triggers `Player.TakeDamage()`.
+  - Platform: Landing on 'Correct Answer' is safe. Landing on 'Wrong Answer' destroys the platform and triggers `Player.TakeDamage()`.
+
+TASK 5: HEALTH SYSTEM & CHECKPOINTS
+- Create a `GameManager.cs` or `PlayerHealth.cs` script managing the 3 Hearts system.
+- Implement a checkpoint system so the player respawns at the nearest safe point upon losing all hearts, instead of restarting the entire level.
+
+Please confirm you understand the concept and provide the code and setup instructions for TASK 1 first. Let's build this step-by-step.

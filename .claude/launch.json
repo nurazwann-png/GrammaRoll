@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "GrammaRoll",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8115"],
+      "port": 8115,
+      "url": "http://localhost:8115"
+    }
+  ]
+}
