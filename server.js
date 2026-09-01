@@ -138,11 +138,60 @@ io.on('connection', (socket) => {
     io.to(code).emit('raceResult', { winner: name, score, stars });
   });
 
+  // ── Co-op: Create Room ───────────────────────────────────
+  socket.on('coopCreate', ({ name }, cb) => {
+    const code = 'C' + generateCode().slice(1); // prefix C for co-op
+    rooms[code] = {
+      players: [socket.id],
+      data: { [socket.id]: { name, score: 0 } },
+      coop: true,
+      answers: {}, // { qIdx: { socketId: correct } }
+    };
+    socket.join(code);
+    socket.roomCode = code;
+    console.log(`[Coop] ${code} created by ${name}`);
+    cb({ ok: true, code });
+  });
+
+  // ── Co-op: Join Room ─────────────────────────────────────
+  socket.on('coopJoin', ({ code, name }, cb) => {
+    const room = rooms[code];
+    if (!room || !room.coop) { cb({ ok: false, error: 'Co-op room not found.' }); return; }
+    if (room.players.length >= 2) { cb({ ok: false, error: 'Room is full.' }); return; }
+    room.players.push(socket.id);
+    room.data[socket.id] = { name, score: 0 };
+    socket.join(code);
+    socket.roomCode = code;
+    const hostData = room.data[room.players[0]];
+    cb({ ok: true, partnerName: hostData.name });
+    socket.to(code).emit('coopPartnerJoined', { name });
+    console.log(`[Coop] ${code} joined by ${name}`);
+  });
+
+  // ── Co-op: Submit Answer ──────────────────────────────────
+  socket.on('coopAnswer', ({ qIdx, correct }) => {
+    const code = socket.roomCode;
+    const room = rooms[code];
+    if (!room || !room.coop) return;
+    if (!room.answers[qIdx]) room.answers[qIdx] = {};
+    room.answers[qIdx][socket.id] = correct;
+    // Notify partner that this player answered
+    socket.to(code).emit('coopPartnerAnswered', { qIdx, correct });
+    // If both players have answered this question
+    const ans = room.answers[qIdx];
+    if (Object.keys(ans).length === room.players.length) {
+      const allCorrect = Object.values(ans).every(v => v);
+      io.to(code).emit('coopResult', { qIdx, allCorrect });
+      delete room.answers[qIdx]; // reset for retry
+    }
+  });
+
   // ── Disconnect ────────────────────────────────────────────
   socket.on('disconnect', () => {
     const code = socket.roomCode;
     if (code && rooms[code]) {
-      socket.to(code).emit('opponentLeft');
+      const evName = rooms[code].coop ? 'coopPartnerLeft' : 'opponentLeft';
+      socket.to(code).emit(evName);
       rooms[code].players = rooms[code].players.filter(id => id !== socket.id);
       delete rooms[code].data[socket.id];
       if (rooms[code].players.length === 0) {
