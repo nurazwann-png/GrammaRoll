@@ -1,5 +1,5 @@
-const CACHE = 'grammar-ball-v1';
-const ASSETS = ['/', '/index.html', '/logo.jpg', '/manifest.json'];
+const CACHE = 'grammar-ball-v2'; // bump version to evict stale v1 assets
+const ASSETS = ['/', '/index.html', '/logo.jpg', '/manifest.json', '/icon-maskable.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(

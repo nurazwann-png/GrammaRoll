@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Safe-zone background fills the whole square for maskable -->
+  <rect width="512" height="512" fill="#1a0533"/>
+  <!-- Outer glow circle -->
+  <circle cx="256" cy="256" r="210" fill="#2d0a5e"/>
+  <!-- Main ball gradient -->
+  <defs>
+    <radialGradient id="ballGrad" cx="38%" cy="35%" r="65%">
+      <stop offset="0%"   stop-color="#FF8C42"/>
+      <stop offset="55%"  stop-color="#e05c10"/>
+      <stop offset="100%" stop-color="#7a2800"/>
+    </radialGradient>
+  </defs>
+  <circle cx="256" cy="256" r="170" fill="url(#ballGrad)"/>
+  <!-- Shine highlight -->
+  <ellipse cx="210" cy="200" rx="58" ry="36" fill="rgba(255,255,255,0.22)" transform="rotate(-25,210,200)"/>
+  <!-- Emoji face -->
+  <text x="256" y="310" font-size="140" text-anchor="middle" font-family="serif">😊</text>
+</svg>

@@ -13,10 +13,11 @@ const MIME = {
   '.jpg':  'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.png':  'image/png',
+  '.svg':  'image/svg+xml',
   '.ico':  'image/x-icon',
 };
 
-const STATIC = ['index.html', 'manifest.json', 'sw.js', 'logo.jpg'];
+const STATIC = ['index.html', 'manifest.json', 'sw.js', 'logo.jpg', 'icon-maskable.svg'];
 
 // ── PostgreSQL via Cloud SQL (Unix socket in Cloud Run, TCP locally) ──────────
 const DB_SOCKET = process.env.CLOUD_SQL_SOCKET; // e.g. /cloudsql/project:region:instance

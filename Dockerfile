@@ -2,7 +2,7 @@ FROM node:20-slim
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
-COPY server.js index.html manifest.json sw.js logo.jpg schema.sql ./
+COPY server.js index.html manifest.json sw.js logo.jpg icon-maskable.svg schema.sql ./
 ENV PORT=8080
 EXPOSE 8080
 CMD ["node", "server.js"]
