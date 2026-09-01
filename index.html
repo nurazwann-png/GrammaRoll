@@ -1535,8 +1535,8 @@ body {
 <!-- PAUSE OVERLAY -->
 <div class="overlay hidden" id="pause-overlay">
   <div id="pause-card">
-    <h2>⏸ Rehat</h2>
-    <p>Game sedang berhenti sebentar</p>
+    <h2>⏸ Paused</h2>
+    <p>Take a breather — game is paused</p>
     <button class="btn" id="pause-btn-resume" onclick="togglePause()">▶ Continue!</button>
     <button class="btn" id="pause-btn-quit" onclick="quitToMenu()">🏠 Exit to Menu</button>
   </div>
@@ -1748,7 +1748,7 @@ body {
   <div id="opp-avatar">👤</div>
   <div id="opp-info">
     <div id="opp-name">Opponent</div>
-    <div id="opp-score">0 mata</div>
+    <div id="opp-score">0 pts</div>
     <div id="opp-q">Question 0</div>
   </div>
 </div>
@@ -1781,7 +1781,7 @@ body {
         </select>
       </div>
       <button class="btn btn-primary" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#10B981,#065F46);" onclick="coopCreate()">🏠 Create Room</button>
-      <div id="mp-divider" style="margin:12px 0;color:rgba(255,255,255,.4);text-align:center;">or</div>
+      <div style="margin:12px 0;color:rgba(255,255,255,.4);text-align:center;">or</div>
       <div class="mp-field">
         <label>Enter Room Code</label>
         <input type="text" id="coop-join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:1.3rem;">
@@ -1848,19 +1848,19 @@ body {
         <h3>➕ Add New Question</h3>
         <div class="guru-field">
           <label>Question (use ___ for the blank)</label>
-          <input type="text" id="guru-q-text" placeholder="Cth: She ___ my friend." maxlength="80">
+          <input type="text" id="guru-q-text" placeholder="E.g.: She ___ my friend." maxlength="80">
         </div>
         <div class="guru-field">
           <label>Correct Answer</label>
-          <input type="text" id="guru-correct" placeholder="Cth: is" maxlength="30">
+          <input type="text" id="guru-correct" placeholder="E.g.: is" maxlength="30">
         </div>
         <div class="guru-field">
           <label>Wrong Answer 1</label>
-          <input type="text" id="guru-wrong1" placeholder="Cth: am" maxlength="30">
+          <input type="text" id="guru-wrong1" placeholder="E.g.: am" maxlength="30">
         </div>
         <div class="guru-field">
           <label>Wrong Answer 2</label>
-          <input type="text" id="guru-wrong2" placeholder="Cth: are" maxlength="30">
+          <input type="text" id="guru-wrong2" placeholder="E.g.: are" maxlength="30">
         </div>
         <div class="guru-field">
           <label>Difficulty</label>
@@ -2180,6 +2180,19 @@ function spawnScreenConfetti(count=50) {
 }
 
 let correctBannerTimer = null;
+
+// Generic notification banner (colour, short message, auto-dismiss)
+let _bannerTimer = null;
+function showBanner(msg, color) {
+  const el = document.getElementById('correct-banner');
+  document.getElementById('correct-banner-main').textContent = msg;
+  document.getElementById('correct-banner-sub').textContent  = '';
+  document.getElementById('correct-banner-divider').style.display = 'none';
+  el.style.background = color || '#333';
+  el.classList.add('show');
+  if (_bannerTimer) clearTimeout(_bannerTimer);
+  _bannerTimer = setTimeout(() => { el.classList.remove('show'); el.style.background = ''; }, 2000);
+}
 
 function showCorrectBanner(combo, multiplier) {
   const TEXTS = [
@@ -3898,10 +3911,10 @@ function onTimerExpired() {
   Audio.wrong();
   if (game) { game.combo = 0; updateComboHUD(0); }
   setTimeout(() => {
+    if (!game) return; // game may have ended during the 900ms delay
     document.getElementById('mcq-hint').style.color = '';
     hideMCQ();
-    // Prevent MCQ re-triggering after timeout too
-    if (game) game.mcqAnsweredSet.add(game.currentQ);
+    game.mcqAnsweredSet.add(game.currentQ);
     game.state = 'playing';
     playerTakeDamage(game, false, 0.5);
   }, 900);
@@ -4075,6 +4088,7 @@ function processAnswerResult(g, label, isCorrect, plat) {
 
 function playerTakeDamage(g, fell=false, amount=1) {
   if (g.invincible > 0) return;
+  g.damageTaken = (g.damageTaken || 0) + amount; // track for no-damage achievement
   g.hearts = Math.max(0, g.hearts-amount);
   g.invincible = 90;
   Audio.death();
@@ -4113,6 +4127,9 @@ function playerTakeDamage(g, fell=false, amount=1) {
 function triggerWin(g) {
   if (g.state==='win') return;
   g.state='win';
+  // Ensure MCQ overlay is hidden so win screen is fully visible
+  hideMCQ();
+  stopMCQTimer();
   Audio.star();
   spawnParticles(g.px,g.py,'#FFD166',24,8);
 
@@ -4126,7 +4143,7 @@ function triggerWin(g) {
   totalScore += g.score;
   // Achievement stats
   const isBossLevel = g.level.key && GRAMMAR_DB[g.level.key]?.difficulty === 'boss';
-  const noDamage = g.hearts >= 3; // started with 3, never lost one
+  const noDamage = !g.damageTaken; // true only if playerTakeDamage was never called
   updateAchStats({
     levelsWon: 1,
     maxStreak: Math.max(0, g.combo),
@@ -4591,7 +4608,7 @@ function renderLBList(entries, container) {
 function showLeaderboard(levelKey) {
   const data = GRAMMAR_DB[levelKey] || GRAMMAR_DB['1-1'];
   document.getElementById('lb-subtitle').textContent =
-    `Top ${LB_MAX} Juara — ${data.world}`;
+    `Top ${LB_MAX} Champions — ${data.world}`;
   const entries = getLB(levelKey);
   renderLBList(entries, document.getElementById('lb-list'));
   document.getElementById('leaderboard-overlay').classList.remove('hidden');
@@ -4684,7 +4701,7 @@ function showReview(g) {
             <div class="review-row-answer">${wa.correctLabel}</div>
           </div>
         </div>
-        <div class="review-sentence">💡 Contoh: ${fullSentence}</div>
+        <div class="review-sentence">💡 Example: ${fullSentence}</div>
       `;
       cards.appendChild(card);
     });
@@ -5411,6 +5428,10 @@ function restartLevel() {
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
   document.getElementById('mcq-overlay').classList.add('hidden');
+  stopMCQTimer(); // clear any ghost timer from previous game
+  coopMyAnswered = false;
+  coopPartnerAnswered = false;
+  document.getElementById('coop-wait-banner').classList.add('hidden');
   // Small delay so overlay fade-out doesn't fight the new game state
   setTimeout(() => {
     confettiList = [];
@@ -5430,7 +5451,7 @@ function nextLevel() {
     startLevel(nw,nl);
   } else {
     showMenu();
-    alert('Congratulations! Kamu have completed all available levels!');
+    alert('Congratulations! You have completed all available levels!');
   }
 }
 
@@ -5607,8 +5628,8 @@ const PRAISE = [
   null,                                  // 0 — no praise
   { main:'Correct! ✓',  sub:'',                   color:'#06D6A0' }, // 1
   { main:'Great! 🔥', sub:'2 in a row!',  color:'#FFD166' }, // 2
-  { main:'Amazing! ⚡', sub:'2× Mata!',      color:'#FF8C42' }, // 3
-  { main:'Excellent! 🌟', sub:'2× Mata!',       color:'#FF8C42' }, // 4
+  { main:'Amazing! ⚡', sub:'2× Points!',      color:'#FF8C42' }, // 3
+  { main:'Excellent! 🌟', sub:'2× Points!',       color:'#FF8C42' }, // 4
   { main:'Genius! 🚀',    sub:'2× Points! Keep going!', color:'#EF476F' }, // 5+
 ];
 
@@ -5798,6 +5819,7 @@ const opponent = {
 function mpConnect() {
   if (socket && socket.connected) return;
   socket = io(MP_SERVER, { transports: ['websocket'] });
+  socket._coopWired = false; // reset per new socket instance
 
   socket.on('connect', () => {
     mpConnected = true;
@@ -5936,10 +5958,11 @@ function mpJoinRoom() {
     if (!ok) { document.getElementById('mp-error').textContent = error; return; }
     mpRoom = code; mpRole = 'guest';
     if (oppData) mpSetOpponent(oppData.name, oppData.avatar);
-    // Tell host we're ready, start same level
-    socket.emit('levelReady', { levelKey: '1-1' });
+    // Tell host which level guest wants (host's selection is authoritative via opponentReady)
+    const levelKey = document.getElementById('mp-level-select').value;
+    socket.emit('levelReady', { levelKey });
     closeMultiplayer();
-    startLevel(1, 1);
+    startLevel(...levelKey.split('-').map(Number));
   });
 }
 
@@ -5966,9 +5989,9 @@ function showCoopMenu() {
   document.getElementById('coop-step-waiting').style.display = 'none';
   document.getElementById('coop-error').textContent = '';
   document.getElementById('coop-overlay').classList.remove('hidden');
-  // Wire co-op socket events once
+  // Wire co-op socket events once per socket instance
   if (!socket._coopWired) {
-    socket._coopWired = true;
+    socket._coopWired = socket.id || true; // unique per connection
 
     socket.on('coopPartnerJoined', ({ name }) => {
       coopPartnerName = name;
@@ -5996,7 +6019,15 @@ function showCoopMenu() {
       } else {
         // At least one wrong — show retry message
         showBanner('❌ Not both correct — try again!', '#EF476F');
-        setTimeout(() => { if (game) { game.state = 'playing'; showMCQ(game); } }, 1200);
+        setTimeout(() => {
+          if (game) {
+            // Clear so MCQ re-triggers for this question
+            game.mcqAnsweredSet.delete(game.currentQ);
+            game.mcqCorrectSet.delete(game.currentQ);
+            game.state = 'playing';
+            showMCQ(game);
+          }
+        }, 1200);
       }
     });
 
@@ -6070,7 +6101,7 @@ function coopAdvance() {
   updateHUD(g);
   g.state = 'playing';
   if (g.answeredQuestions.size >= g.level.questions.length) {
-    setTimeout(() => triggerWin(), 600);
+    setTimeout(() => { if (game) triggerWin(game); }, 600);
   }
 }
 
@@ -6079,9 +6110,17 @@ function coopSubmitAnswer(qIdx, correct) {
   coopCurrentQIdx = qIdx;
   coopMyAnswered = true;
   if (correct) {
-    // Show wait banner; keep game in answering state until coopResult
+    // Show wait banner; pause physics until coopResult arrives
     document.getElementById('coop-wait-banner').classList.remove('hidden');
     if (game) game.state = 'coop-waiting';
+    // Safety: escape coop-waiting after 10s if server never responds
+    setTimeout(() => {
+      if (game && game.state === 'coop-waiting') {
+        game.state = 'playing';
+        document.getElementById('coop-wait-banner').classList.add('hidden');
+        showBanner('⚠️ Connection timeout — continuing solo', '#F59E0B');
+      }
+    }, 10000);
   } else {
     // Wrong: let game resume normally (partner will get notified, retry on result)
     if (game) game.state = 'playing';
@@ -6107,7 +6146,9 @@ function mpSendScore(g) {
 function mpSendWin(g) {
   if (!socket || !mpRoom) return;
   const name = document.getElementById('mp-name-input').value.trim() || 'Murid';
-  socket.emit('playerWon', { name, score: g.score, stars: g.hearts });
+  const answeredAll = g.answeredQuestions.size >= g.level.questions.length;
+  const stars = answeredAll && g.hearts === 3 ? 3 : answeredAll ? 2 : 1;
+  socket.emit('playerWon', { name, score: g.score, stars });
 }
 
 // Draw ghost opponent on canvas

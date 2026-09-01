@@ -173,6 +173,7 @@ io.on('connection', (socket) => {
     const code = socket.roomCode;
     const room = rooms[code];
     if (!room || !room.coop) return;
+    if (typeof qIdx !== 'number' || qIdx < 0 || qIdx > 999) return; // guard against bad input
     if (!room.answers[qIdx]) room.answers[qIdx] = {};
     room.answers[qIdx][socket.id] = correct;
     // Notify partner that this player answered
