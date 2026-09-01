@@ -508,8 +508,7 @@ body {
 #cutscene-overlay {
   position: fixed; inset: 0; z-index: 500;
   display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end;
-  padding-bottom: 40px;
+  align-items: stretch; justify-content: flex-start;
   overflow: hidden;
   background: #000;
   transition: opacity .4s;
@@ -532,33 +531,40 @@ body {
 @keyframes cs-twinkle { from{opacity:.2} to{opacity:1} }
 
 #cs-scene {
-  position: relative; z-index: 2;
-  width: 100%; max-width: 480px;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 0;
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end;
+  padding: 0 12px max(env(safe-area-inset-bottom, 0px), 20px);
+  box-sizing: border-box;
+  pointer-events: none;
 }
+#cs-scene > * { pointer-events: auto; }
 
-/* Characters area */
+/* Characters area — fills all space above the dialog */
 #cs-chars {
-  width: 100%; height: 220px;
-  position: relative;
-  display: flex; align-items: flex-end; justify-content: space-around;
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  bottom: calc(180px + max(env(safe-area-inset-bottom, 0px), 20px));
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 8% 8% 0;
+  box-sizing: border-box;
 }
 .cs-char {
-  position: absolute;
-  bottom: 0;
+  position: relative;
   display: flex; flex-direction: column; align-items: center;
   animation: cs-slide-in 0.5s cubic-bezier(.34,1.56,.64,1) both;
   transform-origin: bottom center;
 }
-.cs-char.left  { left: 8%; }
-.cs-char.right { right: 8%; }
-.cs-char.center{ left: 50%; transform: translateX(-50%); }
+/* single-char centering */
+#cs-chars:has(.cs-char:only-child) { justify-content: center; }
+.cs-char.left  { order: -1; }
+.cs-char.right { order:  1; }
+.cs-char.center { order: 0; }
 .cs-char.bounce { animation: cs-bounce-idle 1.8s ease-in-out infinite; }
 .cs-char.shake  { animation: cs-shake 0.5s ease-in-out infinite alternate; }
 .cs-char.defeated { filter: grayscale(0.7); opacity: 0.6; transform: rotate(-25deg); }
-.cs-char-emoji { font-size: 5rem; line-height: 1; display: block; }
-.cs-char.big .cs-char-emoji { font-size: 7rem; }
+.cs-char-emoji { font-size: clamp(5rem, 20vmin, 12rem); line-height: 1; display: block; }
+.cs-char.big .cs-char-emoji { font-size: clamp(7rem, 26vmin, 16rem); }
 .cs-char-name {
   font-family: 'Fredoka One', cursive;
   font-size: .7rem; color: rgba(255,255,255,.6);
@@ -566,14 +572,14 @@ body {
 }
 /* Ball wrapper for Grammo */
 .cs-ball {
-  width: 100px; height: 100px;
+  width: clamp(110px, 26vmin, 180px); height: clamp(110px, 26vmin, 180px);
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #FF9B4F, #E8601C);
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 8px 30px rgba(232,96,28,.6), inset 0 -6px 12px rgba(0,0,0,.25);
-  font-size: 3rem;
+  font-size: clamp(3rem, 10vmin, 6rem);
 }
-.cs-char.big .cs-ball { width: 130px; height: 130px; font-size: 4rem; }
+.cs-char.big .cs-ball { width: clamp(150px, 34vmin, 240px); height: clamp(150px, 34vmin, 240px); font-size: clamp(4rem, 14vmin, 9rem); }
 
 @keyframes cs-slide-in {
   from { opacity: 0; transform: translateY(60px) scale(0.6); }
@@ -581,9 +587,9 @@ body {
 }
 @keyframes cs-bounce-idle {
   0%,100% { transform: translateY(0) scale(1,1); }
-  45%     { transform: translateY(-28px) scale(1.06,.94); }
-  55%     { transform: translateY(-30px) scale(1.06,.94); }
-  70%     { transform: translateY(0)    scale(.94,1.06); }
+  45%     { transform: translateY(-20px) scale(1.05,.95); }
+  55%     { transform: translateY(-22px) scale(1.05,.95); }
+  70%     { transform: translateY(0)    scale(.96,1.04); }
 }
 @keyframes cs-shake {
   from { transform: translateX(-6px) rotate(-4deg); }
@@ -592,7 +598,8 @@ body {
 
 /* Dialog box */
 #cs-dialog {
-  width: calc(100% - 24px);
+  width: 100%;
+  max-width: 520px;
   background: rgba(8,16,50,.92);
   border: 2px solid rgba(255,255,255,.15);
   border-radius: 22px;
@@ -600,9 +607,9 @@ body {
   backdrop-filter: blur(16px);
   box-shadow: 0 8px 40px rgba(0,0,0,.6);
   min-height: 110px;
-  margin: 0 12px;
   cursor: pointer;
   position: relative;
+  z-index: 3;
 }
 #cs-speaker {
   font-family: 'Fredoka One', cursive;
