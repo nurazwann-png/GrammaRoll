@@ -2137,6 +2137,13 @@ body {
         </div>
         <button onclick="exportResultsCSV()" class="btn btn-secondary" style="width:100%;font-size:.9rem;">📥 Export Results (CSV)</button>
       </div>
+
+      <!-- STUDENT CERTIFICATES -->
+      <div style="margin-top:18px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;">
+        <h3 style="font-family:'Fredoka One',cursive;color:#FFD166;margin:0 0 10px;">📜 Student Certificates</h3>
+        <button onclick="loadClassCertificates()" class="btn btn-secondary" style="width:100%;font-size:.9rem;">🔄 Load Certificates</button>
+        <div id="cert-list" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
+      </div>
     </div>
 
     <button class="btn btn-secondary" style="width:100%;margin-top:16px;" onclick="closeGuruMode()">✕ Close</button>
@@ -4974,9 +4981,17 @@ function maybeShowReview() {
 }
 
 // ── Certificate ──────────────────────────────────────────────────────────────
-function showCertificate() {
-  if (!certData) return;
-  const d = certData;
+function showCertificate(overrideData) {
+  const d = overrideData || certData;
+  if (!d) return;
+  // Auto-submit to server so teacher can see it (fire-and-forget)
+  if (!overrideData) {
+    fetch('/api/certificates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playerName: d.name, levelKey: d.key, score: d.score, stars: d.stars, world: d.world, year: d.year }),
+    }).catch(() => {});
+  }
   const canvas = document.getElementById('cert-canvas');
   const W = 660, H = 920;
   canvas.width  = W;
@@ -5761,6 +5776,53 @@ function guruResetAll() {
   if (!confirm('Reset ALL teacher questions for all levels?')) return;
   try { localStorage.removeItem(GURU_LS_KEY); } catch(e) {}
   renderGuruQuestions();
+}
+
+async function loadClassCertificates() {
+  const listEl = document.getElementById('cert-list');
+  listEl.innerHTML = '<div style="color:rgba(255,255,255,.5);text-align:center;padding:12px;">Loading…</div>';
+  try {
+    const res  = await fetch('/api/certificates');
+    const data = await res.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      listEl.innerHTML = '<div style="color:rgba(255,255,255,.4);text-align:center;padding:12px;">No certificates yet.</div>';
+      return;
+    }
+    listEl.innerHTML = '';
+    data.forEach(c => {
+      const stars = '★'.repeat(c.stars || 1) + '☆'.repeat(3 - (c.stars || 1));
+      const date  = c.created_at ? new Date(c.created_at).toLocaleDateString('en-MY',{day:'numeric',month:'short',year:'numeric'}) : '';
+      const row   = document.createElement('div');
+      row.style.cssText = 'background:rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;';
+      row.innerHTML = `
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:\'Fredoka One\',cursive;color:#FFD166;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.player_name)}</div>
+          <div style="font-size:.78rem;color:rgba(255,255,255,.5);">Level ${esc(c.level_key)} · ${stars} · ${c.score} pts · ${date}</div>
+        </div>
+        <button style="flex-shrink:0;padding:7px 12px;border-radius:8px;border:1px solid rgba(255,209,102,.4);background:rgba(255,209,102,.15);color:#FFD166;cursor:pointer;font-family:\'Fredoka One\',cursive;font-size:.8rem;" onclick="viewStudentCertificate(${JSON.stringify(JSON.stringify(c))})">View</button>`;
+      listEl.appendChild(row);
+    });
+  } catch(e) {
+    listEl.innerHTML = '<div style="color:#EF476F;text-align:center;padding:12px;">Could not load certificates.</div>';
+  }
+}
+
+function viewStudentCertificate(jsonStr) {
+  const c = JSON.parse(jsonStr);
+  const date = c.created_at
+    ? new Date(c.created_at).toLocaleDateString('en-MY',{year:'numeric',month:'long',day:'numeric'})
+    : new Date().toLocaleDateString('en-MY',{year:'numeric',month:'long',day:'numeric'});
+  const data = {
+    name:  c.player_name,
+    key:   c.level_key,
+    score: c.score,
+    stars: c.stars || 1,
+    world: (c.world || '').replace(/[\u{1F000}-\u{1FFFF}\u{2700}-\u{27BF}]/gu,'').trim(),
+    year:  c.year || 1,
+    date,
+  };
+  document.getElementById('guru-overlay').classList.add('hidden');
+  showCertificate(data);
 }
 
 function closeGuruMode() {

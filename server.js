@@ -54,6 +54,10 @@ function parseBody(req) {
   });
 }
 
+// In-memory certificate store — fallback when DB is unreachable
+const certStore = [];
+const MAX_CERTS = 500;
+
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
 
@@ -74,6 +78,47 @@ const server = http.createServer(async (req, res) => {
       );
       json(res, 200, { ok: true });
     } catch(e) { console.error(e); json(res, 500, { error: 'db error' }); }
+    return;
+  }
+
+  // ── API: submit certificate ──
+  if (req.method === 'POST' && url === '/api/certificates') {
+    try {
+      const { playerName, levelKey, score, stars, world, year } = await parseBody(req);
+      if (!playerName || !levelKey) return json(res, 400, { error: 'invalid' });
+      const cert = {
+        player_name: String(playerName).slice(0, 64),
+        level_key:   String(levelKey).slice(0, 16),
+        score:       Math.floor(score || 0),
+        stars:       Math.min(3, Math.max(1, stars || 1)),
+        world:       String(world || '').slice(0, 40),
+        year:        Math.min(6, Math.max(1, Math.floor(year || 1))),
+        created_at:  new Date().toISOString(),
+      };
+      // In-memory store (always works)
+      certStore.unshift(cert);
+      if (certStore.length > MAX_CERTS) certStore.pop();
+      // Also persist to DB when available
+      pool.query(
+        'INSERT INTO certificates(player_name,level_key,score,stars,world,year) VALUES($1,$2,$3,$4,$5,$6)',
+        [cert.player_name, cert.level_key, cert.score, cert.stars, cert.world, cert.year]
+      ).catch(() => {});
+      json(res, 200, { ok: true });
+    } catch(e) { console.error(e); json(res, 500, { error: 'server error' }); }
+    return;
+  }
+
+  // ── API: get all certificates (teacher view) ──
+  if (req.method === 'GET' && url === '/api/certificates') {
+    try {
+      const { rows } = await pool.query(
+        'SELECT player_name,level_key,score,stars,world,year,created_at FROM certificates ORDER BY created_at DESC LIMIT 200'
+      );
+      json(res, 200, rows);
+    } catch(e) {
+      // DB unavailable — return in-memory store
+      json(res, 200, certStore.slice(0, 200));
+    }
     return;
   }
 

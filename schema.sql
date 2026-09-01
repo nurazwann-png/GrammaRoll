@@ -10,6 +10,19 @@ CREATE TABLE IF NOT EXISTS level_scores (
 
 CREATE INDEX IF NOT EXISTS idx_level_scores_level ON level_scores(level_key, score DESC);
 
+CREATE TABLE IF NOT EXISTS certificates (
+  id          SERIAL PRIMARY KEY,
+  player_name TEXT        NOT NULL,
+  level_key   TEXT        NOT NULL,
+  score       INTEGER     NOT NULL DEFAULT 0,
+  stars       SMALLINT    NOT NULL DEFAULT 1,
+  world       TEXT        NOT NULL DEFAULT '',
+  year        SMALLINT    NOT NULL DEFAULT 1,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_certificates_created ON certificates(created_at DESC);
+
 CREATE TABLE IF NOT EXISTS player_progress (
   player_name  TEXT        PRIMARY KEY,
   total_stars  INTEGER     NOT NULL DEFAULT 0,
