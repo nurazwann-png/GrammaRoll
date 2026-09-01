@@ -1946,7 +1946,7 @@ body {
         </select>
       </div>
       <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="mpCreateRoom()">🏠 Create Room</button>
-      <div id="mp-divider">atau</div>
+      <div id="mp-divider">or</div>
       <div class="mp-field">
         <label>Enter Room Code</label>
         <input type="text" id="mp-join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:1.3rem;">
@@ -3616,7 +3616,7 @@ function updateGame(g) {
           Audio.correct(1);
           updateHUD(g);
         } else {
-          // Penuh — tukar jadi mata
+          // Full hearts — convert to points
           spawnParticles(lu.x,lu.y,'#FFD166',10,4);
           spawnTextParticle(lu.x,lu.y-25,'+50','#FFD166');
           g.score += 50;
@@ -4385,12 +4385,12 @@ function triggerWin(g) {
     skinsUnlocked: SKINS.filter(s => isSkinUnlocked(s.id)).length,
   });
   // Accumulate total stars for skin unlocks
-  const prevTotalStars = parseInt(localStorage.getItem('gr_total_stars') || '0');
+  const prevTotalStars = getTotalStars();
   const newTotal = prevTotalStars + stars;
-  localStorage.setItem('gr_total_stars', newTotal);
+  try { localStorage.setItem('gr_total_stars', newTotal); } catch(e) {}
   // bug14 fix: persist total score so dbSyncProgress reads a real value
-  const prevTotalScore = parseInt(localStorage.getItem('gr_total_score') || '0');
-  localStorage.setItem('gr_total_score', prevTotalScore + g.score);
+  const prevTotalScore = parseInt((function(){ try { return localStorage.getItem('gr_total_score'); } catch(e){ return '0'; } })() || '0');
+  try { localStorage.setItem('gr_total_score', prevTotalScore + g.score); } catch(e) {}
   checkSkinUnlocks(prevTotalStars, newTotal);
   // Notify multiplayer opponent that we won
   mpSendWin(g);
@@ -5006,9 +5006,9 @@ const SKIN_COLORS = {
   rainbow: null, // special: drawn with hue rotation
 };
 
-function getActiveSkin() { return localStorage.getItem('gr_active_skin') || 'default'; }
-function setActiveSkin(id) { localStorage.setItem('gr_active_skin', id); updateBallThumb(); }
-function getTotalStars() { return parseInt(localStorage.getItem('gr_total_stars') || '0'); }
+function getActiveSkin() { try { return localStorage.getItem('gr_active_skin') || 'default'; } catch(e) { return 'default'; } }
+function setActiveSkin(id) { try { localStorage.setItem('gr_active_skin', id); } catch(e) {} updateBallThumb(); }
+function getTotalStars() { try { return parseInt(localStorage.getItem('gr_total_stars') || '0'); } catch(e) { return 0; } }
 function isSkinUnlocked(id) {
   const skin = SKINS.find(s => s.id === id);
   return skin && getTotalStars() >= skin.unlock;
@@ -5406,7 +5406,7 @@ function checkGuruPin(submit=false) {
       document.getElementById('guru-main').classList.remove('hidden');
       renderGuruQuestions();
       // Show existing class code or placeholder
-      const existingCode = localStorage.getItem(CC_KEY);
+      const existingCode = (function(){ try { return localStorage.getItem(CC_KEY); } catch(e){ return null; } })();
       const ccEl = document.getElementById('class-code-display');
       if (ccEl) ccEl.textContent = existingCode || '(none)';
 
@@ -5493,7 +5493,7 @@ function guruResetLevel() {
 
 function guruResetAll() {
   if (!confirm('Reset ALL teacher questions for all levels?')) return;
-  localStorage.removeItem(GURU_LS_KEY);
+  try { localStorage.removeItem(GURU_LS_KEY); } catch(e) {}
   renderGuruQuestions();
 }
 
@@ -5602,13 +5602,13 @@ function generateClassCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
   for (let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
-  localStorage.setItem(CC_KEY, code);
+  try { localStorage.setItem(CC_KEY, code); } catch(e) {}
   const el = document.getElementById('class-code-display');
   if (el) el.textContent = code;
   return code;
 }
 function copyClassCode() {
-  const code = localStorage.getItem(CC_KEY) || generateClassCode();
+  const code = (function(){ try { return localStorage.getItem(CC_KEY); } catch(e){ return null; } })() || generateClassCode();
   const text = `Join my Grammar Ball class! Code: ${code}\nPlay at: ${location.origin}`;
   navigator.clipboard?.writeText(text).then(()=>alert('Class code copied!')).catch(()=>alert(`Class code: ${code}`));
 }
@@ -6104,8 +6104,8 @@ function showMenu() {
 }
 
 function showModeSelect() {
-  if (!localStorage.getItem(CS_INTRO_KEY)) {
-    localStorage.setItem(CS_INTRO_KEY, '1');
+  if (!(function(){ try { return localStorage.getItem(CS_INTRO_KEY); } catch(e){ return null; } })()) {
+    try { localStorage.setItem(CS_INTRO_KEY, '1'); } catch(e) {}
     showIntroCutscene(() => {
       document.getElementById('mode-select-overlay').classList.remove('hidden');
     });

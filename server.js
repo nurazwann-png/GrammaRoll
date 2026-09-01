@@ -136,7 +136,8 @@ const server = http.createServer(async (req, res) => {
       if (err) { res.writeHead(404); res.end('Not found'); return; }
       res.writeHead(200, {
         'Content-Type': mime,
-        'Cache-Control': filename === 'sw.js' ? 'no-cache' : 'public, max-age=3600',
+        // sw.js + manifest.json must never be stale-cached — browsers use them for PWA install/update decisions
+        'Cache-Control': (filename === 'sw.js' || filename === 'manifest.json') ? 'no-cache' : 'public, max-age=3600',
       });
       res.end(data);
     });
