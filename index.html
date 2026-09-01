@@ -504,6 +504,178 @@ body {
 .mode-versus  { background: linear-gradient(135deg,#A855F7,#7C3AED); box-shadow: 0 6px 20px rgba(168,85,247,.45); }
 .mode-coop    { background: linear-gradient(135deg,#10B981,#064e3b); box-shadow: 0 6px 20px rgba(16,185,129,.45); }
 
+/* ══ CUTSCENE ══ */
+#cutscene-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-end;
+  padding-bottom: 40px;
+  overflow: hidden;
+  background: #000;
+  transition: opacity .4s;
+}
+#cutscene-overlay.hidden { display: none; }
+#cutscene-overlay.fade-out { opacity: 0; pointer-events: none; }
+
+#cs-bg {
+  position: absolute; inset: 0;
+  transition: background 0.7s, opacity 0.5s;
+}
+#cs-stars {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+.cs-star {
+  position: absolute; border-radius: 50%;
+  background: #fff; animation: cs-twinkle 2s ease-in-out infinite alternate;
+}
+@keyframes cs-twinkle { from{opacity:.2} to{opacity:1} }
+
+#cs-scene {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 480px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0;
+}
+
+/* Characters area */
+#cs-chars {
+  width: 100%; height: 220px;
+  position: relative;
+  display: flex; align-items: flex-end; justify-content: space-around;
+}
+.cs-char {
+  position: absolute;
+  bottom: 0;
+  display: flex; flex-direction: column; align-items: center;
+  animation: cs-slide-in 0.5s cubic-bezier(.34,1.56,.64,1) both;
+  transform-origin: bottom center;
+}
+.cs-char.left  { left: 8%; }
+.cs-char.right { right: 8%; }
+.cs-char.center{ left: 50%; transform: translateX(-50%); }
+.cs-char.bounce { animation: cs-bounce-idle 1.8s ease-in-out infinite; }
+.cs-char.shake  { animation: cs-shake 0.5s ease-in-out infinite alternate; }
+.cs-char.defeated { filter: grayscale(0.7); opacity: 0.6; transform: rotate(-25deg); }
+.cs-char-emoji { font-size: 5rem; line-height: 1; display: block; }
+.cs-char.big .cs-char-emoji { font-size: 7rem; }
+.cs-char-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: .7rem; color: rgba(255,255,255,.6);
+  margin-top: 4px; letter-spacing: .5px;
+}
+/* Ball wrapper for Grammo */
+.cs-ball {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FF9B4F, #E8601C);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 30px rgba(232,96,28,.6), inset 0 -6px 12px rgba(0,0,0,.25);
+  font-size: 3rem;
+}
+.cs-char.big .cs-ball { width: 130px; height: 130px; font-size: 4rem; }
+
+@keyframes cs-slide-in {
+  from { opacity: 0; transform: translateY(60px) scale(0.6); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+@keyframes cs-bounce-idle {
+  0%,100% { transform: translateY(0) scale(1,1); }
+  45%     { transform: translateY(-28px) scale(1.06,.94); }
+  55%     { transform: translateY(-30px) scale(1.06,.94); }
+  70%     { transform: translateY(0)    scale(.94,1.06); }
+}
+@keyframes cs-shake {
+  from { transform: translateX(-6px) rotate(-4deg); }
+  to   { transform: translateX(6px)  rotate(4deg);  }
+}
+
+/* Dialog box */
+#cs-dialog {
+  width: calc(100% - 24px);
+  background: rgba(8,16,50,.92);
+  border: 2px solid rgba(255,255,255,.15);
+  border-radius: 22px;
+  padding: 18px 20px 14px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 40px rgba(0,0,0,.6);
+  min-height: 110px;
+  margin: 0 12px;
+  cursor: pointer;
+  position: relative;
+}
+#cs-speaker {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem; letter-spacing: .5px;
+  margin-bottom: 6px; min-height: 22px;
+}
+#cs-text {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(.95rem,3.5vw,1.1rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.55;
+  white-space: pre-line;
+  min-height: 52px;
+}
+#cs-tap {
+  text-align: right;
+  font-size: .72rem;
+  color: rgba(255,255,255,.35);
+  margin-top: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  animation: cs-twinkle 1.2s ease-in-out infinite alternate;
+}
+#cs-tap.hidden { display: none; }
+
+/* CTA button */
+#cs-cta {
+  margin-top: 14px;
+  padding: 14px 36px;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.2rem;
+  background: linear-gradient(135deg, #06D6A0, #0284C7);
+  color: #fff;
+  border: none; border-radius: 50px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(6,214,160,.5);
+  animation: cs-bounce-idle 1.8s ease-in-out infinite;
+}
+#cs-cta.hidden { display: none; }
+
+/* Skip button */
+#cs-skip {
+  position: absolute; top: 14px; right: 14px; z-index: 10;
+  background: rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.2);
+  border-radius: 20px; padding: 6px 14px;
+  font-family: 'Nunito', sans-serif; font-weight: 800;
+  font-size: .82rem; color: rgba(255,255,255,.6);
+  cursor: pointer; transition: background .15s;
+}
+#cs-skip:hover { background: rgba(255,255,255,.22); color:#fff; }
+
+/* Progress dots */
+#cs-dots {
+  position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
+}
+.cs-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  transition: background .3s, transform .3s;
+}
+.cs-dot.active { background: #fff; transform: scale(1.3); }
+
+/* Background themes */
+.cs-bg-night   { background: radial-gradient(ellipse at 50% 0%, #1a0a40 0%, #0a0520 60%, #000 100%); }
+.cs-bg-kingdom { background: linear-gradient(180deg, #1a3a8f 0%, #2563eb 40%, #7ec8e3 70%, #c9f0c2 100%); }
+.cs-bg-dark    { background: radial-gradient(ellipse at 50% 30%, #4a0a20 0%, #1a0030 50%, #000 100%); }
+.cs-bg-chaos   { background: linear-gradient(135deg, #7f1d1d, #451a03, #1e1b4b); }
+.cs-bg-victory { background: radial-gradient(ellipse at 50% 40%, #065f46 0%, #1e3a5f 50%, #0f172a 100%); }
+.cs-bg-ending  { background: radial-gradient(ellipse at 50% 50%, #451a03 0%, #78350f 30%, #0f172a 100%); }
+
 /* SELFIE SCREEN */
 #selfie-screen {
   background: rgba(10,22,50,0.96);
@@ -1583,6 +1755,23 @@ body {
   </div>
 </div>
 
+<!-- CUTSCENE OVERLAY -->
+<div id="cutscene-overlay" class="hidden">
+  <div id="cs-bg"></div>
+  <div id="cs-stars"></div>
+  <div id="cs-scene">
+    <div id="cs-chars"></div>
+    <div id="cs-dialog">
+      <div id="cs-speaker"></div>
+      <div id="cs-text"></div>
+      <div id="cs-tap">Tap anywhere to continue ▶</div>
+    </div>
+    <button id="cs-cta" class="hidden">Begin Adventure! 🎮</button>
+  </div>
+  <button id="cs-skip">Skip ✕</button>
+  <div id="cs-dots"></div>
+</div>
+
 <!-- PLAY MODE SELECT OVERLAY -->
 <div class="overlay hidden" id="mode-select-overlay">
   <div id="mode-select-card">
@@ -1614,6 +1803,11 @@ body {
         <span class="mode-icon">🤝</span>
         <span class="mode-name">Co-op</span>
         <span class="mode-desc">Team up &amp; answer together</span>
+      </button>
+      <button class="mode-card" style="background:linear-gradient(135deg,#7C3AED,#1e1b4b);box-shadow:0 6px 20px rgba(124,58,237,.4);" onclick="closeModeSelect();showIntroCutscene()">
+        <span class="mode-icon">📖</span>
+        <span class="mode-name">Watch Story</span>
+        <span class="mode-desc">Replay the Grammo adventure</span>
       </button>
     </div>
   </div>
@@ -4192,11 +4386,20 @@ function triggerWin(g) {
   const prev = document.getElementById('win-lb-preview');
   if (prev) prev.innerHTML = '';
 
-  setTimeout(()=>{
-    document.getElementById('win-overlay').classList.remove('hidden');
-    // Prompt for name after short delay
-    setTimeout(() => promptPlayerName(g.level.key, g.score, stars), 600);
-  },800);
+  // Boss level → show ending cutscene before win overlay
+  if (isBossLevel) {
+    setTimeout(() => {
+      showEndingCutscene(() => {
+        document.getElementById('win-overlay').classList.remove('hidden');
+        setTimeout(() => promptPlayerName(g.level.key, g.score, stars), 600);
+      });
+    }, 800);
+  } else {
+    setTimeout(()=>{
+      document.getElementById('win-overlay').classList.remove('hidden');
+      setTimeout(() => promptPlayerName(g.level.key, g.score, stars), 600);
+    },800);
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -5376,6 +5579,324 @@ function showWinLBPreview(entries) {
 }
 
 // Enter key submits name
+// ══════════════════════════════════════════════
+//  CUTSCENE ENGINE
+// ══════════════════════════════════════════════
+const CS_INTRO_KEY = 'gr_intro_seen';
+
+const INTRO_SCENES = [
+  {
+    bg: 'night', stars: true,
+    chars: [],
+    narrator: true,
+    text: 'Once upon a time, in a magical land called...\n\n✨  L I N G U I A  ✨\n\n...words had incredible power.',
+  },
+  {
+    bg: 'kingdom', stars: false,
+    chars: [
+      { id:'fairy', emoji:'🧚', side:'left', big:true },
+      { id:'house', emoji:'🏡', side:'right', big:true, static:true },
+    ],
+    speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+    text:'Welcome to Linguia! 🌟 Every correct sentence makes flowers bloom, rivers flow, and the sun shine brighter!',
+  },
+  {
+    bg: 'dark', stars: true,
+    chars: [
+      { id:'baron', emoji:'👹', side:'right', big:true, shake:true },
+    ],
+    narrator: true,
+    text:'But one stormy night, the evil\n😈  Baron Von Error  😈\narrived from the Land of Confusion...',
+  },
+  {
+    bg: 'dark', stars: false,
+    chars: [
+      { id:'baron', emoji:'👹', side:'center', big:true },
+    ],
+    speaker:'Baron Von Error', speakerColor:'#EF476F',
+    text:'MWAHAHAHA! Grammar is BORING! I shall scramble every sentence until nobody speaks correctly EVER AGAIN!',
+  },
+  {
+    bg: 'chaos', stars: false,
+    chars: [
+      { id:'person1', emoji:'😱', side:'left' },
+      { id:'person2', emoji:'😰', side:'right' },
+    ],
+    narrator: true,
+    text:'He mixed up articles, broke verbs, and confused everyone! The whole kingdom of Linguia was in CHAOS! 💥',
+  },
+  {
+    bg: 'kingdom', stars: false,
+    chars: [
+      { id:'fairy', emoji:'🧚', side:'left', big:true },
+      { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
+    ],
+    speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+    text:'Grammo! You are the chosen one! 🌟 Only YOU can bounce through Baron\'s traps and fix all the grammar!',
+  },
+  {
+    bg: 'victory', stars: true,
+    chars: [
+      { id:'grammo', emoji:'😊', side:'center', big:true, ball:true, bounce:true },
+    ],
+    speaker:'Grammo', speakerColor:'#06D6A0',
+    text:'I am READY! 💪 Let\'s show that villain what proper grammar looks like!',
+    last: true,
+    cta: '🎮 Begin Adventure!',
+    ctaAction: 'intro',
+  },
+];
+
+const ENDING_SCENES = [
+  {
+    bg: 'victory', stars: true,
+    chars: [
+      { id:'grammo', emoji:'😊', side:'left', big:true, ball:true, bounce:true },
+      { id:'baron',  emoji:'👹', side:'right', big:true, defeated:true },
+    ],
+    speaker:'Grammo', speakerColor:'#06D6A0',
+    text:'Grammar rules! 🏆 And so do I!',
+  },
+  {
+    bg: 'dark', stars: false,
+    chars: [
+      { id:'baron', emoji:'👹', side:'center', big:true, defeated:true },
+    ],
+    speaker:'Baron Von Error', speakerColor:'#EF476F',
+    text:'NOOOO! Impossible! How did you know ALL those grammar rules?! I... I cannot believe it!',
+  },
+  {
+    bg: 'kingdom', stars: false,
+    chars: [
+      { id:'fairy',  emoji:'🧚', side:'left', big:true },
+      { id:'confetti', emoji:'🎊', side:'right', big:true, static:true, bounce:true },
+    ],
+    speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+    text:'You did it, Grammo! 🌈 The words are free! Every sentence is correct again! LINGUIA IS SAVED! 🎉',
+  },
+  {
+    bg: 'victory', stars: true,
+    chars: [
+      { id:'grammo', emoji:'😊', side:'center', big:true, ball:true, bounce:true },
+    ],
+    narrator: true,
+    text:'From that day on, Grammo was celebrated as the greatest Grammar Hero in all of Linguia!\n\nAnd everyone lived happily — and grammatically correctly — ever after! 🌟',
+  },
+  {
+    bg: 'ending', stars: true,
+    chars: [],
+    narrator: true,
+    text:'⭐  T H E   E N D  ⭐\n\nRemember:\n"Good grammar is your SUPERPOWER!" 💪',
+    last: true,
+    cta: '🏠 Back to Menu',
+    ctaAction: 'menu',
+  },
+];
+
+let csScenes = [];
+let csIndex = 0;
+let csTyping = false;
+let csTypeTimer = null;
+let csOnDone = null;
+
+function csSpawnStars(count = 60) {
+  const el = document.getElementById('cs-stars');
+  el.innerHTML = '';
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'cs-star';
+    const size = Math.random() * 3 + 1;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*80}%;animation-delay:${Math.random()*2}s;animation-duration:${1.5+Math.random()*2}s;opacity:${Math.random()*.7+.3}`;
+    el.appendChild(s);
+  }
+}
+
+function csBuildChar(ch) {
+  const wrap = document.createElement('div');
+  const classes = ['cs-char', ch.side || 'center'];
+  if (ch.big)      classes.push('big');
+  if (ch.bounce)   classes.push('bounce');
+  if (ch.shake)    classes.push('shake');
+  if (ch.defeated) classes.push('defeated');
+  if (ch.static)   classes.push('static');
+  wrap.className = classes.join(' ');
+  wrap.style.animationDelay = (ch.delay || 0) + 's';
+
+  if (ch.ball) {
+    const ball = document.createElement('div');
+    ball.className = 'cs-ball';
+    ball.textContent = ch.emoji;
+    wrap.appendChild(ball);
+  } else {
+    const em = document.createElement('span');
+    em.className = 'cs-char-emoji';
+    em.textContent = ch.emoji;
+    wrap.appendChild(em);
+  }
+  const label = document.createElement('div');
+  label.className = 'cs-char-name';
+  label.textContent = ch.id === 'grammo' ? 'Grammo' : ch.id === 'fairy' ? 'Whisper' : ch.id === 'baron' ? 'Baron Von Error' : '';
+  wrap.appendChild(label);
+  return wrap;
+}
+
+function csShowFrame(idx) {
+  const scene = csScenes[idx];
+  if (!scene) return;
+
+  // Background
+  const bg = document.getElementById('cs-bg');
+  bg.className = `cs-bg-${scene.bg}`;
+
+  // Stars
+  const starsEl = document.getElementById('cs-stars');
+  if (scene.stars) {
+    starsEl.style.display = '';
+    csSpawnStars();
+  } else {
+    starsEl.style.display = 'none';
+    starsEl.innerHTML = '';
+  }
+
+  // Characters
+  const charsEl = document.getElementById('cs-chars');
+  charsEl.innerHTML = '';
+  (scene.chars || []).forEach((ch, i) => {
+    const el = csBuildChar({ ...ch, delay: i * 0.12 });
+    charsEl.appendChild(el);
+  });
+
+  // Speaker
+  const spkEl = document.getElementById('cs-speaker');
+  if (scene.narrator) {
+    spkEl.textContent = '📖  Story';
+    spkEl.style.color = 'rgba(255,255,255,.45)';
+    spkEl.style.fontStyle = 'italic';
+  } else if (scene.speaker) {
+    spkEl.textContent = scene.speaker;
+    spkEl.style.color = scene.speakerColor || '#fff';
+    spkEl.style.fontStyle = '';
+  } else {
+    spkEl.textContent = '';
+  }
+
+  // Dots
+  const dots = document.getElementById('cs-dots');
+  dots.innerHTML = '';
+  csScenes.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'cs-dot' + (i === idx ? ' active' : '');
+    dots.appendChild(d);
+  });
+
+  // CTA
+  const ctaEl = document.getElementById('cs-cta');
+  const tapEl = document.getElementById('cs-tap');
+  if (scene.last) {
+    ctaEl.textContent = scene.cta || 'Continue';
+    ctaEl.classList.add('hidden');
+    tapEl.classList.add('hidden');
+  } else {
+    ctaEl.classList.add('hidden');
+    tapEl.classList.remove('hidden');
+  }
+
+  // Typewriter
+  csTypeText(scene.text, scene.last, scene);
+}
+
+function csTypeText(fullText, isLast, scene) {
+  const el = document.getElementById('cs-text');
+  el.textContent = '';
+  if (csTypeTimer) clearInterval(csTypeTimer);
+  csTyping = true;
+  let i = 0;
+  const delay = fullText.length > 120 ? 22 : 28;
+  csTypeTimer = setInterval(() => {
+    i++;
+    el.textContent = fullText.slice(0, i);
+    if (i >= fullText.length) {
+      clearInterval(csTypeTimer);
+      csTyping = false;
+      if (isLast) {
+        const ctaEl = document.getElementById('cs-cta');
+        ctaEl.classList.remove('hidden');
+        document.getElementById('cs-tap').classList.add('hidden');
+      }
+    }
+  }, delay);
+}
+
+function csAdvance() {
+  if (csTyping) {
+    // Skip to full text immediately
+    clearInterval(csTypeTimer);
+    csTyping = false;
+    const scene = csScenes[csIndex];
+    document.getElementById('cs-text').textContent = scene.text;
+    if (scene.last) {
+      document.getElementById('cs-cta').classList.remove('hidden');
+      document.getElementById('cs-tap').classList.add('hidden');
+    }
+    return;
+  }
+  const scene = csScenes[csIndex];
+  if (scene.last) return; // wait for CTA button
+  csIndex++;
+  if (csIndex < csScenes.length) {
+    csShowFrame(csIndex);
+  }
+}
+
+function csFinish() {
+  const overlay = document.getElementById('cutscene-overlay');
+  overlay.classList.add('fade-out');
+  setTimeout(() => {
+    overlay.classList.add('hidden');
+    overlay.classList.remove('fade-out');
+    if (csOnDone) csOnDone();
+    csOnDone = null;
+  }, 400);
+}
+
+function showIntroCutscene(onDone) {
+  csScenes = INTRO_SCENES;
+  csIndex = 0;
+  csOnDone = onDone || null;
+  const overlay = document.getElementById('cutscene-overlay');
+  overlay.classList.remove('hidden', 'fade-out');
+  csShowFrame(0);
+}
+
+function showEndingCutscene(onDone) {
+  csScenes = ENDING_SCENES;
+  csIndex = 0;
+  csOnDone = onDone || (() => showMenu());
+  const overlay = document.getElementById('cutscene-overlay');
+  overlay.classList.remove('hidden', 'fade-out');
+  csShowFrame(0);
+}
+
+// Wire up click/tap on dialog and CTA
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cs-dialog').addEventListener('click', csAdvance);
+  document.getElementById('cs-chars').addEventListener('click', csAdvance);
+
+  document.getElementById('cs-cta').addEventListener('click', () => {
+    const scene = csScenes[csIndex];
+    const action = scene?.ctaAction;
+    csFinish();
+    if (action === 'menu') { /* csFinish already calls csOnDone which shows menu */ }
+    // 'intro' action: csOnDone is null (caller handles start)
+  });
+
+  document.getElementById('cs-skip').addEventListener('click', () => {
+    if (csTypeTimer) clearInterval(csTypeTimer);
+    csTyping = false;
+    csFinish();
+  });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
   // Register service worker for PWA
   if ('serviceWorker' in navigator) {
@@ -5391,6 +5912,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   spawnMenuStars();
+
+  // Show intro cutscene on first-ever visit
+  if (!localStorage.getItem(CS_INTRO_KEY)) {
+    localStorage.setItem(CS_INTRO_KEY, '1');
+    showIntroCutscene();
+  }
+
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();
   });
