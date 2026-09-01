@@ -1463,9 +1463,13 @@ body {
       <span class="menu-card-icon">🎨</span>
       <span class="menu-card-label">Ball Skins</span>
     </button>
-    <button class="menu-card" onclick="showDailyChallenge()" style="background:linear-gradient(135deg,#F59E0B,#DC2626);box-shadow:0 6px 20px rgba(245,158,11,.5);color:#fff;grid-column:span 2;">
+    <button class="menu-card" onclick="showDailyChallenge()" style="background:linear-gradient(135deg,#F59E0B,#DC2626);box-shadow:0 6px 20px rgba(245,158,11,.5);color:#fff;">
       <span class="menu-card-icon">📅</span>
       <span class="menu-card-label" id="daily-btn-label">Daily Challenge</span>
+    </button>
+    <button class="menu-card" onclick="showAchievementsMenu()" style="background:linear-gradient(135deg,#FFD166,#F59E0B);box-shadow:0 6px 20px rgba(255,209,102,.5);color:#4a2000;">
+      <span class="menu-card-icon">🏅</span>
+      <span class="menu-card-label">Achievements</span>
     </button>
   </div>
 </div>
@@ -1659,6 +1663,14 @@ body {
           <label>Wrong Answer 2</label>
           <input type="text" id="guru-wrong2" placeholder="Cth: are" maxlength="30">
         </div>
+        <div class="guru-field">
+          <label>Difficulty</label>
+          <select id="guru-difficulty" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:'Fredoka One',cursive;">
+            <option value="easy">⭐ Easy</option>
+            <option value="medium" selected>⭐⭐ Medium</option>
+            <option value="hard">⭐⭐⭐ Hard</option>
+          </select>
+        </div>
         <div id="guru-add-error" style="color:var(--red);font-size:.85rem;min-height:20px;margin-bottom:8px;"></div>
         <button class="btn btn-primary" style="width:100%;" onclick="guruAddQuestion()">💾 Save Question</button>
       </div>
@@ -1666,6 +1678,20 @@ body {
       <div style="display:flex;gap:10px;">
         <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetLevel()">🗑️ Reset This Level</button>
         <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetAll()">♻️ Reset All</button>
+      </div>
+
+      <!-- CLASS CODE + EXPORT -->
+      <div style="margin-top:18px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;">
+        <h3 style="font-family:'Fredoka One',cursive;color:#FFD166;margin:0 0 10px;">📊 Class Tools</h3>
+        <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px;margin-bottom:10px;">
+          <div style="font-size:.82rem;color:rgba(255,255,255,.6);margin-bottom:6px;">Class Code (share with students to join leaderboard)</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div id="class-code-display" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#06D6A0;letter-spacing:4px;">—</div>
+            <button onclick="generateClassCode()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(6,214,160,.4);background:rgba(6,214,160,.15);color:#06D6A0;cursor:pointer;font-family:'Fredoka One',cursive;font-size:.85rem;">🔄 New</button>
+            <button onclick="copyClassCode()" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,209,102,.4);background:rgba(255,209,102,.15);color:#FFD166;cursor:pointer;font-family:'Fredoka One',cursive;font-size:.85rem;">📋 Copy</button>
+          </div>
+        </div>
+        <button onclick="exportResultsCSV()" class="btn btn-secondary" style="width:100%;font-size:.9rem;">📥 Export Results (CSV)</button>
       </div>
     </div>
 
@@ -1677,7 +1703,7 @@ body {
 <div class="overlay hidden" id="leaderboard-overlay">
   <div id="lb-card">
     <div id="lb-title">🏆 Leaderboard</div>
-    <div id="lb-subtitle">Top 5 Juara Kelas</div>
+    <div id="lb-subtitle">Top 5 Class Champions</div>
     <ul id="lb-list"></ul>
     <div style="display:flex;gap:10px;">
       <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="clearLeaderboard()">🗑️ Reset</button>
@@ -3887,6 +3913,18 @@ function triggerWin(g) {
   if (elapsed < 60 && answeredAll && g.hearts>1) stars=Math.max(stars,2);
 
   totalScore += g.score;
+  // Achievement stats
+  const isBossLevel = g.level.key && GRAMMAR_DB[g.level.key]?.difficulty === 'boss';
+  const noDamage = g.hearts >= 3; // started with 3, never lost one
+  updateAchStats({
+    levelsWon: 1,
+    maxStreak: Math.max(0, g.combo),
+    totalScore: g.score,
+    perfectLevels: (g.wrongAnswers && g.wrongAnswers.length === 0) ? 1 : 0,
+    bossDefeated: isBossLevel ? 1 : 0,
+    bossDefeatedNoDmg: (isBossLevel && noDamage) ? 1 : 0,
+    skinsUnlocked: SKINS.filter(s => isSkinUnlocked(s.id)).length,
+  });
   // Accumulate total stars for skin unlocks
   const prevTotalStars = parseInt(localStorage.getItem('gr_total_stars') || '0');
   const newTotal = prevTotalStars + stars;
@@ -4677,6 +4715,8 @@ function dcFinish() {
   // Save to leaderboard
   const name = localStorage.getItem('gr_player_name') || 'Player';
   addLBEntry('daily', name, dcScore, accuracy>=80?3:accuracy>=60?2:1);
+  // Achievement tracking
+  updateAchStats({ dailyDone: 1, maxStreak: dcBestStreak, totalScore: dcScore });
 }
 
 function closeDailyChallenge() {
@@ -4854,6 +4894,11 @@ function checkGuruPin(submit=false) {
       document.getElementById('guru-pin-section').style.display = 'none';
       document.getElementById('guru-main').classList.remove('hidden');
       renderGuruQuestions();
+      // Show existing class code or placeholder
+      const existingCode = localStorage.getItem(CC_KEY);
+      const ccEl = document.getElementById('class-code-display');
+      if (ccEl) ccEl.textContent = existingCode || '(none)';
+
     } else if (submit || val.length === 4) {
       document.getElementById('guru-pin-error').textContent = 'Wrong PIN. Try again.';
     }
@@ -4879,7 +4924,7 @@ function renderGuruQuestions() {
   }
   list.innerHTML = questions.map((q, i) => `
     <div class="guru-q-item">
-      <div class="guru-q-text">${q.q}</div>
+      <div class="guru-q-text">${q.q} ${getDifficultyBadge(q.difficulty)}</div>
       <div class="guru-q-answers">
         <span class="guru-ans-chip correct">✓ ${q.correct}</span>
         ${q.wrong.map(w => `<span class="guru-ans-chip wrong">✗ ${w}</span>`).join('')}
@@ -4915,7 +4960,8 @@ function guruAddQuestion() {
   errEl.textContent = '';
 
   const questions = getGuruQuestions(guruCurrentLevel);
-  questions.push({ q: qText, correct, wrong: [wrong1, wrong2] });
+  const difficulty = document.getElementById('guru-difficulty')?.value || 'medium';
+  questions.push({ q: qText, correct, wrong: [wrong1, wrong2], difficulty });
   saveGuruQuestions(guruCurrentLevel, questions);
   clearGuruForm();
   renderGuruQuestions();
@@ -4942,6 +4988,146 @@ function guruResetAll() {
 
 function closeGuruMode() {
   document.getElementById('guru-overlay').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════
+//  ACHIEVEMENT BADGES (#14)
+// ══════════════════════════════════════════════
+const ACHIEVEMENTS = [
+  { id:'first_win',   icon:'🎮', name:'First Win',       desc:'Complete your first level',          check: (s)=>s.levelsWon>=1 },
+  { id:'streak3',     icon:'🔥', name:'On Fire',          desc:'Reach a 3-streak',                   check: (s)=>s.maxStreak>=3 },
+  { id:'streak5',     icon:'⚡', name:'Unstoppable',      desc:'Reach a 5-streak',                   check: (s)=>s.maxStreak>=5 },
+  { id:'streak10',    icon:'👑', name:'Grammar King',     desc:'Reach a 10-streak',                  check: (s)=>s.maxStreak>=10 },
+  { id:'boss_first',  icon:'⚔️', name:'Boss Slayer',      desc:'Defeat the Grammar King boss',       check: (s)=>s.bossDefeated>=1 },
+  { id:'boss_perfect',icon:'🏆', name:'Perfect Duel',     desc:'Defeat boss without taking damage',  check: (s)=>s.bossDefeatedNoDmg>=1 },
+  { id:'perfect_lvl', icon:'🌟', name:'Flawless',         desc:'Complete a level with no mistakes',  check: (s)=>s.perfectLevels>=1 },
+  { id:'daily3',      icon:'📅', name:'Daily Devotee',    desc:'Complete 3 daily challenges',        check: (s)=>s.dailyDone>=3 },
+  { id:'skins_all',   icon:'🌈', name:'Collector',        desc:'Unlock all ball skins',              check: (s)=>s.skinsUnlocked>=6 },
+  { id:'score10k',    icon:'💎', name:'Grammar Genius',   desc:'Score 10,000 total points',          check: (s)=>s.totalScore>=10000 },
+];
+
+const ACH_LS_KEY = 'gr_achievements';
+const ACH_STATS_KEY = 'gr_ach_stats';
+
+function getAchStats()  { try { return JSON.parse(localStorage.getItem(ACH_STATS_KEY)||'{}'); } catch(e) { return {}; } }
+function saveAchStats(s){ try { localStorage.setItem(ACH_STATS_KEY, JSON.stringify(s)); } catch(e) {} }
+function getEarnedAchs(){ try { return JSON.parse(localStorage.getItem(ACH_LS_KEY)||'[]'); } catch(e) { return []; } }
+
+function updateAchStats(delta) {
+  const s = getAchStats();
+  Object.entries(delta).forEach(([k,v]) => { s[k] = (s[k]||0) + v; });
+  saveAchStats(s);
+  checkAchievements(s);
+}
+
+function checkAchievements(stats) {
+  const earned = getEarnedAchs();
+  ACHIEVEMENTS.forEach(a => {
+    if (!earned.includes(a.id) && a.check(stats)) {
+      earned.push(a.id);
+      try { localStorage.setItem(ACH_LS_KEY, JSON.stringify(earned)); } catch(e) {}
+      showAchievementToast(a);
+    }
+  });
+}
+
+let achToastTimer = null;
+function showAchievementToast(ach) {
+  // Build toast element
+  const old = document.getElementById('ach-toast');
+  if (old) old.remove();
+  const el = document.createElement('div');
+  el.id = 'ach-toast';
+  el.style.cssText = `position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:9999;
+    background:rgba(15,10,40,.96);border:2px solid rgba(255,209,102,.7);border-radius:16px;
+    padding:12px 20px;text-align:center;max-width:280px;opacity:0;transition:all .4s;
+    box-shadow:0 0 30px rgba(255,209,102,.4);pointer-events:none;`;
+  el.innerHTML = `<div style="font-size:2rem;margin-bottom:2px;">${ach.icon}</div>
+    <div style="font-family:'Fredoka One',cursive;color:#FFD166;font-size:1rem;">🏅 Achievement Unlocked!</div>
+    <div style="font-family:'Fredoka One',cursive;color:#fff;font-size:1.1rem;">${ach.name}</div>
+    <div style="color:rgba(255,255,255,.6);font-size:.75rem;margin-top:2px;">${ach.desc}</div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity='1'; el.style.transform='translateX(-50%) translateY(0)'; });
+  if (achToastTimer) clearTimeout(achToastTimer);
+  achToastTimer = setTimeout(() => {
+    el.style.opacity='0';
+    setTimeout(() => el.remove(), 400);
+  }, 3000);
+}
+
+function showAchievementsMenu() {
+  const earned = getEarnedAchs();
+  const stats = getAchStats();
+  const el = document.createElement('div');
+  el.className='overlay'; el.id='ach-overlay'; el.style.zIndex='9999';
+  el.onclick = e => { if(e.target===el) el.remove(); };
+  el.innerHTML = `
+    <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+      <div style="font-size:2.5rem;margin-bottom:4px;">🏅</div>
+      <h2 style="font-family:'Fredoka One',cursive;font-size:1.8rem;color:#FFD166;margin:0 0 4px;">Achievements</h2>
+      <p style="color:rgba(255,255,255,.5);font-size:.85rem;margin:0 0 14px;">${earned.length}/${ACHIEVEMENTS.length} unlocked · ${getAchStats().totalScore||0} total points</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;max-height:60vh;overflow-y:auto;">
+        ${ACHIEVEMENTS.map(a => {
+          const done = earned.includes(a.id);
+          return `<div style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,${done?'.1':'.04'});
+            border:1px solid rgba(255,255,255,${done?'.2':'.07'});border-radius:12px;padding:12px 14px;text-align:left;">
+            <div style="font-size:1.6rem;${done?'':'filter:grayscale(1) opacity(.4);'}">${a.icon}</div>
+            <div>
+              <div style="font-family:'Fredoka One',cursive;color:${done?'#FFD166':'rgba(255,255,255,.3)'};font-size:.95rem;">${a.name}</div>
+              <div style="color:rgba(255,255,255,.45);font-size:.75rem;">${a.desc}</div>
+            </div>
+            ${done?'<div style="margin-left:auto;font-size:1.2rem;">✅</div>':''}
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="btn btn-secondary" onclick="document.getElementById('ach-overlay').remove()" style="width:100%;">✕ Close</button>
+    </div>`;
+  document.body.appendChild(el);
+}
+
+// ── Class Code ──────────────────────────────
+const CC_KEY = 'gr_class_code';
+function generateClassCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i=0;i<6;i++) code += chars[Math.floor(Math.random()*chars.length)];
+  localStorage.setItem(CC_KEY, code);
+  const el = document.getElementById('class-code-display');
+  if (el) el.textContent = code;
+  return code;
+}
+function copyClassCode() {
+  const code = localStorage.getItem(CC_KEY) || generateClassCode();
+  const text = `Join my Grammar Ball class! Code: ${code}\nPlay at: ${location.origin}`;
+  navigator.clipboard?.writeText(text).then(()=>alert('Class code copied!')).catch(()=>alert(`Class code: ${code}`));
+}
+
+// ── Export Results CSV (#13) ─────────────────
+function exportResultsCSV() {
+  const rows = [['Level','Name','Score','Stars','Date']];
+  const allKeys = Object.keys(localStorage).filter(k => k.startsWith('gr_lb_'));
+  allKeys.forEach(k => {
+    const levelKey = k.replace('gr_lb_','');
+    try {
+      const entries = JSON.parse(localStorage.getItem(k)||'[]');
+      entries.forEach(e => rows.push([levelKey, e.name||'', e.score||0, e.stars||0, e.date||'']));
+    } catch(err){}
+  });
+  const csv = rows.map(r => r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `grammar-ball-results-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Difficulty-aware question display in guru list ──
+function getDifficultyBadge(diff) {
+  return diff === 'hard' ? '<span style="color:#EF476F;font-size:.7rem;">⭐⭐⭐ Hard</span>'
+       : diff === 'easy' ? '<span style="color:#06D6A0;font-size:.7rem;">⭐ Easy</span>'
+       : '<span style="color:#FFD166;font-size:.7rem;">⭐⭐ Medium</span>';
 }
 
 function showWinLBPreview(entries) {
