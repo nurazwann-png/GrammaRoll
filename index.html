@@ -1702,6 +1702,26 @@ body {
 
 .shake { animation: shake .4s ease; }
 .pop { animation: pop .3s ease; }
+
+/* ── Certificate overlay ── */
+#cert-overlay {
+  position:fixed; inset:0; z-index:9000;
+  background:rgb(10,22,50);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:flex-start;
+  overflow-y:auto;
+  padding:24px 16px max(env(safe-area-inset-bottom,16px),24px);
+  box-sizing:border-box;
+}
+#cert-overlay.hidden { display:none; }
+#cert-canvas {
+  max-width:100%; border-radius:12px;
+  box-shadow:0 8px 40px rgba(255,209,102,.25);
+}
+#cert-actions {
+  display:flex; gap:12px; margin-top:16px; width:100%; max-width:480px;
+}
+#cert-actions button { flex:1; }
 </style>
 
 <!-- HUD -->
@@ -2208,7 +2228,17 @@ body {
   <button class="btn btn-primary" onclick="nextLevel()">Next Level ▶</button>
   <div style="display:flex;gap:10px;margin-top:10px;">
     <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="showLeaderboard(currentLevelKey)">🏆 Score</button>
+    <button class="btn btn-secondary" style="flex:1;" onclick="showCertificate()">📜 Certificate</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="showMenu()">🏠 Menu</button>
+  </div>
+</div>
+
+<!-- CERTIFICATE OVERLAY -->
+<div id="cert-overlay" class="hidden">
+  <canvas id="cert-canvas"></canvas>
+  <div id="cert-actions">
+    <button class="btn btn-primary" onclick="downloadCertificate()">⬇ Download PNG</button>
+    <button class="btn btn-secondary" onclick="closeCertificate()">✕ Close</button>
   </div>
 </div>
 
@@ -4879,6 +4909,8 @@ function promptPlayerName(levelKey, score, stars) {
   setTimeout(() => input.focus(), 100);
 }
 
+let certData = null;
+
 function submitName() {
   if (!pendingWin) return;
   const input = document.getElementById('name-input');
@@ -4890,6 +4922,18 @@ function submitName() {
   dbPostScore(name, pendingWin.levelKey, pendingWin.score, pendingWin.stars);
   // Sync progress to database
   dbSyncProgress(name);
+  // Store certificate data for later
+  const db = GRAMMAR_DB[pendingWin.levelKey] || {};
+  const now = new Date();
+  certData = {
+    name,
+    key:   pendingWin.levelKey,
+    score: pendingWin.score,
+    stars: pendingWin.stars,
+    world: (db.world || '').replace(/[\u{1F000}-\u{1FFFF}\u{2700}-\u{27BF}︀-️ -⁯]/gu,'').trim(),
+    year:  db.year || 1,
+    date:  now.toLocaleDateString('en-MY',{year:'numeric',month:'long',day:'numeric'}),
+  };
   // Show mini leaderboard in win screen
   showWinLBPreview(entries);
   pendingWin = null;
@@ -4927,6 +4971,202 @@ function maybeShowReview() {
   if (!game) return;
   showReview(game);
 }
+
+// ── Certificate ──────────────────────────────────────────────────────────────
+function showCertificate() {
+  if (!certData) return;
+  const d = certData;
+  const canvas = document.getElementById('cert-canvas');
+  const W = 660, H = 920;
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background gradient
+  const bg = ctx.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0,    '#1a0533');
+  bg.addColorStop(0.45, '#0f1f5c');
+  bg.addColorStop(1,    '#0a3a2a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Centre glow
+  const glow = ctx.createRadialGradient(W/2, H*0.3, 0, W/2, H*0.3, 280);
+  glow.addColorStop(0, 'rgba(168,85,247,0.18)');
+  glow.addColorStop(1, 'rgba(168,85,247,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Outer gold border
+  ctx.strokeStyle = '#FFD166';
+  ctx.lineWidth = 7;
+  ctx.strokeRect(18, 18, W-36, H-36);
+
+  // Inner faint border
+  ctx.strokeStyle = 'rgba(255,209,102,0.35)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(30, 30, W-60, H-60);
+
+  // Corner diamonds
+  ctx.fillStyle = '#FFD166';
+  ctx.font = '22px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  [[42,42],[W-42,42],[42,H-42],[W-42,H-42]].forEach(([x,y]) => ctx.fillText('◆', x, y));
+  ctx.textBaseline = 'alphabetic';
+
+  // Ball badge circle
+  ctx.beginPath();
+  ctx.arc(W/2, 112, 54, 0, Math.PI*2);
+  const ballG = ctx.createRadialGradient(W/2-16, 94, 5, W/2, 112, 54);
+  ballG.addColorStop(0, '#FF8C42');
+  ballG.addColorStop(0.55, '#e05c10');
+  ballG.addColorStop(1, '#7a2800');
+  ctx.fillStyle = ballG;
+  ctx.fill();
+  ctx.strokeStyle = '#FFD166';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Ball shine
+  ctx.beginPath();
+  ctx.ellipse(W/2-14, 98, 18, 11, -0.4, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,0.22)';
+  ctx.fill();
+
+  // Ball face (text fallback for emoji)
+  ctx.font = 'bold 30px Arial';
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'center';
+  ctx.fillText(':)', W/2, 120);
+
+  // "Grammar Ball!" title
+  ctx.font = "bold 46px Georgia, serif";
+  ctx.fillStyle = '#FF8C42';
+  ctx.textAlign = 'center';
+  ctx.fillText('Grammar Ball!', W/2, 208);
+
+  // Rule under title
+  ctx.strokeStyle = '#FFD166';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(80, 222); ctx.lineTo(W-80, 222); ctx.stroke();
+
+  // "CERTIFICATE OF ACHIEVEMENT" spaced caps
+  ctx.font = 'bold 13px Arial, sans-serif';
+  ctx.fillStyle = '#FFD166';
+  ctx.textAlign = 'center';
+  ctx.fillText('C E R T I F I C A T E   O F   A C H I E V E M E N T', W/2, 248);
+
+  // Faint rule
+  ctx.strokeStyle = 'rgba(255,209,102,0.3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(60, 262); ctx.lineTo(W-60, 262); ctx.stroke();
+
+  // "This certifies that"
+  ctx.font = 'italic 19px Georgia, serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.textAlign = 'center';
+  ctx.fillText('This certifies that', W/2, 316);
+
+  // Student name (auto-size)
+  const nSize = d.name.length > 22 ? 36 : d.name.length > 16 ? 42 : 50;
+  ctx.font = `bold ${nSize}px Georgia, serif`;
+  ctx.fillStyle = '#FFD166';
+  ctx.fillText(d.name, W/2, 382);
+
+  // Underline name
+  const nw = ctx.measureText(d.name).width;
+  ctx.strokeStyle = 'rgba(255,209,102,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W/2 - nw/2, 391); ctx.lineTo(W/2 + nw/2, 391);
+  ctx.stroke();
+
+  // "has successfully completed"
+  ctx.font = 'italic 19px Georgia, serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.65)';
+  ctx.textAlign = 'center';
+  ctx.fillText('has successfully completed', W/2, 428);
+
+  // Level line
+  ctx.font = 'bold 27px Arial, sans-serif';
+  ctx.fillStyle = '#06D6A0';
+  const worldLabel = d.world ? `Level ${d.key}  —  ${d.world}` : `Level ${d.key}`;
+  ctx.fillText(worldLabel, W/2, 470);
+
+  // Subtitle
+  ctx.font = '15px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.fillText(`English Grammar · CEFR Malaysia · Year ${d.year}`, W/2, 498);
+
+  // Stars (Unicode ★ ☆ — renders everywhere)
+  ctx.font = '48px Arial, sans-serif';
+  ctx.fillStyle = '#FFD166';
+  ctx.fillText('★'.repeat(d.stars) + '☆'.repeat(3 - d.stars), W/2, 564);
+
+  // Score badge
+  const scoreLabel = `Score: ${Number(d.score).toLocaleString()} points`;
+  ctx.font = 'bold 23px Arial, sans-serif';
+  ctx.fillStyle = '#FF8C42';
+  ctx.fillText(scoreLabel, W/2, 608);
+
+  // Horizontal rule
+  ctx.strokeStyle = 'rgba(255,209,102,0.28)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(80, 632); ctx.lineTo(W-80, 632); ctx.stroke();
+
+  // Footer text
+  ctx.font = '14px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.32)';
+  ctx.fillText(d.date, W/2, 662);
+  ctx.fillText('English Adventure · CEFR Malaysia', W/2, 682);
+
+  // Wax-seal circle
+  const cx = W/2, cy = 770;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 58, 0, Math.PI*2);
+  const sealG = ctx.createRadialGradient(cx-10, cy-12, 5, cx, cy, 58);
+  sealG.addColorStop(0, 'rgba(255,209,102,0.3)');
+  sealG.addColorStop(1, 'rgba(255,209,102,0.08)');
+  ctx.fillStyle = sealG;
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,209,102,0.65)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx, cy, 49, 0, Math.PI*2);
+  ctx.strokeStyle = 'rgba(255,209,102,0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.font = 'bold 11px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,209,102,0.85)';
+  ctx.textAlign = 'center';
+  ctx.fillText('GRAMMAR', cx, 761);
+  ctx.fillText('BALL', cx, 777);
+  ctx.font = '22px serif';
+  ctx.fillText('★', cx, 800);
+
+  // Date stamp at very bottom
+  ctx.font = '13px Arial, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillText(`grammarball · ${d.date}`, W/2, 880);
+
+  document.getElementById('cert-overlay').classList.remove('hidden');
+}
+
+function closeCertificate() {
+  document.getElementById('cert-overlay').classList.add('hidden');
+}
+
+function downloadCertificate() {
+  const canvas = document.getElementById('cert-canvas');
+  const safeName = certData ? certData.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
+  const a = document.createElement('a');
+  a.download = `GrammarBall_Certificate_${safeName}.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 function showReview(g) {
   const overlay = document.getElementById('review-overlay');
@@ -6030,6 +6270,7 @@ function startLevel(world, level) {
 function restartLevel() {
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
+  closeCertificate();
   document.getElementById('mcq-overlay').classList.add('hidden');
   stopMCQTimer(); // clear any ghost timer from previous game
   coopMyAnswered = false;
@@ -6080,6 +6321,7 @@ function spawnMenuStars() {
 }
 
 function showMenu() {
+  closeCertificate();
   document.getElementById('menu-screen').classList.remove('hidden');
   document.getElementById('gameover-overlay').classList.add('hidden');
   document.getElementById('win-overlay').classList.add('hidden');
