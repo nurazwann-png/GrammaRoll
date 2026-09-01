@@ -4344,7 +4344,7 @@ function triggerWin(g) {
 
   totalScore += g.score;
   // Achievement stats
-  const isBossLevel = g.level.key && GRAMMAR_DB[g.level.key]?.difficulty === 'boss';
+  const isBossLevel = g.level.difficulty === 'boss' || (g.level.key && GRAMMAR_DB[g.level.key]?.difficulty === 'boss');
   const noDamage = !g.damageTaken; // true only if playerTakeDamage was never called
   updateAchStats({
     levelsWon: 1,
