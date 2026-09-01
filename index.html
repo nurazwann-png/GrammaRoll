@@ -908,14 +908,22 @@ body {
 .overlay {
   position:fixed; inset:0; z-index:160;
   display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
+  align-items:center;
+  /* flex-start + spacers = center when short, scrollable when tall */
+  justify-content:flex-start;
   transition: opacity .4s;
   /* default solid background so menu never bleeds through any overlay */
   background: rgba(10,22,50,0.97);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   overflow-y: auto;
+  /* safe-area padding for notched phones (iPhone X, Android notch) */
+  padding: max(env(safe-area-inset-top, 12px), 12px) 0
+           max(env(safe-area-inset-bottom, 12px), 12px);
+  box-sizing: border-box;
 }
+/* Spacers push content to vertical center when it fits; collapse when it overflows */
+.overlay::before, .overlay::after { content:''; flex:1 0 0; }
 .overlay.hidden { opacity:0; pointer-events:none; }
 #gameover-overlay {
   background: linear-gradient(160deg, rgba(80,0,0,.9), rgba(20,0,20,.9));
@@ -1036,6 +1044,16 @@ body {
   #hud-hearts      { font-size:1rem; letter-spacing:0.5px; }
   #pause-btn       { width:34px; height:34px; font-size:0.9rem; border-radius:9px; }
   .overlay-title   { font-size:clamp(2.4rem,12vw,3.8rem); }
+
+  /* Time Challenge — compact layout on small phones */
+  #tc-overlay > div { padding:14px 12px; }
+  #tc-timer, #tc-score, #tc-streak { font-size:2rem; }
+  #tc-question { font-size:clamp(1rem,4.5vw,1.2rem); padding:12px; min-height:56px; }
+  #tc-options button { font-size:clamp(0.9rem,4vw,1rem); padding:12px 8px; }
+
+  /* Daily Challenge — compact on small phones */
+  #daily-overlay > div { padding:14px 12px 30px !important; }
+  #dc-question { font-size:clamp(1rem,4.5vw,1.2rem) !important; }
 }
 
 /* ═══════════════════════════════════════════
@@ -1871,20 +1889,20 @@ body {
 
 <!-- TIME CHALLENGE OVERLAY -->
 <div class="overlay hidden" id="tc-overlay">
-  <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+  <div style="max-width:480px;width:100%;text-align:center;padding:20px;box-sizing:border-box;">
     <div style="font-size:3.5rem;margin-bottom:8px;">⏱️</div>
     <h2 style="font-family:'Fredoka One',cursive;font-size:2rem;color:#06D6A0;margin:0 0 8px;">Time Challenge</h2>
     <p style="color:rgba(255,255,255,.7);margin:0 0 20px;">Answer as many questions as you can in <strong style="color:#FFD166;">60 seconds</strong>!</p>
     <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;">
-      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px clamp(10px,4vw,20px);min-width:clamp(76px,22vw,100px);flex:1;">
         <div id="tc-timer" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#FFD166;">60</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">SECONDS</div>
       </div>
-      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px clamp(10px,4vw,20px);min-width:clamp(76px,22vw,100px);flex:1;">
         <div id="tc-score" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#06D6A0;">0</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">SCORE</div>
       </div>
-      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px clamp(10px,4vw,20px);min-width:clamp(76px,22vw,100px);flex:1;">
         <div id="tc-streak" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#FF80FF;">0</div>
         <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">STREAK</div>
       </div>
