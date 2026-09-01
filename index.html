@@ -1463,6 +1463,10 @@ body {
       <span class="menu-card-icon">🎨</span>
       <span class="menu-card-label">Ball Skins</span>
     </button>
+    <button class="menu-card" onclick="showDailyChallenge()" style="background:linear-gradient(135deg,#F59E0B,#DC2626);box-shadow:0 6px 20px rgba(245,158,11,.5);color:#fff;grid-column:span 2;">
+      <span class="menu-card-icon">📅</span>
+      <span class="menu-card-label" id="daily-btn-label">Daily Challenge</span>
+    </button>
   </div>
 </div>
 
@@ -1706,6 +1710,15 @@ body {
       <button class="mcq-btn mcq-btn-b" id="mcq-btn-1" onclick="selectAnswer(1)"></button>
       <button class="mcq-btn mcq-btn-c" id="mcq-btn-2" onclick="selectAnswer(2)"></button>
     </div>
+    <!-- SENTENCE ORDERING PANEL (shown instead of choices for type='order' questions) -->
+    <div id="order-panel" style="display:none;">
+      <div id="order-built" style="min-height:42px;background:rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-family:'Fredoka One',cursive;font-size:1.1rem;color:#FFD166;word-break:break-word;"></div>
+      <div id="order-words" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="orderUndo()" style="flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-family:'Fredoka One',cursive;cursor:pointer;">⬅ Undo</button>
+        <button onclick="orderSubmit()" style="flex:2;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#06D6A0,#0891B2);color:#fff;font-family:'Fredoka One',cursive;font-size:1rem;cursor:pointer;">✅ Submit</button>
+      </div>
+    </div>
     <div id="mcq-progress"></div>
   </div>
 </div>
@@ -1793,6 +1806,8 @@ const GRAMMAR_DB = {
       {q:"They ___ playing chess.",  correct:"are",   wrong:["is","am"],    tip:"Present continuous: they/we/you + are + verb-ing."},
       {q:"He ___ eating lunch.",     correct:"is",    wrong:["am","are"],   tip:"Present continuous: he/she/it + is + verb-ing."},
       {q:"We ___ watching TV.",      correct:"are",   wrong:["is","am"],    tip:"Present continuous: we + are + verb-ing."},
+      {type:"order", words:["She","is","eating","an","apple","."], tip:"Subject + is/am/are + verb-ing for present continuous."},
+      {type:"order", words:["They","are","playing","football","."], tip:"'They' uses 'are' in present continuous."},
     ]
   }
 };
@@ -2775,7 +2790,13 @@ function buildLevel(key) {
     curX += 340;
 
     // Grammar cluster: shuffle 3 platforms
-    const cluster = [
+    // For ordering questions, show placeholder labels
+    const isOrder = q.type === 'order';
+    const cluster = isOrder ? [
+      {label: '📝 Arrange', isCorrect: true},
+      {label: '📝 Words',   isCorrect: false},
+      {label: '📝 Order',   isCorrect: false},
+    ] : [
       {label: q.correct, isCorrect: true},
       {label: q.wrong[0], isCorrect: false},
       {label: q.wrong[1], isCorrect: false},
@@ -3300,6 +3321,12 @@ function showMCQ(g) {
   const q = g.level.questions[g.currentQ];
   if (!q) { g.state='playing'; return; }
 
+  // Sentence ordering question type
+  if (q.type === 'order') {
+    showOrderQuestion(g, q);
+    return;
+  }
+
   // Build shuffled choices from actual grammar platforms for this question
   const platChoices = g.level.platforms.filter(p =>
     p.type==='grammar' && p.data.questionIdx===g.currentQ && !p.crumbling && !p.dead
@@ -3370,6 +3397,9 @@ function showMCQ(g) {
 
 function hideMCQ() {
   document.getElementById('mcq-overlay').classList.add('hidden');
+  // Reset ordering panel if visible
+  document.getElementById('order-panel').style.display = 'none';
+  document.getElementById('mcq-choices').style.display = '';
   stopMCQTimer();
 }
 
@@ -3535,6 +3565,92 @@ function selectBossAnswer(choice, g) {
       setTimeout(() => { g.bossMCQActive = false; }, 2500);
     }
   }, choice.isCorrect ? 500 : 800);
+}
+
+// ── Sentence ordering ──────────────────────────
+let orderWords = [], orderBuilt = [], orderGame = null, orderQ = null;
+
+function showOrderQuestion(g, q) {
+  orderGame = g; orderQ = q;
+  orderWords = [...q.words]; // shuffled copy
+  for (let i=orderWords.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[orderWords[i],orderWords[j]]=[orderWords[j],orderWords[i]];}
+  orderBuilt = [];
+
+  document.getElementById('mcq-question-text').textContent = '🔤 Put the words in order:';
+  document.getElementById('mcq-hint').textContent = 'Tap words to build the sentence!';
+  document.getElementById('mcq-choices').style.display = 'none';
+  document.getElementById('order-panel').style.display = 'block';
+  renderOrderPanel();
+
+  const mcqEl = document.getElementById('mcq-overlay');
+  mcqEl.classList.remove('hidden');
+  applyMCQPowerUps(g);
+  stopMCQTimer();
+  startMCQTimer(g);
+}
+
+function renderOrderPanel() {
+  const built = document.getElementById('order-built');
+  built.textContent = orderBuilt.join(' ') || '(tap words below)';
+  const wordsEl = document.getElementById('order-words');
+  wordsEl.innerHTML = orderWords.map((w,i) =>
+    `<button onclick="orderTap(${i})"
+      style="padding:8px 14px;border-radius:10px;border:1.5px solid rgba(255,209,102,.5);
+             background:rgba(255,209,102,.15);color:#FFD166;font-family:'Fredoka One',cursive;
+             font-size:1rem;cursor:pointer;">${w}</button>`
+  ).join('');
+}
+
+function orderTap(idx) {
+  orderBuilt.push(orderWords[idx]);
+  orderWords.splice(idx, 1);
+  renderOrderPanel();
+}
+
+function orderUndo() {
+  if (!orderBuilt.length) return;
+  orderWords.push(orderBuilt.pop());
+  renderOrderPanel();
+}
+
+function orderSubmit() {
+  if (!orderGame || !orderQ) return;
+  const answer = orderBuilt.join(' ');
+  const correct = orderQ.words.join(' ');
+  const isCorrect = answer === correct;
+  document.getElementById('mcq-choices').style.display = '';
+  document.getElementById('order-panel').style.display = 'none';
+  hideMCQ();
+  orderGame.state = 'playing';
+  stopMCQTimer();
+
+  const g = orderGame;
+  const qIdx = g.currentQ;
+  if (isCorrect) {
+    g.answeredQuestions.add(qIdx);
+    g.combo++;
+    const multiplier = g.combo>=10?5:g.combo>=5?3:g.combo>=3?2:1;
+    const earned = 100 * multiplier * (g.useDouble?2:1);
+    if(g.useDouble){g.useDouble=false;}
+    g.score += earned;
+    Audio.correct(g.combo);
+    spawnParticles(g.px,g.py,'#06D6A0',20,8);
+    spawnTextParticle(g.px,g.py-50,`+${earned} ✅`,'#06D6A0');
+    showCorrectBanner(g.combo, multiplier);
+    g.correctGlow = 30;
+    updateComboHUD(g.combo);
+    g.currentQ = Math.min(g.currentQ+1, g.level.questions.length-1);
+    updateQuestionUI(g); updateHUD(g); mpSendScore(g);
+    g.pvy = -5; g.pvx = 0;
+  } else {
+    g.combo = 0; updateComboHUD(0);
+    spawnParticles(g.px,g.py,'#EF476F',14,5);
+    spawnTextParticle(g.px,g.py-30,'Wrong order! ✗','#EF476F');
+    srRecordWrong(g.level.key, qIdx);
+    if (orderQ.tip) showExplainToast(orderQ.tip, `✗ Correct: "${correct}"`);
+    if(!tryShield(g)) playerTakeDamage(g);
+  }
+  orderGame = null; orderQ = null;
 }
 
 function stopMCQTimer() {
@@ -3839,6 +3955,10 @@ function updateQuestionUI(g) {
   const q = g.level.questions[g.currentQ];
   if (!q) {
     document.getElementById('question-box').innerHTML = '✅ All questions answered!';
+    return;
+  }
+  if (q.type === 'order') {
+    document.getElementById('question-box').innerHTML = '🔤 Put the words in order!';
     return;
   }
   const parts = q.q.split('___');
@@ -4412,6 +4532,159 @@ function closeSkinsMenu() {
 }
 
 // ══════════════════════════════════════════════
+//  DAILY CHALLENGE
+// ══════════════════════════════════════════════
+function getDailyQuestions() {
+  // Collect all questions, seed shuffle by current date
+  const all = [];
+  Object.entries(GRAMMAR_DB).forEach(([k, lvl]) => {
+    if (lvl.questions) lvl.questions.forEach(q => all.push({...q, _lvlKey: k}));
+  });
+  // Date-seeded shuffle using mulberry32 PRNG
+  const today = new Date();
+  const seed = today.getFullYear()*10000 + (today.getMonth()+1)*100 + today.getDate();
+  let s = seed;
+  const rand = () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  for (let i = all.length-1; i > 0; i--) {
+    const j = Math.floor(rand() * (i+1));
+    [all[i], all[j]] = [all[j], all[i]];
+  }
+  return all.slice(0, 10); // 10 questions per day
+}
+
+function getDailyDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getDailyProgress() {
+  try { return JSON.parse(localStorage.getItem('gr_daily')||'{}'); } catch(e) { return {}; }
+}
+
+function showDailyChallenge() {
+  const dateStr = getDailyDateStr();
+  const prog = getDailyProgress();
+  const done = prog[dateStr];
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  overlay.id = 'daily-overlay';
+  overlay.style.zIndex = '9999';
+  overlay.innerHTML = `
+    <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+      <div style="font-size:3rem;margin-bottom:4px;">📅</div>
+      <h2 style="font-family:'Fredoka One',cursive;font-size:1.8rem;color:#FFD166;margin:0 0 4px;">Daily Challenge</h2>
+      <p style="color:rgba(255,255,255,.6);font-size:.88rem;margin:0 0 14px;">${dateStr} · 10 Questions</p>
+      ${done ? `
+        <div style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.4);border-radius:14px;padding:14px;margin-bottom:16px;">
+          <div style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:#06D6A0;">✅ Completed Today!</div>
+          <div style="color:rgba(255,255,255,.7);margin-top:4px;">Score: <strong>${done.score}</strong> · Accuracy: <strong>${done.accuracy}%</strong></div>
+        </div>` : ''}
+      <div id="daily-q-area">
+        ${done ? '' : '<p style="color:rgba(255,255,255,.5);">Tap "Start" to begin today\'s challenge.</p>'}
+      </div>
+      <div id="daily-stats" style="display:${done?'grid':'none'};grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;">
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 4px;text-align:center;">
+          <div id="dc-score" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:#FFD166;">0</div>
+          <div style="font-size:.7rem;color:rgba(255,255,255,.4);">Score</div>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 4px;text-align:center;">
+          <div id="dc-acc" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:#06D6A0;">0%</div>
+          <div style="font-size:.7rem;color:rgba(255,255,255,.4);">Accuracy</div>
+        </div>
+        <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 4px;text-align:center;">
+          <div id="dc-streak" style="font-family:'Fredoka One',cursive;font-size:1.4rem;color:#FF80FF;">0</div>
+          <div style="font-size:.7rem;color:rgba(255,255,255,.4);">Best Streak</div>
+        </div>
+      </div>
+      <div id="dc-question" style="display:none;font-family:'Fredoka One',cursive;font-size:1.2rem;color:#fff;background:rgba(255,255,255,.08);border-radius:14px;padding:16px;margin-bottom:12px;"></div>
+      <div id="dc-options" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;"></div>
+      <div id="dc-feedback" style="min-height:28px;font-family:'Fredoka One',cursive;font-size:.95rem;margin-bottom:8px;"></div>
+      <div id="dc-progress-bar" style="display:none;background:rgba(255,255,255,.1);border-radius:8px;height:8px;margin-bottom:14px;">
+        <div id="dc-progress-fill" style="background:#FFD166;height:8px;border-radius:8px;width:0%;transition:width .3s;"></div>
+      </div>
+      <button id="dc-start-btn" class="btn btn-primary" onclick="startDailyChallenge()" style="${done?'display:none':''}">🚀 Start Daily Challenge!</button>
+      <button class="btn btn-secondary" onclick="closeDailyChallenge()" style="width:100%;margin-top:8px;">✕ Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+let dcQuestions = [], dcQIdx = 0, dcScore = 0, dcCorrect = 0, dcStreak = 0, dcBestStreak = 0;
+
+function startDailyChallenge() {
+  dcQuestions = getDailyQuestions();
+  dcQIdx = 0; dcScore = 0; dcCorrect = 0; dcStreak = 0; dcBestStreak = 0;
+  document.getElementById('dc-start-btn').style.display = 'none';
+  document.getElementById('daily-stats').style.display = 'grid';
+  document.getElementById('dc-question').style.display = 'flex';
+  document.getElementById('dc-question').style.alignItems = 'center';
+  document.getElementById('dc-question').style.justifyContent = 'center';
+  document.getElementById('dc-options').style.display = 'grid';
+  document.getElementById('dc-progress-bar').style.display = 'block';
+  dcShowQuestion();
+}
+
+function dcShowQuestion() {
+  if (dcQIdx >= dcQuestions.length) { dcFinish(); return; }
+  const q = dcQuestions[dcQIdx];
+  document.getElementById('dc-question').innerHTML = q.q.replace('___','<span style="color:#FFD166;text-decoration:underline;">___</span>');
+  document.getElementById('dc-progress-fill').style.width = `${(dcQIdx/dcQuestions.length)*100}%`;
+  const options = [{text:q.correct,correct:true}].concat(q.wrong.map(w=>({text:w,correct:false})));
+  for (let i=options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[options[i],options[j]]=[options[j],options[i]];}
+  const cols=['#3B82F6','#EF476F','#06D6A0'];
+  document.getElementById('dc-options').innerHTML = options.map((o,i)=>
+    `<button onclick="dcAnswer(${o.correct},this,'${o.correct?'':q.correct.replace(/'/g,"\\'")}')"
+      style="padding:12px 8px;border-radius:12px;border:2px solid ${cols[i%3]}55;background:${cols[i%3]}22;
+             color:#fff;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer;">${o.text}</button>`
+  ).join('');
+  document.getElementById('dc-feedback').textContent='';
+}
+
+function dcAnswer(correct, btn, correctText) {
+  dcQIdx++;
+  document.getElementById('dc-options').querySelectorAll('button').forEach(b=>b.disabled=true);
+  const fb = document.getElementById('dc-feedback');
+  if(correct){
+    dcCorrect++; dcStreak++; if(dcStreak>dcBestStreak)dcBestStreak=dcStreak;
+    const mult = dcStreak>=10?5:dcStreak>=5?3:dcStreak>=3?2:1;
+    dcScore += 100*mult;
+    fb.style.color='#06D6A0'; fb.textContent = mult>1?`✅ Correct! ${mult}× bonus!`:'✅ Correct!';
+    btn.style.background='#06D6A044'; btn.style.borderColor='#06D6A0';
+  } else {
+    dcStreak=0;
+    fb.style.color='#EF476F'; fb.textContent=`❌ Correct: ${correctText}`;
+  }
+  document.getElementById('dc-score').textContent = dcScore;
+  document.getElementById('dc-acc').textContent = Math.round((dcCorrect/dcQIdx)*100)+'%';
+  document.getElementById('dc-streak').textContent = dcBestStreak;
+  setTimeout(() => { if(dcQIdx < dcQuestions.length) dcShowQuestion(); else dcFinish(); }, correct?350:1000);
+}
+
+function dcFinish() {
+  const accuracy = Math.round((dcCorrect/dcQuestions.length)*100);
+  document.getElementById('dc-question').style.display='none';
+  document.getElementById('dc-options').style.display='none';
+  document.getElementById('dc-progress-fill').style.width='100%';
+  document.getElementById('dc-feedback').innerHTML = `
+    <div style="margin-top:10px;">
+      <div style="font-size:2rem;">${accuracy>=80?'🏆':accuracy>=60?'⭐':'😊'}</div>
+      <div style="font-family:'Fredoka One',cursive;font-size:1.3rem;color:#FFD166;">Challenge Complete!</div>
+      <div style="color:rgba(255,255,255,.6);font-size:.85rem;margin-top:4px;">Score: ${dcScore} · Accuracy: ${accuracy}%</div>
+    </div>`;
+  // Save completion
+  const prog = getDailyProgress();
+  prog[getDailyDateStr()] = { score: dcScore, accuracy };
+  try { localStorage.setItem('gr_daily', JSON.stringify(prog)); } catch(e) {}
+  // Save to leaderboard
+  const name = localStorage.getItem('gr_player_name') || 'Player';
+  addLBEntry('daily', name, dcScore, accuracy>=80?3:accuracy>=60?2:1);
+}
+
+function closeDailyChallenge() {
+  const el = document.getElementById('daily-overlay');
+  if(el) el.remove();
+}
+
+// ══════════════════════════════════════════════
 //  TIME CHALLENGE MODE
 // ══════════════════════════════════════════════
 let tcTimer = null, tcTimeLeft = 60, tcScore = 0, tcStreak = 0, tcBestStreak = 0;
@@ -4707,6 +4980,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();
   });
+
+  // Update daily challenge button label if already completed today
+  const dailyProg = getDailyProgress();
+  const todayDone = dailyProg[getDailyDateStr()];
+  const dailyLbl = document.getElementById('daily-btn-label');
+  if (dailyLbl && todayDone) dailyLbl.textContent = `Daily ✅ ${todayDone.score}pts`;
 });
 
 // ══════════════════════════════════════════════
