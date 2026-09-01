@@ -2237,7 +2237,8 @@ body {
 <div id="cert-overlay" class="hidden">
   <canvas id="cert-canvas"></canvas>
   <div id="cert-actions">
-    <button class="btn btn-primary" onclick="downloadCertificate()">⬇ Download PNG</button>
+    <button class="btn btn-primary" onclick="shareCertificate()">📤 Share</button>
+    <button class="btn btn-secondary" onclick="downloadCertificate()">⬇ Save</button>
     <button class="btn btn-secondary" onclick="closeCertificate()">✕ Close</button>
   </div>
 </div>
@@ -5165,6 +5166,31 @@ function downloadCertificate() {
   a.download = `GrammarBall_Certificate_${safeName}.png`;
   a.href = canvas.toDataURL('image/png');
   a.click();
+}
+
+async function shareCertificate() {
+  const canvas = document.getElementById('cert-canvas');
+  const safeName = certData ? certData.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
+  const fileName = `GrammarBall_Certificate_${safeName}.png`;
+
+  // Convert canvas to Blob then share
+  canvas.toBlob(async (blob) => {
+    const file = new File([blob], fileName, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: certData ? `${certData.name}'s Grammar Ball Certificate` : 'Grammar Ball Certificate',
+          text: `I completed Level ${certData ? certData.key : ''} on Grammar Ball! 🎉`,
+        });
+      } catch (e) {
+        // User cancelled share — no action needed
+      }
+    } else {
+      // Fallback: download instead
+      downloadCertificate();
+    }
+  }, 'image/png');
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
