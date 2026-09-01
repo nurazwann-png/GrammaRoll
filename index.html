@@ -1267,6 +1267,31 @@ body {
   transition:opacity .5s;
 }
 
+/* WRONG ANSWER EXPLANATION TOOLTIP */
+#explain-toast {
+  position: fixed;
+  bottom: 110px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  z-index: 500;
+  background: rgba(15,10,40,0.95);
+  border: 2px solid rgba(239,71,111,0.6);
+  border-radius: 16px;
+  padding: 12px 18px;
+  max-width: min(420px, 90vw);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  box-shadow: 0 4px 20px rgba(239,71,111,0.3);
+}
+#explain-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+#explain-toast-title { color: #EF476F; font-family:'Fredoka One',cursive; font-size:.95rem; margin-bottom:4px; }
+#explain-toast-body  { color: rgba(255,255,255,.85); font-size:.82rem; line-height:1.45; }
+
 /* BIG CORRECT BANNER */
 #correct-banner {
   position: fixed; left: 50%; top: 38%;
@@ -1390,6 +1415,10 @@ body {
 <div id="checkpoint-flash"></div>
 <div id="damage-flash"></div>
 <div id="correct-flash"></div>
+<div id="explain-toast">
+  <div id="explain-toast-title">💡 Tip</div>
+  <div id="explain-toast-body"></div>
+</div>
 <div id="correct-banner">
   <span id="correct-banner-main"></span>
   <span id="correct-banner-divider"></span>
@@ -1694,6 +1723,24 @@ body {
   <div class="overlay-title" style="color:var(--gold);">Congratulations!</div>
   <div class="stars-row" id="stars-row">⭐⭐⭐</div>
   <div class="overlay-sub" id="win-msg">You answered all questions correctly!</div>
+  <!-- Progress Report -->
+  <div id="progress-report" style="width:100%;max-width:400px;margin:0 auto 12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+    <div style="background:rgba(6,214,160,.15);border:1px solid rgba(6,214,160,.4);border-radius:12px;padding:10px 6px;text-align:center;">
+      <div id="pr-accuracy" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#06D6A0;">—</div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:2px;">Accuracy</div>
+    </div>
+    <div style="background:rgba(255,209,102,.15);border:1px solid rgba(255,209,102,.4);border-radius:12px;padding:10px 6px;text-align:center;">
+      <div id="pr-time" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#FFD166;">—</div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:2px;">Avg Time/Q</div>
+    </div>
+    <div style="background:rgba(239,71,111,.15);border:1px solid rgba(239,71,111,.4);border-radius:12px;padding:10px 6px;text-align:center;">
+      <div id="pr-mistakes" style="font-family:'Fredoka One',cursive;font-size:1.6rem;color:#EF476F;">—</div>
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);margin-top:2px;">Mistakes</div>
+    </div>
+  </div>
+  <div id="pr-weak" style="width:100%;max-width:400px;margin:0 auto 12px;display:none;background:rgba(255,255,255,.06);border-radius:12px;padding:10px 14px;text-align:left;font-size:.78rem;color:rgba(255,255,255,.7);line-height:1.5;">
+    <span style="color:#EF476F;font-weight:700;">Needs practice: </span><span id="pr-weak-list"></span>
+  </div>
   <div id="win-lb-preview" style="width:100%;max-width:360px;margin:0 auto 16px;"></div>
   <button class="btn btn-primary" onclick="nextLevel()">Next Level ▶</button>
   <div style="display:flex;gap:10px;margin-top:10px;">
@@ -1710,42 +1757,42 @@ const GRAMMAR_DB = {
   "1-1": {
     world:"Playground 🛝", year:1, difficulty:'easy',
     questions:[
-      {q:"I ___ a student.",         correct:"am",    wrong:["is","are"]},
-      {q:"She ___ my best friend.",  correct:"is",    wrong:["am","are"]},
-      {q:"We ___ very happy!",       correct:"are",   wrong:["am","is"]},
-      {q:"He ___ a good boy.",       correct:"is",    wrong:["am","are"]},
-      {q:"They ___ at school.",      correct:"are",   wrong:["am","is"]},
+      {q:"I ___ a student.",         correct:"am",    wrong:["is","are"],   tip:"Use 'am' with 'I'. (I am, you are, he/she/it is, we/they are)"},
+      {q:"She ___ my best friend.",  correct:"is",    wrong:["am","are"],   tip:"Use 'is' with he, she, it — third person singular."},
+      {q:"We ___ very happy!",       correct:"are",   wrong:["am","is"],    tip:"Use 'are' with we, you, they — plural subjects."},
+      {q:"He ___ a good boy.",       correct:"is",    wrong:["am","are"],   tip:"'He' is third person singular, so use 'is'."},
+      {q:"They ___ at school.",      correct:"are",   wrong:["am","is"],    tip:"'They' is plural, so use 'are'."},
     ]
   },
   "1-2": {
     world:"Playground 🛝", year:1, difficulty:'easy',
     questions:[
-      {q:"This is ___ apple.",       correct:"an",    wrong:["a","the"]},
-      {q:"I have ___ cat.",          correct:"a",     wrong:["an","the"]},
-      {q:"___ sun is very bright.",  correct:"The",   wrong:["A","An"]},
-      {q:"There is ___ elephant.",   correct:"an",    wrong:["a","the"]},
-      {q:"She reads ___ book.",      correct:"a",     wrong:["an","the"]},
+      {q:"This is ___ apple.",       correct:"an",    wrong:["a","the"],    tip:"Use 'an' before a word that starts with a vowel sound (a, e, i, o, u)."},
+      {q:"I have ___ cat.",          correct:"a",     wrong:["an","the"],   tip:"Use 'a' before a word that starts with a consonant sound."},
+      {q:"___ sun is very bright.",  correct:"The",   wrong:["A","An"],     tip:"Use 'the' when both speaker and listener know which specific thing is meant."},
+      {q:"There is ___ elephant.",   correct:"an",    wrong:["a","the"],    tip:"'Elephant' starts with a vowel sound 'e', so use 'an'."},
+      {q:"She reads ___ book.",      correct:"a",     wrong:["an","the"],   tip:"'Book' starts with the consonant 'b', so use 'a'."},
     ]
   },
   "1-3": {
     world:"Playground Boss 👑", year:1, difficulty:'boss',
     bossName:"Grammar King",
     questions:[
-      {q:"He ___ to school daily.",  correct:"goes",  wrong:["go","going"]},
-      {q:"They ___ football.",       correct:"play",  wrong:["plays","played"]},
-      {q:"She ___ rice every day.",  correct:"eats",  wrong:["eat","eating"]},
-      {q:"I ___ my homework now.",   correct:"do",    wrong:["does","did"]},
-      {q:"We ___ English in class.", correct:"learn", wrong:["learns","learned"]},
+      {q:"He ___ to school daily.",  correct:"goes",  wrong:["go","going"], tip:"With he/she/it in simple present, add '-s' or '-es' to the verb."},
+      {q:"They ___ football.",       correct:"play",  wrong:["plays","played"], tip:"'They' is plural — no '-s' needed on the verb in simple present."},
+      {q:"She ___ rice every day.",  correct:"eats",  wrong:["eat","eating"], tip:"'She' is third person singular — add '-s': eats."},
+      {q:"I ___ my homework now.",   correct:"do",    wrong:["does","did"],  tip:"'I' uses the base form: 'do', not 'does' (that's for he/she/it)."},
+      {q:"We ___ English in class.", correct:"learn", wrong:["learns","learned"], tip:"'We' is plural — use the base form 'learn', not 'learns'."},
     ]
   },
   "2-1": {
     world:"Safari 🦁", year:2, difficulty:'medium',
     questions:[
-      {q:"I ___ reading a book.",    correct:"am",    wrong:["is","are"]},
-      {q:"She ___ singing now.",     correct:"is",    wrong:["am","are"]},
-      {q:"They ___ playing chess.",  correct:"are",   wrong:["is","am"]},
-      {q:"He ___ eating lunch.",     correct:"is",    wrong:["am","are"]},
-      {q:"We ___ watching TV.",      correct:"are",   wrong:["is","am"]},
+      {q:"I ___ reading a book.",    correct:"am",    wrong:["is","are"],   tip:"Present continuous: I + am + verb-ing."},
+      {q:"She ___ singing now.",     correct:"is",    wrong:["am","are"],   tip:"Present continuous: she/he/it + is + verb-ing."},
+      {q:"They ___ playing chess.",  correct:"are",   wrong:["is","am"],    tip:"Present continuous: they/we/you + are + verb-ing."},
+      {q:"He ___ eating lunch.",     correct:"is",    wrong:["am","are"],   tip:"Present continuous: he/she/it + is + verb-ing."},
+      {q:"We ___ watching TV.",      correct:"are",   wrong:["is","am"],    tip:"Present continuous: we + are + verb-ing."},
     ]
   }
 };
@@ -2644,11 +2691,31 @@ class PowerUp {
 // ══════════════════════════════════════════════
 //  LEVEL GENERATOR
 // ══════════════════════════════════════════════
+// Spaced repetition: track wrong counts per question
+const SR_KEY = 'gr_sr_wrong';
+function srGetData()   { try { return JSON.parse(localStorage.getItem(SR_KEY)||'{}'); } catch(e) { return {}; } }
+function srRecordWrong(levelKey, qIdx) {
+  const d = srGetData();
+  const k = `${levelKey}:${qIdx}`;
+  d[k] = (d[k] || 0) + 1;
+  try { localStorage.setItem(SR_KEY, JSON.stringify(d)); } catch(e) {}
+}
+function srSortQuestions(levelKey, questions) {
+  const d = srGetData();
+  return [...questions].sort((a, b) => {
+    const ka = `${levelKey}:${questions.indexOf(a)}`;
+    const kb = `${levelKey}:${questions.indexOf(b)}`;
+    return (d[kb] || 0) - (d[ka] || 0); // most wrong first
+  });
+}
+
 function buildLevel(key) {
   const data = GRAMMAR_DB[key] || GRAMMAR_DB["1-1"];
   // Merge guru custom questions (prepend so guru questions appear first)
   const guruQs = getGuruQuestions(key);
-  const questions = guruQs.length > 0 ? [...guruQs, ...data.questions] : data.questions;
+  const baseQs  = guruQs.length > 0 ? [...guruQs, ...data.questions] : data.questions;
+  // Spaced repetition: sort so most-missed questions appear first
+  const questions = srSortQuestions(key, baseQs);
   const difficulty = data.difficulty || 'easy'; // 'easy' | 'medium' | 'boss'
   const platforms = [];
   const enemies   = [];
@@ -3229,6 +3296,7 @@ const MCQ_TIME  = 10; // seconds
 
 function showMCQ(g) {
   g.state = 'answering';
+  g.mcqOpenTime = Date.now(); // for answer timing
   const q = g.level.questions[g.currentQ];
   if (!q) { g.state='playing'; return; }
 
@@ -3448,6 +3516,12 @@ function selectBossAnswer(choice, g) {
       const fl = document.getElementById('damage-flash');
       if (fl) { fl.style.opacity='0.6'; setTimeout(()=>fl.style.opacity='0',400); }
 
+      // Record for spaced repetition + show tip
+      const bossQIdx = (g.bossCurrentQ - 1) % g.data.questions.length;
+      srRecordWrong(g.level.key, bossQIdx);
+      const bossQ = g.data.questions[bossQIdx];
+      if (bossQ && bossQ.tip) showExplainToast(bossQ.tip, `✗ Correct: "${bossQ.correct}"`);
+
       // Boss shows charge face then rushes at ball
       boss.startCharge();
       spawnTextParticle(boss.x+boss.w/2, boss.y-30, '😤 RAGE!', '#FF4D6D');
@@ -3496,6 +3570,14 @@ function selectAnswer(idx) {
   if (!game || game.state !== 'answering') return;
   const choice = mcqShuffled[idx];
   if (!choice) return;
+
+  // Track answer time for progress report
+  if (game.mcqOpenTime) {
+    const elapsed = (Date.now() - game.mcqOpenTime) / 1000;
+    if (!game.answerTimes) game.answerTimes = [];
+    game.answerTimes.push(elapsed);
+    game.mcqOpenTime = null;
+  }
 
   const btn = document.getElementById(`mcq-btn-${idx}`);
 
@@ -3617,8 +3699,11 @@ function processAnswerResult(g, label, isCorrect, plat) {
     if (plat) { plat.crumbling = true; }
     spawnParticles(g.px, g.py, '#EF476F', 14, 5);
     spawnTextParticle(g.px, g.py-30, 'Wrong! ✗', '#EF476F');
-    // Track wrong answer for review
+    // Track wrong answer for review + spaced repetition
     const q = g.data.questions[qIdx];
+    srRecordWrong(g.level.key, qIdx);
+    // Show grammar explanation tip
+    if (q && q.tip) showExplainToast(q.tip, `✗ Correct answer: "${q.correct}"`);
     if (q && !g.wrongAnswers.find(w => w.questionIdx === qIdx)) {
       g.wrongAnswers.push({
         questionIdx: qIdx,
@@ -3696,6 +3781,30 @@ function triggerWin(g) {
   document.getElementById('stars-row').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
   document.getElementById('win-msg').textContent =
     `Score: ${g.score} | Time: ${Math.round(elapsed)}s | ${g.hearts} ❤️ remaining`;
+
+  // Populate progress report
+  const totalQ = g.level.questions.length;
+  const correctCount = g.answeredQuestions.size;
+  const mistakeCount = g.wrongAnswers ? g.wrongAnswers.length : 0;
+  const accuracy = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 100;
+  const avgTime = g.answerTimes && g.answerTimes.length > 0
+    ? (g.answerTimes.reduce((a,b)=>a+b,0)/g.answerTimes.length).toFixed(1) + 's'
+    : '—';
+  document.getElementById('pr-accuracy').textContent = accuracy + '%';
+  document.getElementById('pr-time').textContent = avgTime;
+  document.getElementById('pr-mistakes').textContent = mistakeCount;
+  const weakEl = document.getElementById('pr-weak');
+  const weakList = document.getElementById('pr-weak-list');
+  if (mistakeCount > 0 && g.wrongAnswers) {
+    const topics = g.wrongAnswers.map(wa => {
+      const q = g.data.questions.find(x => x.q === wa.question);
+      return q && q.tip ? q.tip.split('.')[0] : wa.question.replace('___','...');
+    }).filter((v,i,a)=>a.indexOf(v)===i).slice(0,3);
+    weakList.textContent = topics.join(' · ');
+    weakEl.style.display = 'block';
+  } else {
+    weakEl.style.display = 'none';
+  }
 
   // Clear win preview until name submitted
   const prev = document.getElementById('win-lb-preview');
@@ -4844,6 +4953,19 @@ function updateComboHUD(combo) {
   } else {
     el.classList.remove('active', 'tier-2', 'tier-3');
   }
+}
+
+let explainToastTimer = null;
+function showExplainToast(tip, header) {
+  const toast = document.getElementById('explain-toast');
+  const title = document.getElementById('explain-toast-title');
+  const body  = document.getElementById('explain-toast-body');
+  if (!toast) return;
+  title.textContent = header || '💡 Grammar Tip';
+  body.textContent  = tip;
+  toast.classList.add('show');
+  if (explainToastTimer) clearTimeout(explainToastTimer);
+  explainToastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 let screenShakeTimer = 0, screenShakeIntensity = 0;
