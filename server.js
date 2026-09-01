@@ -77,8 +77,8 @@ io.on('connection', (socket) => {
   // ── Join Room ─────────────────────────────────────────────
   socket.on('joinRoom', ({ code, name, avatar }, cb) => {
     const room = rooms[code];
-    if (!room) { cb({ ok: false, error: 'Kod bilik tidak wujud.' }); return; }
-    if (room.players.length >= 2) { cb({ ok: false, error: 'Bilik sudah penuh.' }); return; }
+    if (!room) { cb({ ok: false, error: 'Room code does not exist.' }); return; }
+    if (room.players.length >= 2) { cb({ ok: false, error: 'Room is full.' }); return; }
 
     room.players.push(socket.id);
     room.data[socket.id] = { name, avatar, x: 0, y: 0, score: 0, currentQ: 0 };

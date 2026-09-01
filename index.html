@@ -1,4 +1,4 @@
-<meta charset="utf-8">
+﻿<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -145,6 +145,7 @@ body {
 .pu-badge.shield { background: rgba(139,92,246,.35); border-color: rgba(139,92,246,.7); }
 .pu-badge.time   { background: rgba(59,130,246,.35); border-color: rgba(59,130,246,.7); }
 .pu-badge.hint   { background: rgba(234,179,8,.35);  border-color: rgba(234,179,8,.7); }
+.pu-badge.double { background: rgba(6,214,160,.35);  border-color: rgba(6,214,160,.7); font-size:.7rem; font-weight:900; }
 
 /* COMBO DISPLAY */
 #combo-display {
@@ -161,11 +162,34 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
   animation: comboPulse 0.8s ease-in-out infinite alternate;
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
 }
 #combo-display.active { display: flex; }
+#combo-display.tier-2 {
+  background: linear-gradient(135deg, rgba(255,200,0,.3), rgba(255,100,0,.25));
+  border-color: rgba(255,200,0,.7);
+  color: #FFE566;
+  font-size: 1rem;
+  animation: comboPulse2 0.6s ease-in-out infinite alternate;
+}
+#combo-display.tier-3 {
+  background: linear-gradient(135deg, rgba(255,50,200,.35), rgba(120,0,255,.3));
+  border-color: rgba(220,100,255,.8);
+  color: #FF80FF;
+  font-size: 1.1rem;
+  animation: comboPulse3 0.4s ease-in-out infinite alternate;
+}
 @keyframes comboPulse {
   from { box-shadow: 0 0 6px rgba(255,140,66,.3); }
   to   { box-shadow: 0 0 18px rgba(255,140,66,.7); }
+}
+@keyframes comboPulse2 {
+  from { box-shadow: 0 0 10px rgba(255,200,0,.4), 0 0 20px rgba(255,100,0,.2); }
+  to   { box-shadow: 0 0 24px rgba(255,200,0,.9), 0 0 40px rgba(255,100,0,.4); }
+}
+@keyframes comboPulse3 {
+  from { box-shadow: 0 0 14px rgba(220,100,255,.5), 0 0 30px rgba(120,0,255,.3); }
+  to   { box-shadow: 0 0 32px rgba(220,100,255,1), 0 0 60px rgba(120,0,255,.6); transform: scale(1.05); }
 }
 
 /* PRAISE POPUP */
@@ -361,6 +385,16 @@ body {
   background: linear-gradient(135deg, #A855F7, #7C3AED);
   color: #fff;
   box-shadow: 0 6px 20px rgba(168,85,247,.5);
+}
+.menu-card-teal {
+  background: linear-gradient(135deg, #06D6A0, #0891B2);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(6,214,160,.5);
+  animation: timePulse 2s ease-in-out infinite alternate;
+}
+@keyframes timePulse {
+  from { box-shadow: 0 6px 20px rgba(6,214,160,.4); }
+  to   { box-shadow: 0 8px 30px rgba(6,214,160,.9), 0 0 60px rgba(6,214,160,.3); }
 }
 #menu-worlds {
   display:flex; gap:10px; margin:18px 0;
@@ -1315,11 +1349,11 @@ body {
     <div class="heart-icon" id="h2">♥</div>
     <div class="heart-icon" id="h3">♥</div>
   </div>
-  <div id="question-box">Pilih tahap untuk bermain!</div>
+  <div id="question-box">Choose a level to play!</div>
   <div id="hud-right" style="display:flex;align-items:center;gap:8px;">
     <div id="powerup-bar"></div>
     <div id="combo-display">🔥 <span id="combo-count">2×</span></div>
-    <div id="world-badge">🌍 Dunia 1</div>
+    <div id="world-badge">🌍 World 1</div>
     <div id="hud-score">0</div>
   </div>
 </div>
@@ -1344,11 +1378,11 @@ body {
   <div id="pause-card">
     <h2>⏸ Rehat</h2>
     <p>Game sedang berhenti sebentar</p>
-    <button class="btn" id="pause-btn-resume" onclick="togglePause()">▶ Teruskan!</button>
-    <button class="btn" id="pause-btn-quit" onclick="quitToMenu()">🏠 Keluar ke Menu</button>
+    <button class="btn" id="pause-btn-resume" onclick="togglePause()">▶ Continue!</button>
+    <button class="btn" id="pause-btn-quit" onclick="quitToMenu()">🏠 Exit to Menu</button>
   </div>
 </div>
-<div id="selfie-indicator" title="Ambil selfie">
+<div id="selfie-indicator" title="Take a selfie">
   <div id="selfie-thumb">😊</div>
 </div>
 
@@ -1374,15 +1408,15 @@ body {
     <div class="world-btn locked">🦁<span>W2</span></div>
     <div class="world-btn locked">🏙️<span>W3</span></div>
   </div>
-  <button class="btn btn-primary menu-play-btn" onclick="startLevel(1,1)">🎮 Mula Bermain!</button>
+  <button class="btn btn-primary menu-play-btn" onclick="startLevel(1,1)">🎮 Start Playing!</button>
   <div class="menu-grid">
     <button class="menu-card menu-card-pink" onclick="showSelfieScreen()">
       <span class="menu-card-icon">📸</span>
-      <span class="menu-card-label">Ambil Selfie</span>
+      <span class="menu-card-label">Take Selfie</span>
     </button>
     <button class="menu-card menu-card-gold" onclick="showLeaderboard(currentLevelKey)">
       <span class="menu-card-icon">🏆</span>
-      <span class="menu-card-label">Papan Skor</span>
+      <span class="menu-card-label">Leaderboard</span>
     </button>
     <button class="menu-card menu-card-blue" onclick="showMultiplayer()">
       <span class="menu-card-icon">⚔️</span>
@@ -1390,22 +1424,30 @@ body {
     </button>
     <button class="menu-card menu-card-purple" onclick="showGuruMode()">
       <span class="menu-card-icon">🧑‍🏫</span>
-      <span class="menu-card-label">Mod Guru</span>
+      <span class="menu-card-label">Teacher Mode</span>
+    </button>
+    <button class="menu-card menu-card-teal" onclick="showTimeChallenge()">
+      <span class="menu-card-icon">⏱️</span>
+      <span class="menu-card-label">Time Challenge</span>
+    </button>
+    <button class="menu-card" onclick="showSkinsMenu()" style="background:linear-gradient(135deg,#FF6B9D,#A855F7);box-shadow:0 6px 20px rgba(168,85,247,.5);color:#fff;">
+      <span class="menu-card-icon">🎨</span>
+      <span class="menu-card-label">Ball Skins</span>
     </button>
   </div>
 </div>
 
 <!-- SELFIE SCREEN -->
 <div class="screen hidden" id="selfie-screen">
-  <h2>📸 Muka Kamu = Bola Kamu!</h2>
-  <p>Ambil gambar muka untuk jadi bola dalam game</p>
+  <h2>📸 Your Face = Your Ball!</h2>
+  <p>Take a photo of your face to become the ball</p>
   <div id="camera-container">
     <video id="camera-video" autoplay playsinline muted></video>
     <div id="camera-overlay"></div>
   </div>
   <div id="selfie-btns">
     <button class="btn btn-primary" id="capture-btn" onclick="captureSelfie()">📷 Snap!</button>
-    <button class="btn btn-secondary" onclick="closeSelfie()">Batal</button>
+    <button class="btn btn-secondary" onclick="closeSelfie()">Cancel</button>
   </div>
 </div>
 
@@ -1413,11 +1455,11 @@ body {
 <div class="overlay hidden" id="name-overlay">
   <div id="name-card">
     <div style="font-size:3rem;margin-bottom:8px;">🏆</div>
-    <h2>Tahniah!</h2>
-    <p>Masukkan nama kamu untuk simpan rekod</p>
-    <input type="text" id="name-input" maxlength="20" placeholder="Nama kamu...">
-    <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="submitName()">💾 Simpan Rekod</button>
-    <button class="btn btn-secondary" style="width:100%;font-size:0.9rem;" onclick="skipName()">Langkau</button>
+    <h2>Congratulations!</h2>
+    <p>Enter your name to save your record</p>
+    <input type="text" id="name-input" maxlength="20" placeholder="Your name...">
+    <button class="btn btn-primary" style="width:100%;margin-bottom:8px;" onclick="submitName()">💾 Save Record</button>
+    <button class="btn btn-secondary" style="width:100%;font-size:0.9rem;" onclick="skipName()">Skip</button>
   </div>
 </div>
 
@@ -1425,30 +1467,67 @@ body {
 <div class="overlay hidden" id="review-overlay">
   <div id="review-wrap">
     <div id="review-header">
-      <h2>📝 Ulang Kaji</h2>
-      <p id="review-subtitle">Soalan yang kamu jawab salah</p>
+      <h2>📝 Review</h2>
+      <p id="review-subtitle">Questions you got wrong</p>
     </div>
     <div id="review-cards"></div>
     <div id="review-perfect" class="hidden">
       <span class="big-emoji">🌟</span>
-      <h3>Sempurna!</h3>
-      <p>Kamu jawab semua soalan dengan betul! Hebat!</p>
+      <h3>Perfect!</h3>
+      <p>You answered all questions correctly! Great!</p>
     </div>
-    <button class="btn btn-primary" style="width:100%;max-width:500px;margin:0 auto;display:block;" onclick="closeReview()">Teruskan ▶</button>
+    <button class="btn btn-primary" style="width:100%;max-width:500px;margin:0 auto;display:block;" onclick="closeReview()">Continue ▶</button>
+  </div>
+</div>
+
+<!-- TIME CHALLENGE OVERLAY -->
+<div class="overlay hidden" id="tc-overlay">
+  <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+    <div style="font-size:3.5rem;margin-bottom:8px;">⏱️</div>
+    <h2 style="font-family:'Fredoka One',cursive;font-size:2rem;color:#06D6A0;margin:0 0 8px;">Time Challenge</h2>
+    <p style="color:rgba(255,255,255,.7);margin:0 0 20px;">Answer as many questions as you can in <strong style="color:#FFD166;">60 seconds</strong>!</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-bottom:20px;flex-wrap:wrap;">
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+        <div id="tc-timer" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#FFD166;">60</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">SECONDS</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+        <div id="tc-score" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#06D6A0;">0</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">SCORE</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border-radius:16px;padding:14px 20px;min-width:100px;">
+        <div id="tc-streak" style="font-family:'Fredoka One',cursive;font-size:2.5rem;color:#FF80FF;">0</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px;">STREAK</div>
+      </div>
+    </div>
+    <div id="tc-question" style="font-family:'Fredoka One',cursive;font-size:1.35rem;color:#fff;background:rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:16px;min-height:70px;display:flex;align-items:center;justify-content:center;"></div>
+    <div id="tc-options" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;"></div>
+    <div id="tc-feedback" style="font-family:'Fredoka One',cursive;font-size:1.1rem;min-height:32px;margin-bottom:10px;"></div>
+    <div id="tc-result" class="hidden" style="text-align:center;">
+      <div style="font-size:2.5rem;">🏁</div>
+      <h3 style="font-family:'Fredoka One',cursive;color:#FFD166;font-size:1.8rem;margin:8px 0;">Time's Up!</h3>
+      <p id="tc-final-score" style="color:#06D6A0;font-size:1.3rem;margin:4px 0;"></p>
+      <p id="tc-final-streak" style="color:#FF80FF;font-size:1rem;margin:4px 0 20px;"></p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="startTimeChallenge()">🔄 Play Again</button>
+        <button class="btn btn-secondary" onclick="closeTimeChallenge()">🏠 Menu</button>
+      </div>
+    </div>
+    <button class="btn btn-secondary" id="tc-close-btn" onclick="closeTimeChallenge()" style="width:100%;">✕ Cancel</button>
   </div>
 </div>
 
 <!-- MULTIPLAYER LOBBY OVERLAY -->
 <div class="overlay hidden" id="mp-overlay">
   <div id="mp-card">
-    <h2>⚔️ Mod Multiplayer</h2>
-    <p class="mp-sub">Lawan rakan dalam masa nyata!</p>
+    <h2>⚔️ Multiplayer Mode</h2>
+    <p class="mp-sub">Challenge a friend in real time!</p>
 
     <!-- Step 1: Enter name -->
     <div id="mp-step-name">
       <div class="mp-field">
-        <label>Nama Kamu</label>
-        <input type="text" id="mp-name-input" maxlength="20" placeholder="Nama kamu...">
+        <label>Your Name</label>
+        <input type="text" id="mp-name-input" maxlength="20" placeholder="Your name...">
       </div>
       <div class="mp-field">
         <label>Level</label>
@@ -1459,26 +1538,26 @@ body {
           <option value="2-1">W2 — Present Continuous</option>
         </select>
       </div>
-      <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="mpCreateRoom()">🏠 Cipta Bilik</button>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:10px;" onclick="mpCreateRoom()">🏠 Create Room</button>
       <div id="mp-divider">atau</div>
       <div class="mp-field">
-        <label>Masukkan Kod Bilik</label>
+        <label>Enter Room Code</label>
         <input type="text" id="mp-join-code" maxlength="4" placeholder="ABCD" style="text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:1.3rem;">
       </div>
-      <button class="btn btn-secondary" style="width:100%;" onclick="mpJoinRoom()">🚪 Sertai Bilik</button>
+      <button class="btn btn-secondary" style="width:100%;" onclick="mpJoinRoom()">🚪 Join Room</button>
     </div>
 
     <!-- Step 2: Waiting / room code display -->
     <div id="mp-step-waiting" style="display:none;">
       <div id="mp-code-display">
         <div id="mp-code-val">----</div>
-        <div id="mp-code-hint">Kongsi kod ini dengan rakan kamu</div>
+        <div id="mp-code-hint">Share this code with your friend</div>
       </div>
-      <div id="mp-status" class="waiting">⏳ Menunggu rakan...</div>
+      <div id="mp-status" class="waiting">⏳ Waiting for friend...</div>
     </div>
 
     <div id="mp-error"></div>
-    <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="closeMultiplayer()">✕ Batal</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:8px;" onclick="closeMultiplayer()">✕ Cancel</button>
   </div>
 </div>
 
@@ -1486,33 +1565,33 @@ body {
 <div id="opponent-hud">
   <div id="opp-avatar">👤</div>
   <div id="opp-info">
-    <div id="opp-name">Lawan</div>
+    <div id="opp-name">Opponent</div>
     <div id="opp-score">0 mata</div>
-    <div id="opp-q">Soalan 0</div>
+    <div id="opp-q">Question 0</div>
   </div>
 </div>
 
 <!-- RACE RESULT overlay -->
 <div id="race-result" class="hidden">
-  <h2 id="race-result-title">🏆 Tahniah!</h2>
-  <p id="race-result-sub">Kamu menang perlumbaan!</p>
-  <button class="btn btn-primary" onclick="closeRaceResult()">Kembali ke Menu</button>
+  <h2 id="race-result-title">🏆 Congratulations!</h2>
+  <p id="race-result-sub">You won the race!</p>
+  <button class="btn btn-primary" onclick="closeRaceResult()">Back to Menu</button>
 </div>
 
 <!-- MOD GURU OVERLAY -->
 <div class="overlay hidden" id="guru-overlay">
   <div id="guru-wrap">
     <div id="guru-header">
-      <h2>🧑‍🏫 Mod Guru</h2>
-      <p>Tetapkan soalan khas untuk kelas anda</p>
+      <h2>🧑‍🏫 Teacher Mode</h2>
+      <p>Set custom questions for your class</p>
     </div>
 
     <!-- PIN gate -->
     <div id="guru-pin-section">
-      <p>Masukkan PIN guru untuk akses</p>
+      <p>Enter teacher PIN to access</p>
       <input type="password" id="guru-pin-input" maxlength="4" placeholder="••••" oninput="checkGuruPin()">
       <div id="guru-pin-error"></div>
-      <button class="btn btn-primary" style="width:140px;" onclick="checkGuruPin(true)">Masuk</button>
+      <button class="btn btn-primary" style="width:140px;" onclick="checkGuruPin(true)">Enter</button>
     </div>
 
     <!-- Main editor (hidden until PIN ok) -->
@@ -1530,46 +1609,46 @@ body {
 
       <!-- Add question form -->
       <div id="guru-add-form">
-        <h3>➕ Tambah Soalan Baru</h3>
+        <h3>➕ Add New Question</h3>
         <div class="guru-field">
-          <label>Soalan (guna ___ untuk ruang kosong)</label>
+          <label>Question (use ___ for the blank)</label>
           <input type="text" id="guru-q-text" placeholder="Cth: She ___ my friend." maxlength="80">
         </div>
         <div class="guru-field">
-          <label>Jawapan Betul</label>
+          <label>Correct Answer</label>
           <input type="text" id="guru-correct" placeholder="Cth: is" maxlength="30">
         </div>
         <div class="guru-field">
-          <label>Jawapan Salah 1</label>
+          <label>Wrong Answer 1</label>
           <input type="text" id="guru-wrong1" placeholder="Cth: am" maxlength="30">
         </div>
         <div class="guru-field">
-          <label>Jawapan Salah 2</label>
+          <label>Wrong Answer 2</label>
           <input type="text" id="guru-wrong2" placeholder="Cth: are" maxlength="30">
         </div>
         <div id="guru-add-error" style="color:var(--red);font-size:.85rem;min-height:20px;margin-bottom:8px;"></div>
-        <button class="btn btn-primary" style="width:100%;" onclick="guruAddQuestion()">💾 Simpan Soalan</button>
+        <button class="btn btn-primary" style="width:100%;" onclick="guruAddQuestion()">💾 Save Question</button>
       </div>
 
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetLevel()">🗑️ Reset Level Ini</button>
-        <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetAll()">♻️ Reset Semua</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetLevel()">🗑️ Reset This Level</button>
+        <button class="btn btn-secondary" style="flex:1;font-size:.85rem;" onclick="guruResetAll()">♻️ Reset All</button>
       </div>
     </div>
 
-    <button class="btn btn-secondary" style="width:100%;margin-top:16px;" onclick="closeGuruMode()">✕ Tutup</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:16px;" onclick="closeGuruMode()">✕ Close</button>
   </div>
 </div>
 
 <!-- LEADERBOARD OVERLAY -->
 <div class="overlay hidden" id="leaderboard-overlay">
   <div id="lb-card">
-    <div id="lb-title">🏆 Papan Skor</div>
+    <div id="lb-title">🏆 Leaderboard</div>
     <div id="lb-subtitle">Top 5 Juara Kelas</div>
     <ul id="lb-list"></ul>
     <div style="display:flex;gap:10px;">
       <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="clearLeaderboard()">🗑️ Reset</button>
-      <button class="btn btn-primary" style="flex:2;" onclick="closeLeaderboard()">Tutup</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="closeLeaderboard()">Close</button>
     </div>
   </div>
 </div>
@@ -1578,7 +1657,7 @@ body {
 <div id="mcq-overlay" class="hidden">
   <div id="mcq-card">
     <div id="mcq-ball-preview">😊</div>
-    <div id="mcq-badge">🎯 Soalan Tatabahasa</div>
+    <div id="mcq-badge">🎯 Grammar Question</div>
     <div id="mcq-timer-wrap">
       <div id="mcq-timer-ring">
         <svg width="56" height="56" viewBox="0 0 56 56">
@@ -1591,8 +1670,8 @@ body {
         <div id="mcq-timer-bar" style="width:100%"></div>
       </div>
     </div>
-    <div id="mcq-question-text">Soalan akan muncul di sini</div>
-    <div id="mcq-hint">Tekan jawapan yang betul!</div>
+    <div id="mcq-question-text">Question will appear here</div>
+    <div id="mcq-hint">Choose the correct answer!</div>
     <div id="mcq-choices">
       <button class="mcq-btn mcq-btn-a" id="mcq-btn-0" onclick="selectAnswer(0)"></button>
       <button class="mcq-btn mcq-btn-b" id="mcq-btn-1" onclick="selectAnswer(1)"></button>
@@ -1605,20 +1684,20 @@ body {
 <!-- GAMEOVER OVERLAY -->
 <div class="overlay hidden" id="gameover-overlay">
   <div class="overlay-title" style="color:var(--red);">Game Over!</div>
-  <div class="overlay-sub">Cuba lagi! Kamu boleh buat ni! 💪</div>
-  <button class="btn btn-primary" onclick="restartLevel()">🔄 Cuba Lagi</button>
+  <div class="overlay-sub">Try again! You can do it! 💪</div>
+  <button class="btn btn-primary" onclick="restartLevel()">🔄 Try Again</button>
   <button class="btn btn-secondary" onclick="showMenu()" style="margin-top:10px;">🏠 Menu</button>
 </div>
 
 <!-- WIN OVERLAY -->
 <div class="overlay hidden" id="win-overlay">
-  <div class="overlay-title" style="color:var(--gold);">Tahniah!</div>
+  <div class="overlay-title" style="color:var(--gold);">Congratulations!</div>
   <div class="stars-row" id="stars-row">⭐⭐⭐</div>
-  <div class="overlay-sub" id="win-msg">Kamu dah jawab semua soalan dengan betul!</div>
+  <div class="overlay-sub" id="win-msg">You answered all questions correctly!</div>
   <div id="win-lb-preview" style="width:100%;max-width:360px;margin:0 auto 16px;"></div>
-  <button class="btn btn-primary" onclick="nextLevel()">Tahap Seterusnya ▶</button>
+  <button class="btn btn-primary" onclick="nextLevel()">Next Level ▶</button>
   <div style="display:flex;gap:10px;margin-top:10px;">
-    <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="showLeaderboard(currentLevelKey)">🏆 Skor</button>
+    <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="showLeaderboard(currentLevelKey)">🏆 Score</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="showMenu()">🏠 Menu</button>
   </div>
 </div>
@@ -1817,11 +1896,16 @@ let correctBannerTimer = null;
 
 function showCorrectBanner(combo, multiplier) {
   const TEXTS = [
-    ['Betul! ✓',        ''],
-    ['Hebat! 🔥',       '2 betul berturut-turut!'],
-    ['Luar Biasa! ⚡',   `${multiplier}× Mata!`],
-    ['Cemerlang! 🌟',   `${multiplier}× Mata!`],
-    ['Genius! 🚀',      'Teruskan semangat tu!'],
+    ['Correct! ✓',           ''],
+    ['Great! 🔥',            '2 in a row!'],
+    ['Amazing! ⚡',          `${multiplier}× Points!`],
+    ['Excellent! 🌟',        `${multiplier}× Points!`],
+    ['ON FIRE! 🔥🔥',        `${multiplier}× Points! Keep going!`],
+    ['UNSTOPPABLE! ⚡⚡',    `${multiplier}× Points!`],
+    ['LEGENDARY! 👑',        `${multiplier}× Points!`],
+    ['ULTRA COMBO! 💥',      `${multiplier}× Points!`],
+    ['GODLIKE! 🚀',          `${multiplier}× Points!`],
+    ['GRAMMAR KING! 👑🔥',   `MAX ${multiplier}× POINTS!!`],
   ];
   const idx = Math.min(combo-1, TEXTS.length-1);
   const [main, sub] = TEXTS[idx];
@@ -2276,6 +2360,8 @@ class Boss {
     this.painTimer = 0;   // pain face when hit
     this.chargeTimer = 0; // charge face before attacking
     this.deathTimer = 0;
+    this.phase = 1;       // 1=normal, 2=50%HP, 3=25%HP
+    this.phaseFlash = 0;  // dramatic flash on phase change
     this.vx = 1.2; // patrol left-right
     this.baseX = x;
     this.patrolRange = 90;
@@ -2300,11 +2386,31 @@ class Boss {
   }
 
   takeDamage() {
+    const prevHp = this.hp;
     this.hp = Math.max(0, this.hp - 1);
     this.shakeTimer = 22;
     this.flashTimer = 18;
-    this.painTimer = 45; // show pain face ~0.75s
+    this.painTimer = 45;
+    // Phase transitions
+    const pct = this.hp / this.maxHp;
+    const prevPct = prevHp / this.maxHp;
+    if (prevPct > 0.5 && pct <= 0.5) this.enterPhase(2);
+    if (prevPct > 0.25 && pct <= 0.25) this.enterPhase(3);
     if (this.hp <= 0) this.die();
+  }
+
+  enterPhase(phase) {
+    this.phase = phase;
+    this.phaseFlash = 80; // frames of phase flash
+    triggerScreenShake(phase === 3 ? 16 : 10, phase === 3 ? 600 : 350);
+    if (game) {
+      spawnScreenConfetti(phase === 3 ? 100 : 60);
+      const msg = phase === 3 ? '😡 FINAL PHASE! 3×!' : '😠 Phase 2! 2×!';
+      spawnTextParticle(this.x + this.w/2, this.y - 40, msg, phase === 3 ? '#FF4444' : '#FF8800');
+    }
+    // Speed up patrol and attack
+    this.patrolRange = phase === 3 ? 160 : 120;
+    if (phase === 3) { this.vx = 3; }
   }
 
   startCharge() {
@@ -2327,6 +2433,7 @@ class Boss {
     if (this.flashTimer > 0) this.flashTimer--;
     if (this.painTimer > 0) this.painTimer--;
     if (this.chargeTimer > 0) this.chargeTimer--;
+    if (this.phaseFlash > 0) this.phaseFlash--;
 
     if (this.attacking) {
       this.x += this.attackVx;
@@ -2359,16 +2466,26 @@ class Boss {
     ctx.fillStyle = grd;
     ctx.beginPath(); ctx.arc(sx+w/2, sy+h/2, w/2+glowSize, 0, Math.PI*2); ctx.fill();
 
-    // Body
-    const flash = this.flashTimer > 0 && this.flashTimer % 3 < 2;
+    // Body — color by phase
+    const flash = (this.flashTimer > 0 && this.flashTimer % 3 < 2) || (this.phaseFlash > 0 && this.phaseFlash % 4 < 2);
+    const phaseTopColor    = this.phase === 3 ? '#7B0000' : this.phase === 2 ? '#B91C1C' : '#DC2626';
+    const phaseBottomColor = this.phase === 3 ? '#1a0000' : this.phase === 2 ? '#4A0808' : '#7F1D1D';
+    const phaseBorderColor = this.phase === 3 ? '#FF2020' : this.phase === 2 ? '#F87171' : '#F87171';
     const bodyGrd = ctx.createLinearGradient(sx, sy, sx, sy+h);
-    bodyGrd.addColorStop(0, flash ? '#fff' : '#DC2626');
-    bodyGrd.addColorStop(1, flash ? '#fca5a5' : '#7F1D1D');
+    bodyGrd.addColorStop(0, flash ? '#fff' : phaseTopColor);
+    bodyGrd.addColorStop(1, flash ? '#fca5a5' : phaseBottomColor);
     ctx.fillStyle = bodyGrd;
     ctx.beginPath(); roundRect(ctx, sx, sy, w, h, 18); ctx.fill();
 
+    // Phase 3: add fiery outer glow ring
+    if (this.phase === 3) {
+      ctx.strokeStyle = `rgba(255,${Math.round(50+Math.sin(this.bobPhase*3)*50)},0,0.8)`;
+      ctx.lineWidth = 5 + Math.sin(this.bobPhase*2)*2;
+      ctx.beginPath(); roundRect(ctx, sx-3, sy-3, w+6, h+6, 21); ctx.stroke();
+    }
+
     // Border
-    ctx.strokeStyle = flash ? '#fff' : '#F87171';
+    ctx.strokeStyle = flash ? '#fff' : phaseBorderColor;
     ctx.lineWidth = 3;
     ctx.beginPath(); roundRect(ctx, sx+2, sy+2, w-4, h-4, 16); ctx.stroke();
 
@@ -2468,9 +2585,10 @@ class Boss {
 //  POWER-UP CLASS
 // ══════════════════════════════════════════════
 const PU_TYPES = {
-  shield: { icon:'🛡️', label:'Perisai',   color:'#8B5CF6', glow:'rgba(139,92,246,.7)'  },
-  time:   { icon:'⏱️', label:'+5 Saat',   color:'#3B82F6', glow:'rgba(59,130,246,.7)'  },
-  hint:   { icon:'💡', label:'Petunjuk',  color:'#EAB308', glow:'rgba(234,179,8,.7)'   },
+  shield: { icon:'🛡️', label:'Shield',        color:'#8B5CF6', glow:'rgba(139,92,246,.7)'  },
+  time:   { icon:'⏱️', label:'+5 Seconds',    color:'#3B82F6', glow:'rgba(59,130,246,.7)'  },
+  hint:   { icon:'💡', label:'Hint',           color:'#EAB308', glow:'rgba(234,179,8,.7)'   },
+  double: { icon:'2×', label:'Double Points!', color:'#06D6A0', glow:'rgba(6,214,160,.7)'   },
 };
 
 class PowerUp {
@@ -2537,7 +2655,7 @@ function buildLevel(key) {
   const coins     = [];
   const powerups  = [];
   const lifeups   = []; // extra life pickups (♥)
-  const puTypes   = ['shield','time','hint'];
+  const puTypes   = ['shield','time','hint','double'];
   let boss = null; // set for boss levels
 
   const GH = 420; // ground height in world
@@ -2679,7 +2797,7 @@ function createGame(key) {
     mcqCorrectSet: new Set(),  // questions answered CORRECTLY via MCQ
     combo: 0,
     // Power-up inventory
-    inv: { shield:false, time:false, hint:false },
+    inv: { shield:false, time:false, hint:false, double:false },
     wrongAnswers: [],
     checkpoint: null,
     checkpointPlaced: false,
@@ -3010,13 +3128,15 @@ function updateGame(g) {
     // Boss fight: show MCQ when player is in arena and not currently answering
     if (g.bossPhase === 'fight' && level.boss.alive && !g.bossMCQActive && g.state !== 'answering') {
       g.bossMCQActive = true;
+      const bossPhaseNum = level.boss.phase || 1;
+      const mcqDelay = bossPhaseNum === 3 ? 350 : bossPhaseNum === 2 ? 550 : 800;
       setTimeout(() => {
         if (game && game.bossPhase === 'fight' && game.level.boss && game.level.boss.alive && game.state !== 'answering') {
           showBossMCQ(game);
         } else if (game) {
           game.bossMCQActive = false;
         }
-      }, 800);
+      }, mcqDelay);
     }
 
     // Boss attack collision: boss rushing into ball
@@ -3145,7 +3265,7 @@ function showMCQ(g) {
   const parts = q.q.split('___');
   document.getElementById('mcq-question-text').innerHTML =
     `${parts[0]}<span id="mcq-blank">___</span>${parts[1]||''}`;
-  document.getElementById('mcq-hint').textContent = 'Pilih jawapan yang betul! 👇';
+  document.getElementById('mcq-hint').textContent = 'Choose the correct answer! 👇';
 
   // Render choices
   mcqShuffled.forEach((c,i) => {
@@ -3259,10 +3379,10 @@ function showBossMCQ(g) {
   stopMCQTimer();
 
   // Boss badge on question text
-  questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS SOALAN ${qi+1}/${questions.length}</span><br>${q.q}`;
+  questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS QUESTION ${qi+1}/${questions.length}</span><br>${q.q}`;
   // Update hint
   const hint = document.getElementById('mcq-hint');
-  if (hint) hint.textContent = 'Serang Grammar King! 👑';
+  if (hint) hint.textContent = 'Attack Grammar King! 👑';
   // Boss badge
   const badge = document.getElementById('mcq-badge');
   if (badge) badge.textContent = '👑 Boss Fight!';
@@ -3305,7 +3425,7 @@ function selectBossAnswer(choice, g) {
       const dist = Math.sqrt(dx*dx+dy*dy)||1;
       g.pvx = (dx/dist) * 18;
       g.pvy = (dy/dist) * 14;
-      spawnTextParticle(g.px, g.py-35, '⚡ SERANG!', '#FFD166');
+      spawnTextParticle(g.px, g.py-35, '⚡ ATTACK!', '#FFD166');
 
       // Ball hits boss after ~260ms — show impact
       setTimeout(() => {
@@ -3313,7 +3433,7 @@ function selectBossAnswer(choice, g) {
         boss.takeDamage();
         spawnParticles(boss.x+boss.w/2, boss.y+boss.h/2, '#06D6A0', 28, 10);
         spawnParticles(boss.x+boss.w/2, boss.y+boss.h/2, '#FFD166', 14, 7);
-        spawnTextParticle(boss.x+boss.w/2, boss.y-30, '💥 TERKENA!', '#06D6A0');
+        spawnTextParticle(boss.x+boss.w/2, boss.y-30, '💥 HIT!', '#06D6A0');
         g.pvx = -g.pvx * 0.5;
         g.pvy = -8;
       }, 280);
@@ -3330,11 +3450,11 @@ function selectBossAnswer(choice, g) {
 
       // Boss shows charge face then rushes at ball
       boss.startCharge();
-      spawnTextParticle(boss.x+boss.w/2, boss.y-30, '😤 AMARAH!', '#FF4D6D');
+      spawnTextParticle(boss.x+boss.w/2, boss.y-30, '😤 RAGE!', '#FF4D6D');
       setTimeout(() => {
         if (!boss||!boss.alive) return;
         boss.startAttack(g.px, g.py);
-        spawnTextParticle(g.px, g.py-40, '💢 Boss serang!', '#FF4D6D');
+        spawnTextParticle(g.px, g.py-40, '💢 Boss attacks!', '#FF4D6D');
       }, 400);
 
       // Release after boss attack animation (~2500ms total)
@@ -3357,7 +3477,7 @@ function stopMCQTimer() {
 function onTimerExpired() {
   if (!game || game.state !== 'answering') return;
   for (let i=0;i<3;i++) document.getElementById(`mcq-btn-${i}`).disabled = true;
-  document.getElementById('mcq-hint').textContent = '⏱️ Masa habis! Cuba lagi...';
+  document.getElementById('mcq-hint').textContent = '⏱️ Time\'s up! Try again...';
   document.getElementById('mcq-hint').style.color = '#EF476F';
 
   Audio.wrong();
@@ -3419,7 +3539,7 @@ function selectAnswer(idx) {
         if (e.questionIdx === qIdx && e.alive) {
           e.die(0);
           spawnParticles(e.x+e.w/2, e.y+e.h/2, '#06D6A0', 12, 5);
-          spawnTextParticle(e.x+e.w/2, e.y-20, '✓ Mati!', '#06D6A0');
+          spawnTextParticle(e.x+e.w/2, e.y-20, '✓ Defeated!', '#06D6A0');
         }
       }
     } else if (game) {
@@ -3452,22 +3572,34 @@ function processAnswerResult(g, label, isCorrect, plat) {
     g.answeredQuestions.add(qIdx);
     g.combo++;
 
-    // Score with multiplier
-    const multiplier = g.combo >= 3 ? 2 : 1;
+    // Streak tiers: 1× base, 2× at 3-streak, 3× at 5-streak, 5× at 10-streak
+    const multiplier = g.combo >= 10 ? 5 : g.combo >= 5 ? 3 : g.combo >= 3 ? 2 : 1;
     const base = 100;
-    const earned = base * multiplier;
+    const doubleBonus = g.useDouble ? 2 : 1;
+    if (g.useDouble) { g.useDouble = false; spawnTextParticle(g.px, g.py-70, '2× Power-Up! 🟢', '#06D6A0'); }
+    const earned = base * multiplier * doubleBonus;
     g.score += earned;
 
     Audio.correct(g.combo);
     // World-space particles at ball position
-    spawnParticles(g.px, g.py, '#06D6A0', 20, 8);
-    spawnConfetti(g.px, g.py, g.combo >= 3 ? 50 : 30);
+    const particleColor = g.combo >= 10 ? '#FF80FF' : g.combo >= 5 ? '#FFE566' : '#06D6A0';
+    spawnParticles(g.px, g.py, particleColor, g.combo >= 5 ? 35 : 20, g.combo >= 5 ? 11 : 8);
+    spawnConfetti(g.px, g.py, g.combo >= 5 ? 80 : g.combo >= 3 ? 50 : 30);
     spawnTextParticle(g.px, g.py-50,
-      multiplier > 1 ? `+${earned} ⚡ ${multiplier}×!` : `+${earned} ⭐`, '#06D6A0');
+      multiplier > 1 ? `+${earned} ⚡ ${multiplier}×!` : `+${earned} ⭐`,
+      g.combo >= 10 ? '#FF80FF' : g.combo >= 5 ? '#FFE566' : '#06D6A0');
 
     // Screen-level celebrations
     showCorrectBanner(g.combo, multiplier);
-    if (g.combo >= 3) spawnScreenConfetti(40);
+    if (g.combo >= 10) {
+      spawnScreenConfetti(120);
+      triggerScreenShake(12, 400);
+    } else if (g.combo >= 5) {
+      spawnScreenConfetti(70);
+      triggerScreenShake(6, 250);
+    } else if (g.combo >= 3) {
+      spawnScreenConfetti(40);
+    }
 
     // Ball glow burst
     g.correctGlow = 30; // frames of green glow on ball
@@ -3484,7 +3616,7 @@ function processAnswerResult(g, label, isCorrect, plat) {
     updateComboHUD(0);
     if (plat) { plat.crumbling = true; }
     spawnParticles(g.px, g.py, '#EF476F', 14, 5);
-    spawnTextParticle(g.px, g.py-30, 'Salah! ✗', '#EF476F');
+    spawnTextParticle(g.px, g.py-30, 'Wrong! ✗', '#EF476F');
     // Track wrong answer for review
     const q = g.data.questions[qIdx];
     if (q && !g.wrongAnswers.find(w => w.questionIdx === qIdx)) {
@@ -3554,11 +3686,16 @@ function triggerWin(g) {
   if (elapsed < 60 && answeredAll && g.hearts>1) stars=Math.max(stars,2);
 
   totalScore += g.score;
+  // Accumulate total stars for skin unlocks
+  const prevTotalStars = parseInt(localStorage.getItem('gr_total_stars') || '0');
+  const newTotal = prevTotalStars + stars;
+  localStorage.setItem('gr_total_stars', newTotal);
+  checkSkinUnlocks(prevTotalStars, newTotal);
   // Notify multiplayer opponent that we won
   mpSendWin(g);
   document.getElementById('stars-row').textContent = '⭐'.repeat(stars) + '☆'.repeat(3-stars);
   document.getElementById('win-msg').textContent =
-    `Skor: ${g.score} | Masa: ${Math.round(elapsed)}s | ${g.hearts} ❤️ tinggal`;
+    `Score: ${g.score} | Time: ${Math.round(elapsed)}s | ${g.hearts} ❤️ remaining`;
 
   // Clear win preview until name submitted
   const prev = document.getElementById('win-lb-preview');
@@ -3592,7 +3729,7 @@ function updateHUD(g) {
 function updateQuestionUI(g) {
   const q = g.level.questions[g.currentQ];
   if (!q) {
-    document.getElementById('question-box').innerHTML = '✅ Semua soalan dijawab!';
+    document.getElementById('question-box').innerHTML = '✅ All questions answered!';
     return;
   }
   const parts = q.q.split('___');
@@ -3717,11 +3854,20 @@ function drawPlayer(g) {
   ctx.ellipse(0, BALL_R+2, BALL_R*0.9, BALL_R*0.3, 0, 0, Math.PI*2);
   ctx.fill();
 
-  // Ball body — always draw orange base
+  // Ball body — skin-colored
+  const skinId = getActiveSkin();
+  const skinCols = SKIN_COLORS[skinId];
   const grad = ctx.createRadialGradient(-BALL_R*0.3,-BALL_R*0.3,BALL_R*0.1, 0,0,BALL_R);
-  grad.addColorStop(0,'#FFA040');
-  grad.addColorStop(0.6,'#FF6B00');
-  grad.addColorStop(1,'#C04000');
+  if (skinId === 'rainbow') {
+    const hue = (Date.now() / 20) % 360;
+    grad.addColorStop(0, `hsl(${hue},100%,70%)`);
+    grad.addColorStop(0.6, `hsl(${(hue+60)%360},100%,50%)`);
+    grad.addColorStop(1, `hsl(${(hue+120)%360},100%,30%)`);
+  } else {
+    grad.addColorStop(0, skinCols[0]);
+    grad.addColorStop(0.6, skinCols[1]);
+    grad.addColorStop(1, skinCols[2]);
+  }
   ctx.fillStyle=grad;
   ctx.beginPath();
   ctx.arc(0,0,BALL_R,0,Math.PI*2);
@@ -3805,6 +3951,17 @@ function render(g) {
   const ctx=ctx2d;
   ctx.clearRect(0,0,CW,CH);
 
+  // Screen shake
+  let shakeX = 0, shakeY = 0;
+  if (screenShakeTimer > 0) {
+    shakeX = (Math.random()-0.5) * screenShakeIntensity;
+    shakeY = (Math.random()-0.5) * screenShakeIntensity;
+    screenShakeTimer--;
+    if (screenShakeTimer === 0) screenShakeIntensity = 0;
+    ctx.save();
+    ctx.translate(shakeX, shakeY);
+  }
+
   drawBG(ctx, g.camX, g.camY, g.level.worldW);
 
   // Platforms
@@ -3855,7 +4012,7 @@ function render(g) {
     ctx.fillText('PAUSED ⏸', CW/2, CH/2-20);
     ctx.font="20px Nunito,sans-serif";
     ctx.fillStyle='rgba(255,255,255,0.6)';
-    ctx.fillText('Tekan P atau Space untuk teruskan', CW/2, CH/2+30);
+    ctx.fillText('Press P or Space to continue', CW/2, CH/2+30);
   }
 
   // Question hint arrow → pointing to grammar platforms
@@ -3885,6 +4042,8 @@ function render(g) {
       }
     }
   }
+
+  if (shakeX !== 0 || shakeY !== 0) ctx.restore();
 }
 
 // ══════════════════════════════════════════════
@@ -3934,7 +4093,7 @@ function addLBEntry(levelKey, name, score, stars) {
 function renderLBList(entries, container) {
   container.innerHTML = '';
   if (!entries.length) {
-    container.innerHTML = '<div id="lb-empty">Belum ada rekod lagi.<br>Jadilah yang pertama! 🏆</div>';
+    container.innerHTML = '<div id="lb-empty">No records yet.<br>Be the first! 🏆</div>';
     return;
   }
   const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣'];
@@ -3965,7 +4124,7 @@ function closeLeaderboard() {
 }
 
 function clearLeaderboard() {
-  if (!confirm('Padam semua rekod untuk tahap ini?')) return;
+  if (!confirm('Delete all records for this level?')) return;
   try { localStorage.removeItem(lbKey(currentLevelKey)); } catch {}
   renderLBList([], document.getElementById('lb-list'));
 }
@@ -4015,10 +4174,10 @@ function showReview(g) {
   if (!g.wrongAnswers || g.wrongAnswers.length === 0) {
     // Perfect run
     perfect.classList.remove('hidden');
-    subtitle.textContent = 'Kamu jawab semua soalan dengan betul!';
+    subtitle.textContent = 'You answered all questions correctly!';
   } else {
     perfect.classList.add('hidden');
-    subtitle.textContent = `${g.wrongAnswers.length} soalan perlu diperbaiki`;
+    subtitle.textContent = `${g.wrongAnswers.length} question(s) to improve`;
 
     g.wrongAnswers.forEach(wa => {
       const q = g.data.questions[wa.questionIdx];
@@ -4036,14 +4195,14 @@ function showReview(g) {
         <div class="review-row review-wrong">
           <span class="review-row-icon">✗</span>
           <div>
-            <div class="review-row-label">Jawapan kamu</div>
+            <div class="review-row-label">Your Answer</div>
             <div class="review-row-answer">${wa.wrongLabel}</div>
           </div>
         </div>
         <div class="review-row review-correct">
           <span class="review-row-icon">✓</span>
           <div>
-            <div class="review-row-label">Jawapan betul</div>
+            <div class="review-row-label">Correct Answer</div>
             <div class="review-row-answer">${wa.correctLabel}</div>
           </div>
         </div>
@@ -4058,6 +4217,208 @@ function showReview(g) {
 
 function closeReview() {
   document.getElementById('review-overlay').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════
+//  BALL SKINS
+// ══════════════════════════════════════════════
+const SKINS = [
+  { id:'default',  name:'Classic',      emoji:'🟠', desc:'Default ball',           unlock:0  },
+  { id:'fire',     name:'Fire Ball',    emoji:'🔥', desc:'Unlock: 5 stars',        unlock:5  },
+  { id:'ice',      name:'Ice Ball',     emoji:'❄️', desc:'Unlock: 10 stars',       unlock:10 },
+  { id:'galaxy',   name:'Galaxy Ball',  emoji:'🌌', desc:'Unlock: 20 stars',       unlock:20 },
+  { id:'gold',     name:'Gold Ball',    emoji:'✨', desc:'Unlock: 35 stars',       unlock:35 },
+  { id:'rainbow',  name:'Rainbow Ball', emoji:'🌈', desc:'Unlock: 50 stars',       unlock:50 },
+];
+
+const SKIN_COLORS = {
+  default: ['#FFA040','#FF6B00','#C04000'],
+  fire:    ['#FF6030','#FF2000','#800000'],
+  ice:     ['#A0E8FF','#40B0FF','#0060C0'],
+  galaxy:  ['#6030C0','#301870','#100030'],
+  gold:    ['#FFE040','#FFB000','#806000'],
+  rainbow: null, // special: drawn with hue rotation
+};
+
+function getActiveSkin() { return localStorage.getItem('gr_active_skin') || 'default'; }
+function setActiveSkin(id) { localStorage.setItem('gr_active_skin', id); updateBallThumb(); }
+function getTotalStars() { return parseInt(localStorage.getItem('gr_total_stars') || '0'); }
+function isSkinUnlocked(id) {
+  const skin = SKINS.find(s => s.id === id);
+  return skin && getTotalStars() >= skin.unlock;
+}
+
+function checkSkinUnlocks(prev, curr) {
+  SKINS.forEach(s => {
+    if (s.unlock > 0 && prev < s.unlock && curr >= s.unlock) {
+      setTimeout(() => {
+        spawnScreenConfetti(80);
+        alert(`🎉 New skin unlocked: ${s.emoji} ${s.name}!\nGo to the Skins menu to equip it.`);
+      }, 1500);
+    }
+  });
+}
+
+function showSkinsMenu() {
+  const total = getTotalStars();
+  const active = getActiveSkin();
+  const next = SKINS.find(s => !isSkinUnlocked(s.id));
+  const html = `
+    <div class="overlay" id="skins-overlay" style="z-index:9999;" onclick="if(event.target===this)closeSkinsMenu()">
+      <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+        <div style="font-size:2.5rem;margin-bottom:4px;">🎨</div>
+        <h2 style="font-family:'Fredoka One',cursive;font-size:1.8rem;color:#FFD166;margin:0 0 4px;">Ball Skins</h2>
+        <p style="color:rgba(255,255,255,.6);font-size:.9rem;margin:0 0 6px;">Total Stars: <strong style="color:#FFD166;">⭐ ${total}</strong>${next ? ` · Next unlock at ${next.unlock}⭐` : ' · All skins unlocked!'}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;">
+          ${SKINS.map(s => {
+            const unlocked = isSkinUnlocked(s.id);
+            const isActive = active === s.id;
+            return `<button onclick="${unlocked ? `pickSkin('${s.id}')` : ''}"
+              style="border-radius:16px;padding:14px 8px;border:2px solid ${isActive ? '#FFD166' : unlocked ? 'rgba(255,255,255,.2)' : 'rgba(255,255,255,.1)'};
+                     background:${isActive ? 'rgba(255,209,102,.2)' : unlocked ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.3)'};
+                     cursor:${unlocked ? 'pointer' : 'default'};color:${unlocked ? '#fff' : 'rgba(255,255,255,.35)'};">
+              <div style="font-size:2rem;margin-bottom:4px;">${s.emoji}</div>
+              <div style="font-family:'Fredoka One',cursive;font-size:.85rem;">${s.name}</div>
+              <div style="font-size:.7rem;margin-top:2px;color:${unlocked ? '#06D6A0' : 'rgba(255,255,255,.4)'};">${unlocked ? (isActive ? '✓ Active' : 'Equip') : s.desc}</div>
+            </button>`;
+          }).join('')}
+        </div>
+        <button class="btn btn-secondary" onclick="closeSkinsMenu()" style="width:100%;">✕ Close</button>
+      </div>
+    </div>`;
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  document.body.appendChild(el.firstElementChild);
+}
+
+function pickSkin(id) {
+  setActiveSkin(id);
+  closeSkinsMenu();
+  showSkinsMenu(); // refresh
+}
+
+function closeSkinsMenu() {
+  const el = document.getElementById('skins-overlay');
+  if (el) el.remove();
+}
+
+// ══════════════════════════════════════════════
+//  TIME CHALLENGE MODE
+// ══════════════════════════════════════════════
+let tcTimer = null, tcTimeLeft = 60, tcScore = 0, tcStreak = 0, tcBestStreak = 0;
+let tcQuestions = [], tcQIdx = 0, tcActive = false;
+
+function showTimeChallenge() {
+  document.getElementById('tc-overlay').classList.remove('hidden');
+  document.getElementById('tc-result').classList.add('hidden');
+  document.getElementById('tc-close-btn').classList.remove('hidden');
+  document.getElementById('tc-question').textContent = 'Press "Start" to begin!';
+  document.getElementById('tc-options').innerHTML =
+    `<button class="btn btn-primary" style="grid-column:span 2;font-size:1.2rem;" onclick="startTimeChallenge()">🚀 Start!</button>`;
+  document.getElementById('tc-feedback').textContent = '';
+  document.getElementById('tc-timer').textContent = '60';
+  document.getElementById('tc-score').textContent = '0';
+  document.getElementById('tc-streak').textContent = '0';
+}
+
+function startTimeChallenge() {
+  // Collect all questions from all levels
+  tcQuestions = [];
+  Object.values(GRAMMAR_DB).forEach(lvl => {
+    if (lvl.questions) lvl.questions.forEach(q => tcQuestions.push(q));
+  });
+  // Shuffle
+  for (let i = tcQuestions.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [tcQuestions[i], tcQuestions[j]] = [tcQuestions[j], tcQuestions[i]];
+  }
+  tcQIdx = 0; tcScore = 0; tcStreak = 0; tcBestStreak = 0; tcTimeLeft = 60; tcActive = true;
+  document.getElementById('tc-result').classList.add('hidden');
+  document.getElementById('tc-close-btn').classList.remove('hidden');
+  document.getElementById('tc-feedback').textContent = '';
+  document.getElementById('tc-score').textContent = '0';
+  document.getElementById('tc-streak').textContent = '0';
+  clearInterval(tcTimer);
+  tcTimer = setInterval(() => {
+    tcTimeLeft--;
+    const el = document.getElementById('tc-timer');
+    if (el) {
+      el.textContent = tcTimeLeft;
+      el.style.color = tcTimeLeft <= 10 ? '#EF476F' : '#FFD166';
+    }
+    if (tcTimeLeft <= 0) endTimeChallenge();
+  }, 1000);
+  tcShowQuestion();
+}
+
+function tcShowQuestion() {
+  if (!tcActive) return;
+  if (tcQIdx >= tcQuestions.length) tcQIdx = 0; // loop if exhausted
+  const q = tcQuestions[tcQIdx];
+  const filled = q.q.replace('___', `<span style="color:#FFD166;text-decoration:underline;">___</span>`);
+  document.getElementById('tc-question').innerHTML = filled;
+  // Build shuffled options
+  const options = [{ text: q.correct, correct: true }].concat(q.wrong.map(w => ({ text: w, correct: false })));
+  for (let i = options.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+  const colors = ['#3B82F6','#EF476F','#06D6A0'];
+  document.getElementById('tc-options').innerHTML = options.map((o,i) =>
+    `<button onclick="tcAnswer(${o.correct},this)"
+      style="padding:14px 10px;border-radius:14px;border:2px solid ${colors[i%3]}55;
+             background:${colors[i%3]}22;color:#fff;font-family:'Fredoka One',cursive;
+             font-size:1rem;cursor:pointer;transition:all .15s;"
+      onmouseover="this.style.background='${colors[i%3]}44'"
+      onmouseout="this.style.background='${colors[i%3]}22'">${o.text}</button>`
+  ).join('');
+  document.getElementById('tc-feedback').textContent = '';
+}
+
+function tcAnswer(correct, btn) {
+  if (!tcActive) return;
+  tcQIdx++;
+  const fbEl = document.getElementById('tc-feedback');
+  if (correct) {
+    tcStreak++;
+    if (tcStreak > tcBestStreak) tcBestStreak = tcStreak;
+    const mult = tcStreak >= 10 ? 5 : tcStreak >= 5 ? 3 : tcStreak >= 3 ? 2 : 1;
+    tcScore += 100 * mult;
+    document.getElementById('tc-score').textContent = tcScore;
+    document.getElementById('tc-streak').textContent = tcStreak;
+    fbEl.style.color = '#06D6A0';
+    fbEl.textContent = mult > 1 ? `✅ Correct! ${mult}× bonus!` : '✅ Correct!';
+    btn.style.background = '#06D6A044';
+    btn.style.borderColor = '#06D6A0';
+  } else {
+    tcStreak = 0;
+    document.getElementById('tc-streak').textContent = '0';
+    fbEl.style.color = '#EF476F';
+    fbEl.textContent = `❌ Wrong! Correct: ${tcQuestions[tcQIdx-1]?.correct ?? ''}`;
+  }
+  setTimeout(() => { if (tcActive) tcShowQuestion(); }, correct ? 300 : 900);
+}
+
+function endTimeChallenge() {
+  tcActive = false;
+  clearInterval(tcTimer);
+  document.getElementById('tc-options').innerHTML = '';
+  document.getElementById('tc-question').textContent = '';
+  document.getElementById('tc-feedback').textContent = '';
+  document.getElementById('tc-close-btn').classList.add('hidden');
+  const res = document.getElementById('tc-result');
+  res.classList.remove('hidden');
+  document.getElementById('tc-final-score').textContent = `🏆 Score: ${tcScore} points`;
+  document.getElementById('tc-final-streak').textContent = `🔥 Best Streak: ${tcBestStreak}`;
+  // Save to leaderboard under 'time-challenge'
+  const name = localStorage.getItem('gr_player_name') || 'Player';
+  addLBEntry('time-challenge', name, tcScore, tcBestStreak >= 5 ? 3 : tcBestStreak >= 3 ? 2 : 1);
+}
+
+function closeTimeChallenge() {
+  tcActive = false;
+  clearInterval(tcTimer);
+  document.getElementById('tc-overlay').classList.add('hidden');
 }
 
 // ══════════════════════════════════════════════
@@ -4112,7 +4473,7 @@ function checkGuruPin(submit=false) {
       document.getElementById('guru-main').classList.remove('hidden');
       renderGuruQuestions();
     } else if (submit || val.length === 4) {
-      document.getElementById('guru-pin-error').textContent = 'PIN salah. Cuba lagi.';
+      document.getElementById('guru-pin-error').textContent = 'Wrong PIN. Try again.';
     }
   } else {
     document.getElementById('guru-pin-error').textContent = '';
@@ -4131,7 +4492,7 @@ function renderGuruQuestions() {
   const list = document.getElementById('guru-q-list');
   const questions = getGuruQuestions(guruCurrentLevel);
   if (questions.length === 0) {
-    list.innerHTML = '<div id="guru-empty">Tiada soalan khas lagi. Tambah soalan di bawah.</div>';
+    list.innerHTML = '<div id="guru-empty">No custom questions yet. Add questions below.</div>';
     return;
   }
   list.innerHTML = questions.map((q, i) => `
@@ -4141,7 +4502,7 @@ function renderGuruQuestions() {
         <span class="guru-ans-chip correct">✓ ${q.correct}</span>
         ${q.wrong.map(w => `<span class="guru-ans-chip wrong">✗ ${w}</span>`).join('')}
       </div>
-      <button class="guru-q-delete" onclick="guruDeleteQuestion(${i})">Padam</button>
+      <button class="guru-q-delete" onclick="guruDeleteQuestion(${i})">Delete</button>
     </div>
   `).join('');
 }
@@ -4161,13 +4522,13 @@ function guruAddQuestion() {
   const errEl   = document.getElementById('guru-add-error');
 
   if (!qText || !correct || !wrong1 || !wrong2) {
-    errEl.textContent = 'Sila isi semua ruangan.'; return;
+    errEl.textContent = 'Please fill in all fields.'; return;
   }
   if (!qText.includes('___')) {
-    errEl.textContent = 'Soalan mesti ada ___ (tiga garis bawah).'; return;
+    errEl.textContent = 'Question must contain ___ (three underscores).'; return;
   }
   if (correct.toLowerCase() === wrong1.toLowerCase() || correct.toLowerCase() === wrong2.toLowerCase() || wrong1.toLowerCase() === wrong2.toLowerCase()) {
-    errEl.textContent = 'Jawapan tidak boleh sama.'; return;
+    errEl.textContent = 'Answers cannot be the same.'; return;
   }
   errEl.textContent = '';
 
@@ -4186,13 +4547,13 @@ function clearGuruForm() {
 }
 
 function guruResetLevel() {
-  if (!confirm(`Reset semua soalan untuk level ${guruCurrentLevel}?`)) return;
+  if (!confirm(`Reset all questions for level ${guruCurrentLevel}?`)) return;
   saveGuruQuestions(guruCurrentLevel, []);
   renderGuruQuestions();
 }
 
 function guruResetAll() {
-  if (!confirm('Reset SEMUA soalan guru untuk semua level?')) return;
+  if (!confirm('Reset ALL teacher questions for all levels?')) return;
   localStorage.removeItem(GURU_LS_KEY);
   renderGuruQuestions();
 }
@@ -4207,7 +4568,7 @@ function showWinLBPreview(entries) {
   // Compact top-3 preview
   container.innerHTML = `
     <div style="font-family:'Fredoka One',cursive;font-size:.85rem;color:rgba(255,255,255,.5);
-      text-align:center;margin-bottom:8px;letter-spacing:1px;">— PAPAN SKOR —</div>`;
+      text-align:center;margin-bottom:8px;letter-spacing:1px;">— LEADERBOARD —</div>`;
   const ul = document.createElement('ul');
   ul.style.cssText='list-style:none;display:flex;flex-direction:column;gap:6px;';
   renderLBList(entries.slice(0,3), ul);
@@ -4246,7 +4607,7 @@ function startLevel(world, level) {
   const key = `${world}-${level}`;
   currentLevelKey = key;
   const db = GRAMMAR_DB[key];
-  if (!db) { alert('Tahap belum tersedia!'); return; }
+  if (!db) { alert('Level not available yet!'); return; }
 
   document.getElementById('menu-screen').classList.add('hidden');
   document.getElementById('gameover-overlay').classList.add('hidden');
@@ -4282,7 +4643,7 @@ function nextLevel() {
     startLevel(nw,nl);
   } else {
     showMenu();
-    alert('Tahniah! Kamu dah habis semua tahap yang ada!');
+    alert('Congratulations! Kamu have completed all available levels!');
   }
 }
 
@@ -4352,7 +4713,7 @@ async function showSelfieScreen() {
     cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
     video.srcObject = cameraStream;
   } catch(e) {
-    alert('Kamera tidak dapat diakses. Sila benarkan akses kamera.');
+    alert('Camera cannot be accessed. Please allow camera access.');
     screen.classList.add('hidden');
   }
 }
@@ -4378,7 +4739,7 @@ function collectPowerUp(g, type) {
 function updatePowerUpHUD(g) {
   const bar = document.getElementById('powerup-bar');
   bar.innerHTML = '';
-  ['shield','time','hint'].forEach(t => {
+  ['shield','time','hint','double'].forEach(t => {
     if (g.inv[t]) {
       const info = PU_TYPES[t];
       const badge = document.createElement('div');
@@ -4396,7 +4757,7 @@ function tryShield(g) {
     g.inv.shield = false;
     updatePowerUpHUD(g);
     spawnParticles(g.px, g.py, '#8B5CF6', 16, 6);
-    spawnTextParticle(g.px, g.py-40, '🛡️ Perisai Aktif!', '#8B5CF6');
+    spawnTextParticle(g.px, g.py-40, '🛡️ Shield Active!', '#8B5CF6');
     Audio.checkpoint();
     return true; // absorbed damage
   }
@@ -4415,6 +4776,11 @@ function applyMCQPowerUps(g) {
     g.inv.hint = false;
     updatePowerUpHUD(g);
     g.useHint = true;
+  }
+  if (g.inv.double) {
+    g.inv.double = false;
+    updatePowerUpHUD(g);
+    g.useDouble = true;
   }
 }
 
@@ -4437,11 +4803,11 @@ function applyHintToButtons() {
 // ══════════════════════════════════════════════
 const PRAISE = [
   null,                                  // 0 — no praise
-  { main:'Betul! ✓',  sub:'',                   color:'#06D6A0' }, // 1
-  { main:'Hebat! 🔥', sub:'2 betul berturut!',  color:'#FFD166' }, // 2
-  { main:'Luar Biasa! ⚡', sub:'2× Mata!',      color:'#FF8C42' }, // 3
-  { main:'Cemerlang! 🌟', sub:'2× Mata!',       color:'#FF8C42' }, // 4
-  { main:'Genius! 🚀',    sub:'2× Mata! Teruskan!', color:'#EF476F' }, // 5+
+  { main:'Correct! ✓',  sub:'',                   color:'#06D6A0' }, // 1
+  { main:'Great! 🔥', sub:'2 in a row!',  color:'#FFD166' }, // 2
+  { main:'Amazing! ⚡', sub:'2× Mata!',      color:'#FF8C42' }, // 3
+  { main:'Excellent! 🌟', sub:'2× Mata!',       color:'#FF8C42' }, // 4
+  { main:'Genius! 🚀',    sub:'2× Points! Keep going!', color:'#EF476F' }, // 5+
 ];
 
 let praiseTimer = null;
@@ -4469,12 +4835,21 @@ function updateComboHUD(combo) {
   const el    = document.getElementById('combo-display');
   const count = document.getElementById('combo-count');
   if (combo >= 2) {
-    const mult = combo >= 3 ? '2×' : '';
-    count.textContent = `${combo} Combo${mult ? ' ' + mult : ''}`;
+    const mult = combo >= 10 ? ' 5×' : combo >= 5 ? ' 3×' : combo >= 3 ? ' 2×' : '';
+    const icon = combo >= 10 ? '👑' : combo >= 5 ? '🔥' : '⚡';
+    count.textContent = `${icon} ${combo} Streak${mult}`;
     el.classList.add('active');
+    el.classList.toggle('tier-2', combo >= 5 && combo < 10);
+    el.classList.toggle('tier-3', combo >= 10);
   } else {
-    el.classList.remove('active');
+    el.classList.remove('active', 'tier-2', 'tier-3');
   }
+}
+
+let screenShakeTimer = 0, screenShakeIntensity = 0;
+function triggerScreenShake(intensity, durationMs) {
+  screenShakeIntensity = intensity;
+  screenShakeTimer = Math.round(durationMs / 16);
 }
 
 function updateBallThumb() {
@@ -4529,12 +4904,19 @@ document.getElementById('selfie-indicator').addEventListener('click', showSelfie
 //  INPUT
 // ══════════════════════════════════════════════
 document.addEventListener('keydown', e => {
+  // Don't intercept keys when user is typing in an input/textarea
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (['ArrowLeft','a','A'].includes(e.key)) keys.left=true;
   if (['ArrowRight','d','D'].includes(e.key)) keys.right=true;
-  if (['ArrowUp','w','W',' '].includes(e.key)) { e.preventDefault(); keys.up=true; }
+  if (['ArrowUp','w','W',' '].includes(e.key)) {
+    // Only prevent default scroll for ArrowUp and Space, not W
+    if (e.key === 'ArrowUp' || e.key === ' ') e.preventDefault();
+    keys.up=true;
+  }
   if (['p','P','Escape'].includes(e.key) && game) togglePause();
 });
 document.addEventListener('keyup', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   if (['ArrowLeft','a','A'].includes(e.key)) keys.left=false;
   if (['ArrowRight','d','D'].includes(e.key)) keys.right=false;
   if (['ArrowUp','w','W',' '].includes(e.key)) keys.up=false;
@@ -4614,7 +4996,7 @@ function mpConnect() {
 
   socket.on('opponentJoined', ({ name, avatar }) => {
     mpSetOpponent(name, avatar);
-    document.getElementById('mp-status').textContent = `${name} telah sertai! Permainan bermula...`;
+    document.getElementById('mp-status').textContent = `${name} has joined! Game starting...`;
     document.getElementById('mp-status').classList.remove('waiting');
     setTimeout(() => {
       closeMultiplayer();
@@ -4644,21 +5026,21 @@ function mpConnect() {
 
   socket.on('raceResult', ({ winner, score, stars }) => {
     const isMe = winner === document.getElementById('mp-name-input').value.trim();
-    document.getElementById('race-result-title').textContent = isMe ? '🏆 Kamu Menang!' : '😢 Kamu Kalah';
+    document.getElementById('race-result-title').textContent = isMe ? '🏆 You Win!' : '😢 You Lose';
     document.getElementById('race-result-sub').textContent = isMe
-      ? `Tahniah! Skor: ${score}`
-      : `${winner} menang dengan skor ${score}!`;
+      ? `Congratulations! Score: ${score}`
+      : `${winner} wins with score ${score}!`;
     document.getElementById('race-result').classList.remove('hidden');
   });
 
   socket.on('opponentLeft', () => {
     opponent.active = false;
     document.getElementById('opponent-hud').classList.remove('visible');
-    showBanner('Lawan telah keluar bilik', '#EF476F');
+    showBanner('Opponent has left the room', '#EF476F');
   });
 
   socket.on('connect_error', () => {
-    document.getElementById('mp-error').textContent = 'Tidak dapat sambung ke server. Pastikan server berjalan.';
+    document.getElementById('mp-error').textContent = 'Cannot connect to server. Please check your connection.';
   });
 }
 
@@ -4676,8 +5058,8 @@ function mpSetOpponent(name, avatarB64) {
 
 function updateOpponentHUD() {
   document.getElementById('opp-name').textContent = opponent.name;
-  document.getElementById('opp-score').textContent = `${opponent.score} mata`;
-  document.getElementById('opp-q').textContent = `Soalan ${opponent.currentQ + 1}`;
+  document.getElementById('opp-score').textContent = `${opponent.score} pts`;
+  document.getElementById('opp-q').textContent = `Question ${opponent.currentQ + 1}`;
   const avatarEl = document.getElementById('opp-avatar');
   if (opponent.avatar) {
     avatarEl.innerHTML = `<img src="${opponent.avatar.src}" alt="">`;
@@ -4694,7 +5076,7 @@ function showMultiplayer() {
   document.getElementById('mp-overlay').classList.remove('hidden');
   // Show connecting status while socket connects
   if (!mpConnected) {
-    document.getElementById('mp-error').textContent = '⏳ Menyambung ke server...';
+    document.getElementById('mp-error').textContent = '⏳ Connecting to server...';
     const waitId = setInterval(() => {
       if (mpConnected) {
         document.getElementById('mp-error').textContent = '';
@@ -4711,9 +5093,9 @@ function closeMultiplayer() {
 
 function mpCreateRoom() {
   const name = document.getElementById('mp-name-input').value.trim();
-  if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
+  if (!name) { document.getElementById('mp-error').textContent = 'Please enter your name.'; return; }
   if (!socket || !socket.connected) {
-    document.getElementById('mp-error').textContent = '⏳ Masih menyambung... cuba lagi sebentar.';
+    document.getElementById('mp-error').textContent = '⏳ Still connecting... try again shortly.';
     setTimeout(mpCreateRoom, 800); return;
   }
 
@@ -4730,9 +5112,9 @@ function mpCreateRoom() {
 function mpJoinRoom() {
   const name = document.getElementById('mp-name-input').value.trim();
   const code = document.getElementById('mp-join-code').value.trim().toUpperCase();
-  if (!name) { document.getElementById('mp-error').textContent = 'Masukkan nama kamu.'; return; }
-  if (code.length !== 4) { document.getElementById('mp-error').textContent = 'Kod bilik mesti 4 huruf.'; return; }
-  if (!socket || !socket.connected) { document.getElementById('mp-error').textContent = '⏳ Masih menyambung... cuba lagi sebentar.'; return; }
+  if (!name) { document.getElementById('mp-error').textContent = 'Please enter your name.'; return; }
+  if (code.length !== 4) { document.getElementById('mp-error').textContent = 'Room code must be 4 characters.'; return; }
+  if (!socket || !socket.connected) { document.getElementById('mp-error').textContent = '⏳ Still connecting... try again shortly.'; return; }
 
   const avatar = selfieDataURL || null;
   socket.emit('joinRoom', { code, name, avatar }, ({ ok, error, opponent: oppData }) => {
