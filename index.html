@@ -8,7 +8,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="apple-touch-icon" href="/logo.jpg">
 <link rel="icon" type="image/jpeg" href="/logo.jpg">
-<title>Grammar Roll</title>
+<title>Grammar Ball</title>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap">
@@ -2308,6 +2308,11 @@ const BALL_R   = 22;
 // ══════════════════════════════════════════════
 //  GAME STATE
 // ══════════════════════════════════════════════
+// bug6 fix: escape user-supplied strings before inserting into innerHTML
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 let game = null;
 let selfieCanvas  = null;
 let selfieDataURL = null;
@@ -3149,17 +3154,18 @@ class PowerUp {
 // Spaced repetition: track wrong counts per question
 const SR_KEY = 'gr_sr_wrong';
 function srGetData()   { try { return JSON.parse(localStorage.getItem(SR_KEY)||'{}'); } catch(e) { return {}; } }
-function srRecordWrong(levelKey, qIdx) {
+function srRecordWrong(levelKey, qText) { // bug2 fix: key by question text not index
   const d = srGetData();
-  const k = `${levelKey}:${qIdx}`;
+  const k = `${levelKey}:${qText}`;
   d[k] = (d[k] || 0) + 1;
   try { localStorage.setItem(SR_KEY, JSON.stringify(d)); } catch(e) {}
 }
 function srSortQuestions(levelKey, questions) {
+  // bug2 fix: key by question text, not index — index shifts when guru questions are prepended
   const d = srGetData();
   return [...questions].sort((a, b) => {
-    const ka = `${levelKey}:${questions.indexOf(a)}`;
-    const kb = `${levelKey}:${questions.indexOf(b)}`;
+    const ka = `${levelKey}:${a.q}`;
+    const kb = `${levelKey}:${b.q}`;
     return (d[kb] || 0) - (d[ka] || 0); // most wrong first
   });
 }
@@ -3799,7 +3805,7 @@ function showMCQ(g) {
   // Render question
   const parts = q.q.split('___');
   document.getElementById('mcq-question-text').innerHTML =
-    `${parts[0]}<span id="mcq-blank">___</span>${parts[1]||''}`;
+    `${esc(parts[0])}<span id="mcq-blank">___</span>${esc(parts[1]||'')}`; // bug6 xss fix
   document.getElementById('mcq-hint').textContent = 'Choose the correct answer! 👇';
 
   // Render choices
@@ -3917,7 +3923,7 @@ function showBossMCQ(g) {
   stopMCQTimer();
 
   // Boss badge on question text
-  questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS QUESTION ${qi+1}/${questions.length}</span><br>${q.q}`;
+  questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS QUESTION ${qi+1}/${questions.length}</span><br>${esc(q.q)}`; // bug6 xss fix
   // Update hint
   const hint = document.getElementById('mcq-hint');
   if (hint) hint.textContent = 'Attack Grammar King! 👑';
@@ -3941,7 +3947,7 @@ function selectBossAnswer(choice, g) {
   // Highlight chosen button
   document.querySelectorAll('.mcq-btn').forEach(b => {
     b.disabled = true;
-    if (b.textContent === choice.label) b.classList.add(choice.isCorrect ? 'correct' : 'wrong');
+    if (b.textContent === choice.label) b.classList.add(choice.isCorrect ? 'correct-flash' : 'wrong-flash'); // bug3 fix: use correct CSS class names
   });
   setTimeout(() => {
     hideMCQ();
@@ -3988,8 +3994,8 @@ function selectBossAnswer(choice, g) {
 
       // Record for spaced repetition + show tip
       const bossQIdx = (g.bossCurrentQ - 1) % g.data.questions.length;
-      srRecordWrong(g.level.key, bossQIdx);
       const bossQ = g.data.questions[bossQIdx];
+      srRecordWrong(g.level.key, bossQ ? bossQ.q : String(bossQIdx));
       if (bossQ && bossQ.tip) showExplainToast(bossQ.tip, `✗ Correct: "${bossQ.correct}"`);
 
       // Boss shows charge face then rushes at ball
@@ -4037,7 +4043,7 @@ function renderOrderPanel() {
     `<button onclick="orderTap(${i})"
       style="padding:8px 14px;border-radius:10px;border:1.5px solid rgba(255,209,102,.5);
              background:rgba(255,209,102,.15);color:#FFD166;font-family:'Fredoka One',cursive;
-             font-size:1rem;cursor:pointer;">${w}</button>`
+             font-size:1rem;cursor:pointer;">${esc(w)}</button>` // bug6 xss fix
   ).join('');
 }
 
@@ -4086,7 +4092,7 @@ function orderSubmit() {
     g.combo = 0; updateComboHUD(0);
     spawnParticles(g.px,g.py,'#EF476F',14,5);
     spawnTextParticle(g.px,g.py-30,'Wrong order! ✗','#EF476F');
-    srRecordWrong(g.level.key, qIdx);
+    srRecordWrong(g.level.key, orderQ ? orderQ.q : String(qIdx));
     if (orderQ.tip) showExplainToast(orderQ.tip, `✗ Correct: "${correct}"`);
     if(!tryShield(g)) playerTakeDamage(g);
   }
@@ -4269,7 +4275,7 @@ function processAnswerResult(g, label, isCorrect, plat) {
     spawnTextParticle(g.px, g.py-30, 'Wrong! ✗', '#EF476F');
     // Track wrong answer for review + spaced repetition
     const q = g.data.questions[qIdx];
-    srRecordWrong(g.level.key, qIdx);
+    srRecordWrong(g.level.key, q ? q.q : String(qIdx));
     // Show grammar explanation tip
     if (q && q.tip) showExplainToast(q.tip, `✗ Correct answer: "${q.correct}"`);
     if (q && !g.wrongAnswers.find(w => w.questionIdx === qIdx)) {
@@ -4359,6 +4365,9 @@ function triggerWin(g) {
   const prevTotalStars = parseInt(localStorage.getItem('gr_total_stars') || '0');
   const newTotal = prevTotalStars + stars;
   localStorage.setItem('gr_total_stars', newTotal);
+  // bug14 fix: persist total score so dbSyncProgress reads a real value
+  const prevTotalScore = parseInt(localStorage.getItem('gr_total_score') || '0');
+  localStorage.setItem('gr_total_score', prevTotalScore + g.score);
   checkSkinUnlocks(prevTotalStars, newTotal);
   // Notify multiplayer opponent that we won
   mpSendWin(g);
@@ -4440,7 +4449,7 @@ function updateQuestionUI(g) {
   }
   const parts = q.q.split('___');
   document.getElementById('question-box').innerHTML =
-    `${parts[0]}<span id="question-blank">___</span>${parts[1] || ''}`;
+    `${esc(parts[0])}<span id="question-blank">___</span>${esc(parts[1] || '')}`; // bug6 xss fix
 }
 
 // ══════════════════════════════════════════════
@@ -4806,12 +4815,13 @@ function renderLBList(entries, container) {
   entries.forEach((e,i) => {
     const li = document.createElement('li');
     li.className = `lb-row ${i===0?'top1':i===1?'top2':i===2?'top3':''}`;
-    li.innerHTML = `
-      <span class="lb-rank">${MEDALS[i]}</span>
-      <span class="lb-name">${e.name}</span>
-      <span class="lb-stars">${'⭐'.repeat(e.stars)}${'☆'.repeat(3-e.stars)}</span>
-      <span class="lb-score">${e.score}</span>
-      <span class="lb-date">${e.date}</span>`;
+    // bug5 fix: use textContent for user-supplied name to prevent XSS
+    const rank = document.createElement('span'); rank.className = 'lb-rank'; rank.textContent = MEDALS[i];
+    const nm   = document.createElement('span'); nm.className   = 'lb-name';  nm.textContent = e.name;
+    const st   = document.createElement('span'); st.className   = 'lb-stars'; st.textContent = '⭐'.repeat(e.stars) + '☆'.repeat(3-e.stars);
+    const sc   = document.createElement('span'); sc.className   = 'lb-score'; sc.textContent = e.score;
+    const dt   = document.createElement('span'); dt.className   = 'lb-date';  dt.textContent = e.date;
+    li.append(rank, nm, st, sc, dt);
     container.appendChild(li);
   });
 }
@@ -4841,7 +4851,7 @@ let pendingWin = null;
 function promptPlayerName(levelKey, score, stars) {
   pendingWin = { levelKey, score, stars };
   const input = document.getElementById('name-input');
-  input.value = '';
+  input.value = localStorage.getItem('gr_player_name') || ''; // bug8 fix: pre-fill saved name
   document.getElementById('name-overlay').classList.remove('hidden');
   setTimeout(() => input.focus(), 100);
 }
@@ -4850,6 +4860,7 @@ function submitName() {
   if (!pendingWin) return;
   const input = document.getElementById('name-input');
   const name  = input.value.trim() || 'Murid';
+  try { localStorage.setItem('gr_player_name', name); } catch(e) {} // bug8 fix: persist name for daily/time challenge
   document.getElementById('name-overlay').classList.add('hidden');
   const entries = addLBEntry(pendingWin.levelKey, name, pendingWin.score, pendingWin.stars);
   // Sync score to database
@@ -4915,26 +4926,27 @@ function showReview(g) {
       if (!q) return;
 
       // Build full sentence with correct answer filled in
-      const fullSentence = q.q.replace('___', `<strong>${wa.correctLabel}</strong>`);
+      // bug6 xss fix: escape user-derived strings before html interpolation
+      const fullSentence = esc(q.q).replace('___', `<strong>${esc(wa.correctLabel)}</strong>`);
 
       const card = document.createElement('div');
       card.className = 'review-card';
       card.innerHTML = `
         <div class="review-card-q">
-          ${q.q.replace('___', '<span>___</span>')}
+          ${esc(q.q).replace('___', '<span>___</span>')}
         </div>
         <div class="review-row review-wrong">
           <span class="review-row-icon">✗</span>
           <div>
             <div class="review-row-label">Your Answer</div>
-            <div class="review-row-answer">${wa.wrongLabel}</div>
+            <div class="review-row-answer">${esc(wa.wrongLabel)}</div>
           </div>
         </div>
         <div class="review-row review-correct">
           <span class="review-row-icon">✓</span>
           <div>
             <div class="review-row-label">Correct Answer</div>
-            <div class="review-row-answer">${wa.correctLabel}</div>
+            <div class="review-row-answer">${esc(wa.correctLabel)}</div>
           </div>
         </div>
         <div class="review-sentence">💡 Example: ${fullSentence}</div>
@@ -5131,16 +5143,22 @@ function startDailyChallenge() {
 function dcShowQuestion() {
   if (dcQIdx >= dcQuestions.length) { dcFinish(); return; }
   const q = dcQuestions[dcQIdx];
-  document.getElementById('dc-question').innerHTML = q.q.replace('___','<span style="color:#FFD166;text-decoration:underline;">___</span>');
+  document.getElementById('dc-question').innerHTML = esc(q.q).replace('___','<span style="color:#FFD166;text-decoration:underline;">___</span>'); // bug6 xss fix
   document.getElementById('dc-progress-fill').style.width = `${(dcQIdx/dcQuestions.length)*100}%`;
   const options = [{text:q.correct,correct:true}].concat(q.wrong.map(w=>({text:w,correct:false})));
   for (let i=options.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[options[i],options[j]]=[options[j],options[i]];}
   const cols=['#3B82F6','#EF476F','#06D6A0'];
-  document.getElementById('dc-options').innerHTML = options.map((o,i)=>
-    `<button onclick="dcAnswer(${o.correct},this,'${o.correct?'':q.correct.replace(/'/g,"\\'")}')"
-      style="padding:12px 8px;border-radius:12px;border:2px solid ${cols[i%3]}55;background:${cols[i%3]}22;
-             color:#fff;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer;">${o.text}</button>`
-  ).join('');
+  // bug6 xss fix: use data-correct attribute to avoid inline-js injection
+  document.getElementById('dc-options').innerHTML = '';
+  options.forEach((o,i) => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `padding:12px 8px;border-radius:12px;border:2px solid ${cols[i%3]}55;background:${cols[i%3]}22;color:#fff;font-family:'Fredoka One',cursive;font-size:.95rem;cursor:pointer;`;
+    btn.textContent = o.text;
+    btn.dataset.correct = o.correct ? '1' : '0';
+    btn.dataset.correctText = o.correct ? '' : q.correct;
+    btn.addEventListener('click', function() { dcAnswer(o.correct, this, o.correct ? '' : q.correct); });
+    document.getElementById('dc-options').appendChild(btn);
+  });
   document.getElementById('dc-feedback').textContent='';
 }
 
@@ -5244,7 +5262,7 @@ function tcShowQuestion() {
   if (!tcActive) return;
   if (tcQIdx >= tcQuestions.length) tcQIdx = 0; // loop if exhausted
   const q = tcQuestions[tcQIdx];
-  const filled = q.q.replace('___', `<span style="color:#FFD166;text-decoration:underline;">___</span>`);
+  const filled = esc(q.q).replace('___', `<span style="color:#FFD166;text-decoration:underline;">___</span>`); // bug6 xss fix
   document.getElementById('tc-question').innerHTML = filled;
   // Build shuffled options
   const options = [{ text: q.correct, correct: true }].concat(q.wrong.map(w => ({ text: w, correct: false })));
@@ -5259,7 +5277,7 @@ function tcShowQuestion() {
              background:${colors[i%3]}22;color:#fff;font-family:'Fredoka One',cursive;
              font-size:1rem;cursor:pointer;transition:all .15s;"
       onmouseover="this.style.background='${colors[i%3]}44'"
-      onmouseout="this.style.background='${colors[i%3]}22'">${o.text}</button>`
+      onmouseout="this.style.background='${colors[i%3]}22'">${esc(o.text)}</button>` // bug6 xss fix
   ).join('');
   document.getElementById('tc-feedback').textContent = '';
 }
@@ -5391,10 +5409,10 @@ function renderGuruQuestions() {
   }
   list.innerHTML = questions.map((q, i) => `
     <div class="guru-q-item">
-      <div class="guru-q-text">${q.q} ${getDifficultyBadge(q.difficulty)}</div>
+      <div class="guru-q-text">${esc(q.q)} ${getDifficultyBadge(q.difficulty)}</div>
       <div class="guru-q-answers">
-        <span class="guru-ans-chip correct">✓ ${q.correct}</span>
-        ${q.wrong.map(w => `<span class="guru-ans-chip wrong">✗ ${w}</span>`).join('')}
+        <span class="guru-ans-chip correct">✓ ${esc(q.correct)}</span>
+        ${q.wrong.map(w => `<span class="guru-ans-chip wrong">✗ ${esc(w)}</span>`).join('')}
       </div>
       <button class="guru-q-delete" onclick="guruDeleteQuestion(${i})">Delete</button>
     </div>
@@ -6043,6 +6061,7 @@ function showMenu() {
   document.getElementById('name-overlay').classList.add('hidden');
   document.getElementById('leaderboard-overlay').classList.add('hidden');
   document.getElementById('mode-select-overlay').classList.add('hidden');
+  document.getElementById('review-overlay').classList.add('hidden'); // bug11 fix: clear review on menu
   document.getElementById('pause-btn').style.display='none';
   document.getElementById('pause-btn').textContent='⏸';
   document.getElementById('pause-overlay').classList.add('hidden');
@@ -6078,6 +6097,8 @@ function closeModeSelect() {
 document.getElementById('pause-btn').addEventListener('click', togglePause);
 function togglePause() {
   if (!game) return;
+  // bug9 fix: don't pause mid-MCQ (state=answering) — that would corrupt MCQ flow
+  if (game.state === 'answering') return;
   const isPausing = game.state === 'playing';
   game.state = isPausing ? 'paused' : 'playing';
   document.getElementById('pause-btn').textContent = isPausing ? '▶' : '⏸';
@@ -6085,7 +6106,9 @@ function togglePause() {
 }
 
 function quitToMenu() {
-  if (game) game.state = 'playing'; // stop paused draw loop weirdness
+  stopMCQTimer(); // bug10 fix: prevent timer from firing after menu is shown
+  hideMCQ();
+  if (game) game.state = 'playing';
   document.getElementById('pause-overlay').classList.add('hidden');
   document.getElementById('pause-btn').textContent = '⏸';
   showMenu();
@@ -6364,7 +6387,7 @@ requestAnimationFrame(loop);
 // ══════════════════════════════════════════════
 //  MULTIPLAYER
 // ══════════════════════════════════════════════
-const MP_SERVER = 'http://localhost:3000';
+const MP_SERVER = window.location.origin; // bug4 fix: connect to same origin, not hardcoded localhost
 let socket = null;
 let mpRoom = null;       // current room code
 let mpRole = null;       // 'host' | 'guest'

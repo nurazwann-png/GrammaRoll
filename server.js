@@ -28,10 +28,15 @@ const pool = new Pool(
     : { connectionString: process.env.DATABASE_URL } // local dev fallback
 );
 
-// Run schema on startup (idempotent)
-pool.query(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'))
-  .then(() => console.log('[DB] Schema ready'))
-  .catch(e => console.error('[DB] Schema error:', e.message));
+// Run schema on startup (idempotent) — bug17 fix: wrapped in try/catch
+try {
+  const schemaSql = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  pool.query(schemaSql)
+    .then(() => console.log('[DB] Schema ready'))
+    .catch(e => console.error('[DB] Schema error:', e.message));
+} catch (e) {
+  console.error('[DB] schema.sql missing or unreadable:', e.message);
+}
 
 // ── HTTP helpers ──────────────────────────────────────────────────────────────
 function json(res, code, body) {
@@ -42,6 +47,7 @@ function json(res, code, body) {
 function parseBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
+    req.on('error', reject); // bug18 fix: release connection on client abort
     req.on('data', c => { data += c; if (data.length > 1e6) reject(new Error('too large')); });
     req.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('bad json')); } });
   });
@@ -110,8 +116,8 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && url.startsWith('/api/progress/')) {
     const playerName = decodeURIComponent(url.slice('/api/progress/'.length));
     try {
-      const { rows } = await pool.query(
-        'SELECT * FROM player_progress WHERE player_name=$1', [playerName]
+      const { rows } = await pool.query( // bug20 fix: explicit columns, no SELECT *
+        'SELECT player_name,total_stars,total_score,achievements,unlocked_skins,updated_at FROM player_progress WHERE player_name=$1', [playerName]
       );
       json(res, 200, rows[0] || null);
     } catch(e) { json(res, 500, { error: 'db error' }); }
@@ -145,11 +151,14 @@ const io = new Server(server, {
 
 const rooms = {};
 
-function generateCode() {
+function generateCode() { // bug19 fix: loop instead of unbounded recursion
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return rooms[code] ? generateCode() : code;
+  for (let attempts = 0; attempts < 1000; attempts++) {
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    if (!rooms[code]) return code;
+  }
+  throw new Error('Could not generate unique room code');
 }
 
 io.on('connection', (socket) => {
