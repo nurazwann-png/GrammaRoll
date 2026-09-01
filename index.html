@@ -5237,7 +5237,10 @@ function startTimeChallenge() {
   // Collect all questions from all levels
   tcQuestions = [];
   Object.values(GRAMMAR_DB).forEach(lvl => {
-    if (lvl.questions) lvl.questions.forEach(q => tcQuestions.push(q));
+    if (lvl.questions) lvl.questions.forEach(q => {
+      // skip order questions — they have no q.q fill-in-the-blank text
+      if (q && q.q && q.type !== 'order') tcQuestions.push(q);
+    });
   });
   // Shuffle
   for (let i = tcQuestions.length-1; i > 0; i--) {
