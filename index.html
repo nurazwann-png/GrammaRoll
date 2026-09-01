@@ -5071,8 +5071,11 @@ function showDailyChallenge() {
   overlay.className = 'overlay';
   overlay.id = 'daily-overlay';
   overlay.style.zIndex = '9999';
+  overlay.style.background = 'rgba(10,22,50,0.97)';
+  overlay.style.backdropFilter = 'blur(20px)';
+  overlay.style.overflowY = 'auto';
   overlay.innerHTML = `
-    <div style="max-width:480px;width:100%;text-align:center;padding:20px;">
+    <div style="max-width:480px;width:100%;text-align:center;padding:20px 20px 40px;">
       <div style="font-size:3rem;margin-bottom:4px;">📅</div>
       <h2 style="font-family:'Fredoka One',cursive;font-size:1.8rem;color:#FFD166;margin:0 0 4px;">Daily Challenge</h2>
       <p style="color:rgba(255,255,255,.6);font-size:.88rem;margin:0 0 14px;">${dateStr} · 10 Questions</p>
