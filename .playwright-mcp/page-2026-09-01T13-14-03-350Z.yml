@@ -1,0 +1,255 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: ♥
+      - generic [ref=e5]: ♥
+      - generic [ref=e6]: ♥
+    - generic [ref=e7]: Choose a level to play!
+    - generic [ref=e8]:
+      - generic [ref=e9]: 🌍 World 1
+      - generic [ref=e10]: "0"
+  - generic:
+    - generic [ref=e12]:
+      - button "◀" [ref=e13] [cursor=pointer]
+      - button "▶" [ref=e14] [cursor=pointer]
+    - button "▲" [ref=e16] [cursor=pointer]
+  - generic:
+    - generic:
+      - heading "⏸ Paused" [level=2]
+      - paragraph: Take a breather — game is paused
+      - button "▶ Continue!"
+      - button "🏠 Exit to Menu"
+  - generic: 💡 Tip
+  - generic [ref=e17]:
+    - generic [ref=e18]: GrammarBall!
+    - generic [ref=e19]: English Adventure · CEFR Malaysia
+    - generic [ref=e20] [cursor=pointer]: 😊
+    - generic [ref=e21]:
+      - generic [ref=e22] [cursor=pointer]:
+        - text: 🛝
+        - generic [ref=e23]: L1-1
+      - generic [ref=e24] [cursor=pointer]:
+        - text: 🛝
+        - generic [ref=e25]: L1-2
+      - generic [ref=e26] [cursor=pointer]:
+        - text: 👑
+        - generic [ref=e27]: Boss
+      - generic [ref=e28]:
+        - text: 🦁
+        - generic [ref=e29]: W2
+      - generic [ref=e30]:
+        - text: 🏙️
+        - generic [ref=e31]: W3
+    - button "🎮 Start Playing!" [ref=e32] [cursor=pointer]
+    - generic [ref=e33]:
+      - button "🏆 Scores" [ref=e34] [cursor=pointer]:
+        - text: 🏆
+        - generic [ref=e35]: Scores
+      - button "🎨 Skins" [ref=e36] [cursor=pointer]:
+        - text: 🎨
+        - generic [ref=e37]: Skins
+      - button "🏅 Badges" [ref=e38] [cursor=pointer]:
+        - text: 🏅
+        - generic [ref=e39]: Badges
+      - button "🧑‍🏫 Teacher" [ref=e40] [cursor=pointer]:
+        - text: 🧑‍🏫
+        - generic [ref=e41]: Teacher
+      - button "📸 Selfie" [ref=e42] [cursor=pointer]:
+        - text: 📸
+        - generic [ref=e43]: Selfie
+    - generic: 🎉
+    - generic: ⭐
+    - generic: ⭐
+    - generic: 🌙
+    - generic: 🌙
+    - generic: 🌙
+    - generic: 💫
+    - generic: 🌙
+    - generic: 💫
+    - generic: ⭐
+    - generic: 🌈
+    - generic: ✨
+    - generic: ⚡
+    - generic: 🌟
+    - generic: 🎉
+    - generic: ⚡
+    - generic: ✨
+    - generic: 🌙
+  - generic:
+    - generic:
+      - generic: ← Back
+      - heading "Choose Your Mode" [level=2]
+      - paragraph: Pick how you want to play today
+      - generic:
+        - button "🎮 Normal Play Explore levels & defeat enemies":
+          - generic: 🎮
+          - generic: Normal Play
+          - generic: Explore levels & defeat enemies
+        - button "📅 Daily Challenge One set of questions per day":
+          - generic: 📅
+          - generic: Daily Challenge
+          - generic: One set of questions per day
+        - button "⏱️ Speed Run Answer fast before time runs out":
+          - generic: ⏱️
+          - generic: Speed Run
+          - generic: Answer fast before time runs out
+        - button "⚔️ Versus Race a friend — first to finish wins":
+          - generic: ⚔️
+          - generic: Versus
+          - generic: Race a friend — first to finish wins
+        - button "🤝 Co-op Team up & answer together":
+          - generic: 🤝
+          - generic: Co-op
+          - generic: Team up & answer together
+        - button "📖 Watch Story Replay the Grammo adventure":
+          - generic: 📖
+          - generic: Watch Story
+          - generic: Replay the Grammo adventure
+  - generic:
+    - heading "📸 Your Face = Your Ball!" [level=2]
+    - paragraph: Take a photo of your face to become the ball
+    - generic:
+      - button "📷 Snap!"
+      - button "Cancel"
+  - generic:
+    - generic:
+      - generic: 🏆
+      - heading "Congratulations!" [level=2]
+      - paragraph: Enter your name to save your record
+      - textbox "Your name..."
+      - button "💾 Save Record"
+      - button "Skip"
+  - generic:
+    - generic:
+      - generic:
+        - heading "📝 Review" [level=2]
+        - paragraph: Questions you got wrong
+      - generic:
+        - generic: 🌟
+        - heading "Perfect!" [level=3]
+        - paragraph: You answered all questions correctly! Great!
+      - button "Continue ▶"
+  - generic:
+    - generic:
+      - generic: ⏱️
+      - heading "Time Challenge" [level=2]
+      - paragraph:
+        - text: Answer as many questions as you can in
+        - strong: 60 seconds
+        - text: "!"
+      - generic:
+        - generic:
+          - generic: "60"
+          - generic: SECONDS
+        - generic:
+          - generic: "0"
+          - generic: SCORE
+        - generic:
+          - generic: "0"
+          - generic: STREAK
+      - generic:
+        - generic: 🏁
+        - heading "Time's Up!" [level=3]
+        - paragraph
+        - paragraph
+        - generic:
+          - button "🔄 Play Again"
+          - button "🏠 Menu"
+      - button "✕ Cancel"
+  - generic:
+    - generic:
+      - heading "⚔️ Multiplayer Mode" [level=2]
+      - paragraph: Challenge a friend in real time!
+      - generic:
+        - generic:
+          - generic: Your Name
+          - textbox "Your name..."
+        - generic:
+          - generic: Level
+          - combobox:
+            - option "L1-1 — am/is/are" [selected]
+            - option "L1-2 — a/an/the"
+            - option "Boss — Simple Present"
+            - option "W2 — Present Continuous"
+        - button "🏠 Create Room"
+        - generic: atau
+        - generic:
+          - generic: Enter Room Code
+          - textbox "ABCD"
+        - button "🚪 Join Room"
+      - button "✕ Cancel"
+  - generic:
+    - generic:
+      - heading "🤝 Co-op Mode" [level=2]
+      - paragraph: Team up! Both players must answer correctly to advance.
+      - generic:
+        - generic:
+          - generic: Your Name
+          - textbox "Your name..."
+        - generic:
+          - generic: Level
+          - combobox:
+            - option "L1-1 — am/is/are" [selected]
+            - option "L1-2 — a/an/the"
+            - option "Boss — Simple Present"
+            - option "W2 — Present Continuous"
+        - button "🏠 Create Room"
+        - generic: or
+        - generic:
+          - generic: Enter Room Code
+          - textbox "ABCD"
+        - button "🚪 Join Room"
+      - button "✕ Cancel"
+  - generic:
+    - generic:
+      - generic:
+        - heading "🧑‍🏫 Teacher Mode" [level=2]
+        - paragraph: Set custom questions for your class
+      - generic:
+        - paragraph: Enter teacher PIN to access
+        - textbox "••••"
+        - button "Enter"
+      - button "✕ Close"
+  - generic:
+    - generic:
+      - generic: 🏆 Leaderboard
+      - generic: Top 5 Class Champions
+      - list
+      - generic:
+        - button "🗑️ Reset"
+        - button "Close"
+  - generic:
+    - generic:
+      - text: 🌟
+      - generic: 😊
+      - generic: 🎯 Grammar Question
+      - generic: "10"
+      - generic: Question will appear here
+      - generic: Choose the correct answer!
+      - generic:
+        - button
+        - button
+        - button
+  - generic:
+    - generic: Game Over!
+    - generic: Try again! You can do it! 💪
+    - button "🔄 Try Again"
+    - button "🏠 Menu"
+  - generic:
+    - generic: Congratulations!
+    - generic: ⭐⭐⭐
+    - generic: You answered all questions correctly!
+    - generic:
+      - generic:
+        - generic: —
+        - generic: Accuracy
+      - generic:
+        - generic: —
+        - generic: Avg Time/Q
+      - generic:
+        - generic: —
+        - generic: Mistakes
+    - button "Next Level ▶"
+    - generic:
+      - button "🏆 Score"
+      - button "🏠 Menu"

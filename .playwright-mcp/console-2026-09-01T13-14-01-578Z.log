@@ -1,0 +1,2 @@
+[    1551ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ https://grammarball-617886577219.asia-southeast1.run.app/:0
+[   36248ms] [ERROR] Failed to load resource: the server responded with a status of 500 () @ https://grammarball-617886577219.asia-southeast1.run.app/api/scores/1-1:0
