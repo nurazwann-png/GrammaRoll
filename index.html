@@ -686,7 +686,7 @@ body {
 
 /* SELFIE SCREEN */
 #selfie-screen {
-  background: rgba(10,22,50,0.96);
+  background: rgb(10,22,50);
   backdrop-filter:blur(20px);
 }
 #selfie-screen h2 {
@@ -912,8 +912,8 @@ body {
   /* flex-start + spacers = center when short, scrollable when tall */
   justify-content:flex-start;
   transition: opacity .4s;
-  /* default solid background so menu never bleeds through any overlay */
-  background: rgba(10,22,50,0.97);
+  /* fully opaque so nothing bleeds through from behind */
+  background: rgb(10,22,50);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   overflow-y: auto;
@@ -5106,7 +5106,7 @@ function showDailyChallenge() {
   overlay.className = 'overlay';
   overlay.id = 'daily-overlay';
   overlay.style.zIndex = '9999';
-  overlay.style.background = 'rgba(10,22,50,0.97)';
+  overlay.style.background = 'rgb(10,22,50)';
   overlay.style.backdropFilter = 'blur(20px)';
   overlay.style.overflowY = 'auto';
   overlay.innerHTML = `
