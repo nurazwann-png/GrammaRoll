@@ -910,6 +910,11 @@ body {
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   transition: opacity .4s;
+  /* default solid background so menu never bleeds through any overlay */
+  background: rgba(10,22,50,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow-y: auto;
 }
 .overlay.hidden { opacity:0; pointer-events:none; }
 #gameover-overlay {
