@@ -4852,10 +4852,35 @@ function submitName() {
   const name  = input.value.trim() || 'Murid';
   document.getElementById('name-overlay').classList.add('hidden');
   const entries = addLBEntry(pendingWin.levelKey, name, pendingWin.score, pendingWin.stars);
+  // Sync score to database
+  dbPostScore(name, pendingWin.levelKey, pendingWin.score, pendingWin.stars);
+  // Sync progress to database
+  dbSyncProgress(name);
   // Show mini leaderboard in win screen
   showWinLBPreview(entries);
   pendingWin = null;
   maybeShowReview();
+}
+
+// ── Database sync helpers ──────────────────────────────────────────────────────
+function dbPostScore(playerName, levelKey, score, stars) {
+  fetch('/api/scores', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerName, levelKey, score, stars })
+  }).catch(() => {}); // silent — localStorage is still the source of truth
+}
+
+function dbSyncProgress(playerName) {
+  const achievements = JSON.parse(localStorage.getItem('gr_ach_stats') || '{}');
+  const totalStars   = parseInt(localStorage.getItem('gr_total_stars') || '0');
+  const totalScore   = parseInt(localStorage.getItem('gr_total_score') || '0');
+  const unlockedSkins = SKINS.filter(s => isSkinUnlocked(s.id)).map(s => s.id);
+  fetch('/api/progress', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerName, totalStars, totalScore, achievements, unlockedSkins })
+  }).catch(() => {});
 }
 
 function skipName() {
