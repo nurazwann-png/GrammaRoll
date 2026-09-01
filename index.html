@@ -5921,11 +5921,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   spawnMenuStars();
 
-  // Show intro cutscene on first-ever visit
-  if (!localStorage.getItem(CS_INTRO_KEY)) {
-    localStorage.setItem(CS_INTRO_KEY, '1');
-    showIntroCutscene();
-  }
 
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();
@@ -6036,6 +6031,13 @@ function showMenu() {
 }
 
 function showModeSelect() {
+  if (!localStorage.getItem(CS_INTRO_KEY)) {
+    localStorage.setItem(CS_INTRO_KEY, '1');
+    showIntroCutscene(() => {
+      document.getElementById('mode-select-overlay').classList.remove('hidden');
+    });
+    return;
+  }
   document.getElementById('mode-select-overlay').classList.remove('hidden');
 }
 function closeModeSelect() {
