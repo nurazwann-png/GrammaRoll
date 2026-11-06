@@ -61,8 +61,9 @@ function spawnBossQuestion(g) {
   g.bossLastQ = q;
   const opts = [{ label: q.correct, isCorrect: true }, ...q.wrong.map(w => ({ label: w, isCorrect: false }))];
   for (let i = opts.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [opts[i], opts[j]] = [opts[j], opts[i]]; }
-  const { x0, groundY } = boss.arena;
-  g.bossBubbles = opts.map((o, i) => ({ ...o, x: x0 + 110 + i * 190, y: groundY - BOSS_BUBBLE_RISE, r: BOSS_BUBBLE_R, bob: i * 1.7, pop: 0 }));
+  const { x0, x1, groundY } = boss.arena;
+  const mid = (x0 + x1) / 2;
+  g.bossBubbles = opts.map((o, i) => ({ ...o, x: mid - 190 + i * 190, y: groundY - BOSS_BUBBLE_RISE, r: BOSS_BUBBLE_R, bob: i * 1.7, pop: 0 }));
   g.bossAskTime = Date.now();
   document.getElementById('question-box').innerHTML =
     `👑 ${esc(q.q).replace('___', '<span id="question-blank">___</span>')}`;

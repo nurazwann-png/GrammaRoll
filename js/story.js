@@ -433,9 +433,29 @@ function csStopNarration() {
   window.speechSynthesis?.cancel();
 }
 
+// Autoplay: each scene moves on by itself once its line has been read or spoken
+let csAutoTimer = null;
+function csClearAuto() { clearTimeout(csAutoTimer); csAutoTimer = null; }
+function csScheduleAuto(ms) { csClearAuto(); csAutoTimer = setTimeout(csNext, ms); }
+function csReadMs(scene) { return Math.max(4000, scene.text.length * 55 + 1500); }
+
+// Move to the next scene (or finish on the last one)
+function csNext() {
+  csClearAuto();
+  if (csTransitioning || document.getElementById('cutscene-overlay').classList.contains('hidden')) return;
+  if (csTypeTimer) clearInterval(csTypeTimer);
+  csTyping = false;
+  const scene = csScenes[csIndex];
+  if (!scene) return;
+  if (scene.last) { document.getElementById('cs-cta').click(); return; }
+  csIndex++;
+  csGoTo(csIndex);
+}
+
 function csNarrate(scene) {
   csStopNarration();
-  if (!getSettings().narrateStory || !scene) return;
+  if (!scene) return;
+  if (!getSettings().narrateStory) { csScheduleAuto(csReadMs(scene)); return; }
   const text = csSpokenText(scene.text);
   const id = narrationId(csSetId, csScenes.indexOf(scene));
   const entry = csAudioManifest[id];
@@ -444,10 +464,15 @@ function csNarrate(scene) {
     const el = document.createElement('audio');
     el.src = `/audio/story/${entry.file}`;
     csAudioEl = el;
-    el.play().then(() => csConnectAnalyser(el)).catch(() => { if (csAudioEl === el) { csAudioEl = null; speak(text, voice); } });
+    el.addEventListener('ended', () => { if (csAudioEl === el) csScheduleAuto(1200); });
+    csScheduleAuto(csReadMs(scene) + 10000); // safety net if the audio never ends
+    el.play().then(() => csConnectAnalyser(el)).catch(() => {
+      if (csAudioEl === el) { csAudioEl = null; speak(text, voice); csScheduleAuto(text.length * 80 + 1500); }
+    });
     return;
   }
   speak(text, voice);
+  csScheduleAuto(text.length * 80 + 1500);
 }
 function csUpdateVoiceBtn() {
   const on = getSettings().narrateStory;
@@ -461,7 +486,7 @@ function csToggleVoice(e) {
   saveSettings({ narrateStory: on });
   csUpdateVoiceBtn();
   if (on) { csNarrate(csScenes[csIndex]); csSetMusic(csMusicFor(csIndex)); }
-  else { csStopNarration(); csSetMusic(null); }
+  else { csStopNarration(); csSetMusic(null); csScheduleAuto(csReadMs(csScenes[csIndex])); }
 }
 
 // ══════════════════════════════════════════════
@@ -745,26 +770,6 @@ function csTypeText(fullText, isLast, scene) {
   }, delay);
 }
 
-function csAdvance() {
-  if (csTyping) {
-    // Skip to full text immediately
-    clearInterval(csTypeTimer);
-    csTyping = false;
-    const scene = csScenes[csIndex];
-    document.getElementById('cs-text').textContent = scene.text;
-    if (scene.last) {
-      document.getElementById('cs-cta').classList.remove('hidden');
-      document.getElementById('cs-tap').classList.add('hidden');
-    }
-    return;
-  }
-  const scene = csScenes[csIndex];
-  if (scene.last) return; // wait for CTA button
-  if (csTransitioning || csIndex + 1 >= csScenes.length) return;
-  csIndex++;
-  csGoTo(csIndex);
-}
-
 let csTransitioning = false;
 function csGoTo(idx) {
   const curtain = document.getElementById('cs-curtain');
@@ -780,6 +785,7 @@ function csGoTo(idx) {
 }
 
 function csFinish() {
+  csClearAuto();
   csStopNarration();
   csSetMusic(null);
   csFxStop();
@@ -838,8 +844,17 @@ function showEndingCutscene(onDone) {
 
 // Wire up click/tap on dialog and CTA
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('cs-dialog').addEventListener('click', csAdvance);
-  document.getElementById('cs-chars').addEventListener('click', csAdvance);
+  // Any tap or key skips the current part; only the Skip button skips the whole story
+  document.getElementById('cutscene-overlay').addEventListener('click', e => {
+    if (e.target.closest('#cs-skip, #cs-voice, #cs-cta')) return;
+    csNext();
+  });
+  document.addEventListener('keydown', e => {
+    if (document.getElementById('cutscene-overlay').classList.contains('hidden') || e.repeat) return;
+    if (e.target.closest && e.target.closest('#cutscene-overlay button')) return;
+    e.preventDefault();
+    csNext();
+  });
 
   document.getElementById('cs-cta').addEventListener('click', () => {
     const scene = csScenes[csIndex];

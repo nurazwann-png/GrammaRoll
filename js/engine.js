@@ -182,6 +182,22 @@ function showBanner(msg, color) {
   _bannerTimer = setTimeout(() => { el.classList.remove('show'); el.style.background = ''; }, 2000);
 }
 
+// The arena is always at least one screen wide, with the boss and answer bubbles centred in it
+function fitArenaToScreen(g) {
+  const lv = g.level, a = lv.boss.arena, boss = lv.boss;
+  const need = a.x0 - 30 + CW;
+  if (a.x1 < need) {
+    a.x1 = need;
+    lv.worldW = need;
+    a.ground.w = need - a.x0;
+  }
+  const mid = (a.x0 + a.x1) / 2;
+  if (Math.abs(boss.baseX - (mid - boss.w / 2)) > 1) {
+    boss.baseX = mid - boss.w / 2;
+    if (!boss.attacking) boss.x = boss.baseX;
+  }
+}
+
 // Entering the boss arena: fade in, seal the gate behind the ball, hold the first question briefly
 function enterBossArena(g) {
   const arena = g.level.boss.arena;
@@ -190,7 +206,8 @@ function enterBossArena(g) {
   g.arenaFade = 45;
   g.px = Math.max(g.px, arena.x0 + 70);
   g.pvx = Math.max(g.pvx, 0);
-  g.camX = Math.max(g.camX, Math.min(arena.x0 - 30, g.level.worldW - CW));
+  fitArenaToScreen(g);
+  g.camX = arena.x0 - 30;
   g.checkpoint = { px: arena.x0 + 80, py: arena.groundY - 20, hearts: g.hearts, score: g.score };
   triggerScreenShake(6, 400);
   Audio.enemy();
@@ -1125,14 +1142,15 @@ function buildLevel(key) {
   // Final ground + goal
   if (difficulty === 'boss') {
     // Boss arena: wide flat ground, no goal platform — boss takes its place
-    platforms.push(new Platform(curX, GH, 600, 40, 'solid'));
+    const arenaGround = new Platform(curX, GH, 600, 40, 'solid');
+    platforms.push(arenaGround);
     // Boss spawns above arena ground
     const bossX = curX + 220;
     const bossW = BALL_R * 6;
     // In jump mode the boss hovers high so answer bubbles fit between it and the ground
     boss = new Boss(bossX, GH - bossW - (jumpMode ? 170 : 10), data.bossName || 'Grammar King');
     boss.baseX = bossX;
-    boss.arena = { x0: curX, x1: curX + 600, groundY: GH };
+    boss.arena = { x0: curX, x1: curX + 600, groundY: GH, ground: arenaGround };
   } else {
     // Normal ending
     platforms.push(new Platform(curX, GH, 400, 40, 'solid'));
@@ -1609,7 +1627,10 @@ function updateGame(g) {
       g.targetCamX = Math.min(Math.max(centred, g.px - CW + 70), g.px - 70);
     }
   }
-  if (g.arenaLocked) g.targetCamX = Math.max(g.targetCamX, level.boss.arena.x0 - 30);
+  if (g.arenaLocked) {
+    fitArenaToScreen(g);
+    g.targetCamX = Math.max(g.targetCamX, level.boss.arena.x0 - 30);
+  }
   g.targetCamX = Math.max(0, Math.min(level.worldW - CW, g.targetCamX));
   g.camX += (g.targetCamX - g.camX) * 0.09;
   // Small landscape phones: keep the ball high so the touch controls don't cover it.

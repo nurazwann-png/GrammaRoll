@@ -691,7 +691,7 @@ body {
 }
 #cs-skip:hover { background: rgba(255,255,255,.22); color:#fff; }
 #cs-voice {
-  position: absolute; top: 14px; right: 96px; z-index: 10;
+  position: absolute; top: 14px; right: 140px; z-index: 10;
   background: rgba(0,0,0,.35); border: 1.5px solid rgba(255,255,255,.25);
   border-radius: 20px; padding: 4px 12px; font-size: 1rem; cursor: pointer;
 }
