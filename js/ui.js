@@ -23,6 +23,7 @@ function startLevelKey(key) {
   updatePowerUpHUD(game);
   updateComboHUD(0);
   playWorldMusic(key);
+  updateRotateTip();
 }
 
 function restartLevel() {
@@ -83,17 +84,30 @@ function renderMenuWorlds() {
   const stars = getLevelStars();
   const assigned = getAssignedLevels();
   wrap.innerHTML = '';
-  LEVEL_KEYS.forEach(key => {
-    const d = GRAMMAR_DB[key];
-    const unlocked = isLevelUnlocked(key);
-    const btn = document.createElement('button');
-    btn.className = 'world-btn' + (unlocked ? '' : ' locked') + (stars[key] ? ' done' : '') + (assigned.includes(key) ? ' assigned' : '');
-    btn.setAttribute('role', 'listitem');
-    btn.setAttribute('aria-label', `${levelLabel(key)}: ${d.topic}${unlocked ? '' : ' (locked)'}${stars[key] ? `, ${stars[key]} stars` : ''}`);
-    btn.title = `${d.topic}${unlocked ? '' : ' — finish the previous level to unlock'}`;
-    btn.innerHTML = `${d.icon}<span>${levelLabel(key)}</span>`;
-    btn.onclick = () => unlocked ? startLevelKey(key) : showToast('🔒 Finish the previous level to unlock this one!');
-    wrap.appendChild(btn);
+  // One small card per world, e.g. "🛝 Playground" with its three levels
+  const worlds = [...new Set(LEVEL_KEYS.map(k => k.split('-')[0]))];
+  worlds.forEach(w => {
+    const keys = LEVEL_KEYS.filter(k => k.startsWith(`${w}-`));
+    const first = GRAMMAR_DB[keys[0]];
+    const group = document.createElement('div');
+    group.className = 'world-group';
+    group.setAttribute('role', 'group');
+    const name = first.world.replace(/\s*Boss\s*/i, ' ').trim();
+    group.setAttribute('aria-label', `World ${w}: ${name}`);
+    group.innerHTML = `<div class="world-group-name">${esc(name)}</div><div class="world-group-tiles"></div>`;
+    const tiles = group.lastElementChild;
+    keys.forEach(key => {
+      const d = GRAMMAR_DB[key];
+      const unlocked = isLevelUnlocked(key);
+      const btn = document.createElement('button');
+      btn.className = 'world-btn' + (unlocked ? '' : ' locked') + (stars[key] ? ' done' : '') + (assigned.includes(key) ? ' assigned' : '');
+      btn.setAttribute('aria-label', `${levelLabel(key)}: ${d.topic}${unlocked ? '' : ' (locked)'}${stars[key] ? `, ${stars[key]} stars` : ''}`);
+      btn.title = `${d.topic}${unlocked ? '' : ' — finish the previous level to unlock'}`;
+      btn.innerHTML = `${d.icon}<span>${levelLabel(key)}</span>${unlocked ? '' : '<i class="lock-badge" aria-hidden="true">🔒</i>'}`;
+      btn.onclick = () => unlocked ? startLevelKey(key) : showToast('🔒 Finish the previous level to unlock this one!');
+      tiles.appendChild(btn);
+    });
+    wrap.appendChild(group);
   });
   renderMenuProgress();
 }
@@ -209,6 +223,18 @@ async function refreshClassInfo() {
     renderMenuWorlds();
   } catch (e) { /* offline: keep cached class info */ }
 }
+
+// ── "Turn your phone sideways" tip: touch screens held upright, during a level ──
+function updateRotateTip() {
+  const show = !!game && window.matchMedia?.('(pointer: coarse)').matches && innerHeight > innerWidth * 1.15 &&
+    !sessionStorage.getItem('gr_rotate_tip_closed');
+  document.getElementById('rotate-tip').classList.toggle('show', show);
+}
+function dismissRotateTip() {
+  try { sessionStorage.setItem('gr_rotate_tip_closed', '1'); } catch (e) {}
+  updateRotateTip();
+}
+window.addEventListener('resize', updateRotateTip);
 
 // ── Background music while playing ──
 let worldMusic = { el: null, track: null };
@@ -494,6 +520,7 @@ function showMenu() {
   }
   document.getElementById('word-progress').style.display = 'none';
   stopWorldMusic();
+  updateRotateTip();
   renderMenuWorlds();
   spawnMenuStars();
 }

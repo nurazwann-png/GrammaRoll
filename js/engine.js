@@ -45,10 +45,16 @@ const canvas = document.getElementById('game-canvas');
 const ctx2d  = canvas.getContext('2d');
 let CW = 0, CH = 0;
 
+// Small screens see a slightly zoomed-out world: the canvas is drawn larger than it is displayed,
+// so a phone still shows at least MIN_VIEW_W × MIN_VIEW_H world pixels (e.g. all three answers).
+const MIN_VIEW_W = 560;
+const MIN_VIEW_H = 380;
+let viewZoom = 1;
 function resizeCanvas() {
-  const hud = document.getElementById('hud');
-  CW = canvas.width  = canvas.offsetWidth;
-  CH = canvas.height = canvas.offsetHeight;
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  viewZoom = Math.min(1, w / MIN_VIEW_W, h / MIN_VIEW_H) || 1;
+  CW = canvas.width  = Math.round(w / viewZoom);
+  CH = canvas.height = Math.round(h / viewZoom);
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
@@ -1566,8 +1572,16 @@ function updateGame(g) {
   // Ball correct glow countdown
   if (g.correctGlow > 0) g.correctGlow--;
 
-  // Camera
+  // Camera: normally the ball sits 35% from the left; near a set of answers the camera
+  // centres on them so all three stay on screen, while still keeping the ball in view.
   g.targetCamX = g.px - CW*0.35;
+  if (level.jumpMode) {
+    const c = getClusters(level)[g.currentQ];
+    if (c && !g.answeredQuestions.has(g.currentQ) && g.px > c.minX - 320 && g.px < c.maxX + 60) {
+      const centred = (c.minX + c.maxX) / 2 - CW / 2;
+      g.targetCamX = Math.min(Math.max(centred, g.px - CW + 70), g.px - 70);
+    }
+  }
   g.targetCamX = Math.max(0, Math.min(level.worldW - CW, g.targetCamX));
   g.camX += (g.targetCamX - g.camX) * 0.09;
   // Small landscape phones: keep the ball high so the touch controls don't cover it.

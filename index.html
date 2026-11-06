@@ -42,6 +42,7 @@
 </div>
 
 <button id="pause-btn" title="Pause">⏸</button>
+<div id="rotate-tip" role="status"><span class="rot-icon" aria-hidden="true">📱</span> Turn your phone sideways for a bigger view <button onclick="dismissRotateTip()" aria-label="Close tip">✕</button></div>
 
 <!-- PAUSE OVERLAY -->
 <div class="overlay hidden" id="pause-overlay">
@@ -73,11 +74,11 @@
 
 <!-- MENU SCREEN -->
 <div class="screen" id="menu-screen">
-  <div id="menu-title">Grammar<br>Ball!</div>
+  <div id="menu-title">Grammar <br>Ball!</div>
   <div id="menu-subtitle">English Adventure · CEFR Malaysia</div>
   <div id="menu-ball-preview">😊</div>
   <div id="menu-progress-row" aria-live="polite"></div>
-  <div id="menu-worlds" role="list" aria-label="Levels"></div>
+  <div id="menu-worlds" aria-label="Levels"></div>
   <button class="btn btn-primary menu-play-btn" onclick="showModeSelect()">🎮 Start Playing!</button>
 
   <!-- Utility icon row -->

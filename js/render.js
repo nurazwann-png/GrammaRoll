@@ -267,6 +267,7 @@ function drawQuestionSign(ctx, g) {
   const cx = (c.minX + c.maxX) / 2 - g.camX;
   if (cx < -300 || cx > CW + 300) return;
   const top = c.y - 92 - g.camY;
+  if (top < 4) return; // no room above the answers (short screens): the top bar already shows the question
   const special = isSpecial(q) ? SPECIAL_TYPES[q.type] : null;
   const text = special ? `${special.icon} ${special.prompt}` : q.q.replace(/_{3,}/, '____');
   const sub = special ? 'Jump onto any platform to start ⬆' : 'Jump onto the right answer ⬆';
