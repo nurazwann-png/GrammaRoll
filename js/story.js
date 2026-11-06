@@ -162,7 +162,7 @@ const WORLD_STORIES = {
         { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
       ],
       speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
-      text: 'Grammo, the Safari needs you! Remember: we use am, is or are with -ing to say what is happening now.',
+      text: 'Grammo, the Safari needs you! To say what is happening now, use "am", "is" or "are" with an "ing" word, like "I am swinging"!',
     },
     {
       fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
@@ -258,7 +258,7 @@ const WORLD_STORIES = {
         { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
       ],
       speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
-      text: 'This is the final battle, Grammo. Use will and going to for the future. You are faster, braver and smarter than ever!',
+      text: 'This is the final battle, Grammo. Use "will" and "going to" for the future. You are faster, braver and smarter than ever!',
     },
     {
       fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['fanfare',200],['boing',900]],

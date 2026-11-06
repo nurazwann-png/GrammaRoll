@@ -593,8 +593,9 @@ body {
 .cs-char.big .cs-char-emoji { font-size: clamp(7rem, 26vmin, 16rem); }
 .cs-char-name {
   font-family: 'Fredoka One', cursive;
-  font-size: .7rem; color: rgba(255,255,255,.6);
+  font-size: .7rem; color: rgba(255,255,255,.9);
   margin-top: 4px; letter-spacing: .5px;
+  background: rgba(0,0,0,.35); border-radius: 10px; padding: 1px 8px;
 }
 /* Ball wrapper for Grammo */
 .cs-ball {
@@ -681,8 +682,8 @@ body {
 /* Skip button */
 #cs-skip {
   position: absolute; top: 14px; right: 14px; z-index: 10;
-  background: rgba(255,255,255,.12);
-  border: 1.5px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.35);
+  border: 1.5px solid rgba(255,255,255,.25);
   border-radius: 20px; padding: 6px 14px;
   font-family: 'Nunito', sans-serif; font-weight: 800;
   font-size: .82rem; color: rgba(255,255,255,.6);
@@ -691,7 +692,7 @@ body {
 #cs-skip:hover { background: rgba(255,255,255,.22); color:#fff; }
 #cs-voice {
   position: absolute; top: 14px; right: 96px; z-index: 10;
-  background: rgba(255,255,255,.12); border: 1.5px solid rgba(255,255,255,.2);
+  background: rgba(0,0,0,.35); border: 1.5px solid rgba(255,255,255,.25);
   border-radius: 20px; padding: 4px 12px; font-size: 1rem; cursor: pointer;
 }
 #cs-voice:hover { background: rgba(255,255,255,.22); }
@@ -714,9 +715,9 @@ body {
 .cs-bg-dark    { background: radial-gradient(ellipse at 50% 30%, #4a0a20 0%, #1a0030 50%, #000 100%); }
 .cs-bg-chaos   { background: linear-gradient(135deg, #7f1d1d, #451a03, #1e1b4b); }
 .cs-bg-victory { background: radial-gradient(ellipse at 50% 40%, #065f46 0%, #1e3a5f 50%, #0f172a 100%); }
-.cs-bg-safari  { background: linear-gradient(180deg, #f59e0b 0%, #fb923c 30%, #fcd34d 60%, #84cc16 85%, #4d7c0f 100%); }
-.cs-bg-city    { background: linear-gradient(180deg, #0f172a 0%, #312e81 45%, #7c3aed 75%, #f472b6 100%); }
-.cs-bg-space   { background: radial-gradient(ellipse at 70% 20%, #4c1d95 0%, #1e1b4b 40%, #020617 100%); }
+.cs-bg-safari  { background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20400%20140%27%3E%3Cg%20fill%3D%27%233b2a12%27%20opacity%3D%27.85%27%3E%3Cpath%20d%3D%27M0%20120%20Q100%20105%20200%20118%20T400%20112%20V140%20H0Z%27%2F%3E%3Crect%20x%3D%27292%27%20y%3D%2760%27%20width%3D%277%27%20height%3D%2758%27%2F%3E%3Cpath%20d%3D%27M250%2062%20Q296%2030%20342%2062%20Q296%2054%20250%2062Z%27%2F%3E%3Crect%20x%3D%2762%27%20y%3D%2784%27%20width%3D%275%27%20height%3D%2736%27%2F%3E%3Cpath%20d%3D%27M36%2086%20Q65%2064%2094%2086%20Q65%2080%2036%2086Z%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center bottom 27% / 100% auto no-repeat, linear-gradient(180deg, #f59e0b 0%, #fb923c 30%, #fcd34d 60%, #84cc16 85%, #4d7c0f 100%); }
+.cs-bg-city    { background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20400%20140%27%3E%3Cg%20fill%3D%27%23140f33%27%3E%3Crect%20x%3D%270%27%20y%3D%2760%27%20width%3D%2746%27%20height%3D%2780%27%2F%3E%3Crect%20x%3D%2750%27%20y%3D%2730%27%20width%3D%2738%27%20height%3D%27110%27%2F%3E%3Crect%20x%3D%2792%27%20y%3D%2775%27%20width%3D%2750%27%20height%3D%2765%27%2F%3E%3Crect%20x%3D%27146%27%20y%3D%2715%27%20width%3D%2734%27%20height%3D%27125%27%2F%3E%3Crect%20x%3D%27184%27%20y%3D%2755%27%20width%3D%2756%27%20height%3D%2785%27%2F%3E%3Crect%20x%3D%27244%27%20y%3D%2738%27%20width%3D%2740%27%20height%3D%27102%27%2F%3E%3Crect%20x%3D%27288%27%20y%3D%2770%27%20width%3D%2748%27%20height%3D%2770%27%2F%3E%3Crect%20x%3D%27340%27%20y%3D%2725%27%20width%3D%2760%27%20height%3D%27115%27%2F%3E%3C%2Fg%3E%3Cg%20fill%3D%27%23fde68a%27%20opacity%3D%27.75%27%3E%3Crect%20x%3D%2758%27%20y%3D%2742%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%2772%27%20y%3D%2760%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27154%27%20y%3D%2730%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27166%27%20y%3D%2752%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27154%27%20y%3D%2776%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27196%27%20y%3D%2770%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27222%27%20y%3D%2790%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27254%27%20y%3D%2752%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27268%27%20y%3D%2778%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27352%27%20y%3D%2740%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27378%27%20y%3D%2764%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%2710%27%20y%3D%2780%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27104%27%20y%3D%2790%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3Crect%20x%3D%27300%27%20y%3D%2788%27%20width%3D%276%27%20height%3D%278%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") center bottom 30% / 100% auto no-repeat, linear-gradient(#140f33, #140f33) bottom / 100% 30.5% no-repeat, linear-gradient(180deg, #0f172a 0%, #312e81 45%, #7c3aed 75%, #f472b6 100%); }
+.cs-bg-space   { background: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20200%20200%27%3E%3Ccircle%20cx%3D%27100%27%20cy%3D%27100%27%20r%3D%2746%27%20fill%3D%27%23f472b6%27%2F%3E%3Ccircle%20cx%3D%2786%27%20cy%3D%2786%27%20r%3D%2746%27%20fill%3D%27%23fb7185%27%20opacity%3D%27.5%27%2F%3E%3Cellipse%20cx%3D%27100%27%20cy%3D%27104%27%20rx%3D%2788%27%20ry%3D%2718%27%20fill%3D%27none%27%20stroke%3D%27%23fde68a%27%20stroke-width%3D%276%27%20opacity%3D%27.8%27%20transform%3D%27rotate(-14%20100%20100)%27%2F%3E%3C%2Fsvg%3E") 88% 12% / min(32vw, 180px) auto no-repeat, radial-gradient(ellipse at 70% 20%, #4c1d95 0%, #1e1b4b 40%, #020617 100%); }
 .cs-bg-ending  { background: radial-gradient(ellipse at 50% 50%, #451a03 0%, #78350f 30%, #0f172a 100%); }
 
 /* SELFIE SCREEN */
