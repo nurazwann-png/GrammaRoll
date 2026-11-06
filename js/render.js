@@ -195,6 +195,17 @@ function drawPlayer(g) {
     ctx.rotate(-g.pRot); // counter-rotate → face stays upright
     ctx.drawImage(selfieCanvas, -BALL_R, -BALL_R, BALL_R*2, BALL_R*2);
     ctx.restore();
+  } else if (g.hurtTimer > 0) {
+    // Pained face: squeezed eyes, frown, sweat drop
+    ctx.save();
+    ctx.rotate(-g.pRot);
+    ctx.strokeStyle='#1a0a00'; ctx.lineWidth=2.4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-10,-8); ctx.lineTo(-3,-4); ctx.lineTo(-10,0); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(10,-8); ctx.lineTo(3,-4); ctx.lineTo(10,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 11, 6, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+    ctx.fillStyle='#7dd3fc';
+    ctx.beginPath(); ctx.moveTo(BALL_R*0.62,-BALL_R*0.55); ctx.quadraticCurveTo(BALL_R*0.85,-BALL_R*0.2, BALL_R*0.62,-BALL_R*0.1); ctx.quadraticCurveTo(BALL_R*0.4,-BALL_R*0.2, BALL_R*0.62,-BALL_R*0.55); ctx.fill();
+    ctx.restore();
   } else {
     // Emoji face — counter-rotated to stay upright
     ctx.save();
@@ -205,6 +216,12 @@ function drawPlayer(g) {
     ctx.strokeStyle='#1a0a00'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.arc(0, 4, 6, 0, Math.PI); ctx.stroke();
     ctx.restore();
+  }
+
+  // Hurt: the whole ball blinks red
+  if (g.hurtTimer > 0 && Math.floor(g.hurtTimer / 6) % 2 === 0) {
+    ctx.fillStyle = 'rgba(255,30,60,0.5)';
+    ctx.beginPath(); ctx.arc(0, 0, BALL_R, 0, Math.PI * 2); ctx.fill();
   }
 
   // Shine on top (always, gives "ball" feel even with selfie)
@@ -354,6 +371,35 @@ function drawBossBattle(ctx, g) {
   }
 }
 
+// Boss arena: darkness over the way back and a sealed stone gate
+function drawArenaGate(ctx, g) {
+  const arena = g.level.boss.arena;
+  const gx = arena.x0 - g.camX, gy = arena.groundY - g.camY;
+  if (gx > -40) {
+    const fade = ctx.createLinearGradient(gx - 80, 0, gx, 0);
+    fade.addColorStop(0, 'rgba(8,0,18,0.92)');
+    fade.addColorStop(1, 'rgba(8,0,18,0.55)');
+    ctx.fillStyle = 'rgba(8,0,18,0.92)';
+    ctx.fillRect(-20, -20, Math.max(0, gx - 60), CH + 40);
+    ctx.fillStyle = fade;
+    ctx.fillRect(gx - 80, -20, 80, CH + 40);
+  }
+  const top = gy - 230;
+  ctx.fillStyle = '#3b2f4a';
+  ctx.fillRect(gx - 14, top, 28, 230);
+  ctx.fillStyle = '#5b4a70';
+  ctx.fillRect(gx - 18, top - 14, 36, 16);
+  ctx.strokeStyle = '#8b7aa5';
+  ctx.lineWidth = 4;
+  for (let i = 0; i < 4; i++) {
+    const bx = gx - 9 + i * 6;
+    ctx.beginPath(); ctx.moveTo(bx, top + 4); ctx.lineTo(bx, gy); ctx.stroke();
+  }
+  ctx.font = '22px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🔒', gx, top - 22);
+}
+
 function render(g) {
   if (!g) return;
   const ctx=ctx2d;
@@ -371,10 +417,13 @@ function render(g) {
   }
 
   drawBG(ctx, g.camX, g.camY, g.level.worldW);
+  if (g.arenaLocked) {
+    ctx.fillStyle = 'rgba(70,0,50,0.32)';
+    ctx.fillRect(-20, -20, CW + 40, CH + 40);
+  }
 
   // Platforms
   for (const p of g.level.platforms) p.draw(ctx, g.camX, g.camY);
-  if (g.level.jumpMode) drawQuestionSign(ctx, g);
 
   // Coins
   for (const c of g.level.coins) drawCoin(ctx, c, g.camX, g.camY);
@@ -386,6 +435,8 @@ function render(g) {
 
   // Enemies
   for (const e of g.level.enemies) e.draw(ctx, g.camX, g.camY);
+  if (g.arenaLocked) drawArenaGate(ctx, g);
+  if (g.level.jumpMode) drawQuestionSign(ctx, g);
   if (g.level.boss) g.level.boss.draw(ctx, g.camX, g.camY);
   if (g.level.jumpMode && g.level.boss) drawBossBattle(ctx, g);
 
@@ -405,6 +456,12 @@ function render(g) {
   for (const c of confettiList) c.draw(ctx, g.camX, g.camY);
 
   if (currentTheme()) drawVignette(ctx);
+
+  // Fade in from black when entering the boss arena
+  if (g.arenaFade > 0) {
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(1, g.arenaFade / 30)})`;
+    ctx.fillRect(-20, -20, CW + 40, CH + 40);
+  }
 
   // Screen-space confetti (no camera offset)
   // (already drawn above with camX/camY of 0 for screen-burst ones)

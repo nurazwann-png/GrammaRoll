@@ -182,6 +182,26 @@ function showBanner(msg, color) {
   _bannerTimer = setTimeout(() => { el.classList.remove('show'); el.style.background = ''; }, 2000);
 }
 
+// Entering the boss arena: fade in, seal the gate behind the ball, hold the first question briefly
+function enterBossArena(g) {
+  const arena = g.level.boss.arena;
+  g.bossPhase = 'fight';
+  g.arenaLocked = true;
+  g.arenaFade = 45;
+  g.px = Math.max(g.px, arena.x0 + 70);
+  g.pvx = Math.max(g.pvx, 0);
+  g.camX = Math.max(g.camX, Math.min(arena.x0 - 30, g.level.worldW - CW));
+  g.checkpoint = { px: arena.x0 + 80, py: arena.groundY - 20, hearts: g.hearts, score: g.score };
+  triggerScreenShake(6, 400);
+  Audio.enemy();
+  showBanner('⚔️ BOSS ARENA ⚔️', 'linear-gradient(135deg,#7f1d1d,#4c1d95)');
+  if (g.level.jumpMode) g.bossNextAt = Date.now() + 1500;
+  else {
+    g.bossMCQActive = true;
+    setTimeout(() => { if (game === g) g.bossMCQActive = false; }, 1300);
+  }
+}
+
 function showCorrectBanner(combo, multiplier) {
   const TEXTS = [
     ['Correct! ✓',           ''],
@@ -1490,6 +1510,8 @@ function updateGame(g) {
 
   // Invincibility frames
   if (g.invincible>0) g.invincible--;
+  if (g.hurtTimer>0) g.hurtTimer--;
+  if (g.arenaFade>0) g.arenaFade--;
 
   // Platform + enemy update
   for (const p of level.platforms) p.update();
@@ -1517,8 +1539,13 @@ function updateGame(g) {
     level.boss.update();
 
     // Trigger boss fight when player reaches boss arena
-    if (g.bossPhase === 'approach' && level.boss.alive && g.px >= level.boss.x - 250) {
-      g.bossPhase = 'fight';
+    if (g.bossPhase === 'approach' && level.boss.alive && g.px >= level.boss.arena.x0 + 10) {
+      enterBossArena(g);
+    }
+    // The arena gate is closed: no going back
+    if (g.arenaLocked) {
+      const minX = level.boss.arena.x0 + BALL_R + 6;
+      if (g.px < minX) { g.px = minX; if (g.pvx < 0) g.pvx = 0; }
     }
 
     // Jump mode: bounce on answer bubbles; pop-up mode: boss question pop-up
@@ -1582,6 +1609,7 @@ function updateGame(g) {
       g.targetCamX = Math.min(Math.max(centred, g.px - CW + 70), g.px - 70);
     }
   }
+  if (g.arenaLocked) g.targetCamX = Math.max(g.targetCamX, level.boss.arena.x0 - 30);
   g.targetCamX = Math.max(0, Math.min(level.worldW - CW, g.targetCamX));
   g.camX += (g.targetCamX - g.camX) * 0.09;
   // Small landscape phones: keep the ball high so the touch controls don't cover it.

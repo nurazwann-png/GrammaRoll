@@ -1633,9 +1633,9 @@ body {
 /* DAMAGE FLASH */
 #damage-flash {
   position:fixed; inset:0; z-index:100;
-  background: rgba(239,71,111,0.22);
+  background: radial-gradient(ellipse at center, rgba(239,71,111,.12) 35%, rgba(220,20,60,.7) 100%);
   pointer-events:none; opacity:0;
-  transition:opacity .4s;
+  transition:opacity .1s;
 }
 
 /* CORRECT FLASH */

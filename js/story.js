@@ -624,6 +624,12 @@ function csFxFrame(ts) {
   csFx.raf = requestAnimationFrame(csFxFrame);
   const c = document.getElementById('cs-fx');
   const ctx = c.getContext('2d');
+  // The canvas had no size when particles were made (e.g. hidden): wait for a size, then respawn them
+  if (!csFx.W || !csFx.H || c.clientWidth !== csFx.W) {
+    csResizeFx();
+    if (!csFx.W || !csFx.H) return;
+    csFx.parts = csFx.parts.map(p => csFxMake(p.kind || csFx.kinds[0], csFx.W, csFx.H, true) || p);
+  }
   const { W, H } = csFx;
   ctx.clearRect(0, 0, W, H);
   const reduced = prefersReducedMotion();

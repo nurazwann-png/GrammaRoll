@@ -467,9 +467,8 @@ function selectBossAnswer(choice, g) {
     } else {
       Audio.wrong();
 
-      // Flash screen red
-      const fl = document.getElementById('damage-flash');
-      if (fl) { fl.style.opacity='0.6'; setTimeout(()=>fl.style.opacity='0',400); }
+      flashDamage();
+      g.hurtTimer = Math.max(g.hurtTimer || 0, 45);
 
       recordWrong(g, g.bossLastQ, choice.label);
 
@@ -914,16 +913,22 @@ function processAnswerResult(g, label, isCorrect, plat) {
   }
 }
 
+function flashDamage() {
+  const flash = document.getElementById('damage-flash');
+  if (!flash) return;
+  [[0, '1'], [110, '0.25'], [220, '1'], [380, '0']].forEach(([t, o]) => setTimeout(() => { flash.style.opacity = o; }, t));
+}
+
 function playerTakeDamage(g, fell=false, amount=1, respawn=true) {
   if (g.invincible > 0) return;
   g.damageTaken = (g.damageTaken || 0) + amount; // track for no-damage achievement
   g.hearts = Math.max(0, g.hearts-amount);
   g.invincible = 90;
+  g.hurtTimer = 70;
   Audio.death();
   spawnParticles(g.px, g.py,'#EF476F',20,7);
-
-  const flash = document.getElementById('damage-flash');
-  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',400);
+  flashDamage();
+  triggerScreenShake(10, 280);
 
   // Shake HUD hearts
   document.getElementById('hud-hearts').classList.add('shake');
@@ -945,8 +950,20 @@ function playerTakeDamage(g, fell=false, amount=1, respawn=true) {
 
   if (!respawn) { g.pvy = Math.max(g.pvy, 2); return; }
 
-  // Respawn — teleport to a safe position
-  if (g.checkpoint) {
+  // Hits and wrong answers knock the ball back a little; only falling into a pit respawns
+  if (!fell) {
+    const boss = g.arenaLocked && g.level.boss;
+    const dir = boss ? (g.px < boss.x + boss.w / 2 ? -1 : 1) : (g.pvx > 0 ? -1 : 1);
+    g.pvx = dir * 4;
+    g.pvy = Math.min(g.pvy, -6);
+    return;
+  }
+
+  // Respawn — teleport to a safe position (never out of the boss arena)
+  if (g.arenaLocked && g.level.boss) {
+    g.px = g.level.boss.arena.x0 + 80;
+    g.py = g.level.boss.arena.groundY - 60;
+  } else if (g.checkpoint) {
     g.px = g.checkpoint.px;
     g.py = g.checkpoint.py - 40;
   } else {
