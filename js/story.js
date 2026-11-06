@@ -691,8 +691,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('is-mobile', m);
   });
 
-  spawnMenuStars();
-
 
   document.getElementById('name-input')?.addEventListener('keydown', e => {
     if (e.key==='Enter') submitName();

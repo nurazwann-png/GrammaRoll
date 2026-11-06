@@ -74,22 +74,42 @@
 
 <!-- MENU SCREEN -->
 <div class="screen" id="menu-screen">
-  <div id="menu-title">Grammar <br>Ball!</div>
-  <div id="menu-subtitle">English Adventure · CEFR Malaysia</div>
-  <div id="menu-ball-preview">😊</div>
-  <div id="menu-progress-row" aria-live="polite"></div>
-  <div id="menu-worlds" aria-label="Levels"></div>
-  <button class="btn btn-primary menu-play-btn" onclick="showModeSelect()">🎮 Start Playing!</button>
+  <canvas id="menu-bg" aria-hidden="true"></canvas>
 
-  <!-- Utility icon row -->
-  <div id="menu-util-row">
-    <button class="util-btn" onclick="showLeaderboard(currentLevelKey)" title="Leaderboard">🏆<span>Scores</span></button>
-    <button class="util-btn" onclick="showSkinsMenu()" title="Ball Skins">🎨<span>Skins</span></button>
-    <button class="util-btn" onclick="showAchievementsMenu()" title="Achievements">🏅<span>Badges</span></button>
-    <button class="util-btn" onclick="showGuruMode()" title="Teacher Mode">🧑‍🏫<span>Teacher</span></button>
-    <button class="util-btn" onclick="showSelfieScreen()" title="Take Selfie">📸<span>Selfie</span></button>
-    <button class="util-btn" onclick="showSettings()" title="Settings">⚙️<span>Settings</span></button>
+  <!-- Top bar: player on the left, counters on the right -->
+  <div id="menu-topbar">
+    <button id="menu-player" onclick="showProfilePicker()"></button>
+    <div id="menu-counters" aria-live="polite"></div>
+    <button id="menu-teacher" onclick="showGuruMode()" title="Teacher Mode" aria-label="Teacher Mode">🧑‍🏫</button>
   </div>
+
+  <div id="menu-main">
+    <div id="menu-hero">
+      <div id="menu-ball-preview">😊</div>
+      <div id="menu-title">Grammar Ball!</div>
+      <div id="menu-subtitle">English grammar adventure</div>
+    </div>
+
+    <!-- World map: one world at a time -->
+    <div id="world-map" aria-roledescription="carousel" aria-label="Worlds">
+      <button class="wm-arrow" id="wm-prev" onclick="moveWorld(-1)" aria-label="Previous world">‹</button>
+      <div id="wm-card"></div>
+      <button class="wm-arrow" id="wm-next" onclick="moveWorld(1)" aria-label="Next world">›</button>
+    </div>
+    <div id="wm-dots" role="tablist" aria-label="Choose a world"></div>
+
+    <button class="btn btn-primary menu-play-btn" id="menu-continue" onclick="continuePlaying()"></button>
+    <button id="menu-more" onclick="showModeSelect()">🎮 More ways to play</button>
+  </div>
+
+  <!-- Bottom dock -->
+  <nav id="menu-dock" aria-label="Menu">
+    <button class="dock-btn" onclick="showLeaderboard(currentLevelKey)">🏆<span>Scores</span></button>
+    <button class="dock-btn" onclick="showSkinsMenu()">🎨<span>Skins</span></button>
+    <button class="dock-btn" onclick="showAchievementsMenu()">🏅<span>Badges</span></button>
+    <button class="dock-btn" onclick="showSelfieScreen()">📸<span>Selfie</span></button>
+    <button class="dock-btn" onclick="showSettings()">⚙️<span>Settings</span></button>
+  </nav>
 </div>
 
 <!-- CUTSCENE OVERLAY -->

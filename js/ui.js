@@ -79,62 +79,144 @@ function levelLabel(key) {
   return GRAMMAR_DB[key].difficulty === 'boss' ? `W${w} Boss` : `L${w}-${l}`;
 }
 
+// ── Main menu: world map, continue button, top bar ──
+let menuWorld = null; // world number currently shown on the map
+const worldNumbers = () => [...new Set(LEVEL_KEYS.map(k => k.split('-')[0]))];
+const worldLevels = w => LEVEL_KEYS.filter(k => k.startsWith(`${w}-`));
+const worldName = w => GRAMMAR_DB[`${w}-1`].world.replace(/\s*Boss\s*/i, ' ').trim();
+
+// Homework first, then the next unlocked level without stars
+function nextLevelToPlay() {
+  const stars = getLevelStars();
+  return getAssignedLevels().find(k => !stars[k] && isLevelUnlocked(k))
+    || LEVEL_KEYS.find(k => isLevelUnlocked(k) && !stars[k])
+    || LEVEL_KEYS[LEVEL_KEYS.length - 1];
+}
+
 function renderMenuWorlds() {
-  const wrap = document.getElementById('menu-worlds');
+  const next = nextLevelToPlay();
+  if (!menuWorld || !worldNumbers().includes(menuWorld)) menuWorld = next.split('-')[0];
+  renderWorldCard();
+  renderMenuProgress();
+  const d = GRAMMAR_DB[next];
+  const started = Object.keys(getLevelStars()).length > 0;
+  document.getElementById('menu-continue').innerHTML =
+    `<span class="cont-main">▶ ${started ? 'Continue' : 'Start'}</span><span class="cont-sub">${esc(levelLabel(next))} · ${esc(d.topic)}</span>`;
+  startMenuBackground();
+}
+
+function renderWorldCard() {
+  const w = menuWorld;
+  const keys = worldLevels(w);
   const stars = getLevelStars();
   const assigned = getAssignedLevels();
-  wrap.innerHTML = '';
-  // One small card per world, e.g. "🛝 Playground" with its three levels
-  const worlds = [...new Set(LEVEL_KEYS.map(k => k.split('-')[0]))];
-  worlds.forEach(w => {
-    const keys = LEVEL_KEYS.filter(k => k.startsWith(`${w}-`));
-    const first = GRAMMAR_DB[keys[0]];
-    const group = document.createElement('div');
-    group.className = 'world-group';
-    group.setAttribute('role', 'group');
-    const name = first.world.replace(/\s*Boss\s*/i, ' ').trim();
-    group.setAttribute('aria-label', `World ${w}: ${name}`);
-    group.innerHTML = `<div class="world-group-name">${esc(name)}</div><div class="world-group-tiles"></div>`;
-    const tiles = group.lastElementChild;
-    keys.forEach(key => {
-      const d = GRAMMAR_DB[key];
-      const unlocked = isLevelUnlocked(key);
-      const btn = document.createElement('button');
-      btn.className = 'world-btn' + (unlocked ? '' : ' locked') + (stars[key] ? ' done' : '') + (assigned.includes(key) ? ' assigned' : '');
-      btn.setAttribute('aria-label', `${levelLabel(key)}: ${d.topic}${unlocked ? '' : ' (locked)'}${stars[key] ? `, ${stars[key]} stars` : ''}`);
-      btn.title = `${d.topic}${unlocked ? '' : ' — finish the previous level to unlock'}`;
-      btn.innerHTML = `${d.icon}<span>${levelLabel(key)}</span>${unlocked ? '' : '<i class="lock-badge" aria-hidden="true">🔒</i>'}`;
-      btn.onclick = () => unlocked ? startLevelKey(key) : showToast('🔒 Finish the previous level to unlock this one!');
-      tiles.appendChild(btn);
-    });
-    wrap.appendChild(group);
+  const open = isLevelUnlocked(keys[0]);
+  const earned = keys.reduce((s, k) => s + (stars[k] || 0), 0);
+  const card = document.getElementById('wm-card');
+  card.className = open ? '' : 'locked';
+  card.setAttribute('aria-label', `World ${w}: ${worldName(w)}. ${earned} of ${keys.length * 3} stars${open ? '' : '. Locked'}`);
+  const prevBoss = LEVEL_KEYS[LEVEL_KEYS.indexOf(keys[0]) - 1];
+  card.innerHTML = `
+    <canvas class="wm-scene" aria-hidden="true"></canvas>
+    <div class="wm-head"><span class="wm-title">${esc(worldName(w))}</span><span class="wm-progress">⭐ ${earned}/${keys.length * 3}</span></div>
+    <div class="wm-levels"></div>
+    ${open ? '' : `<div class="wm-lock">🔒 Beat ${esc(levelLabel(prevBoss))} to open this world</div>`}`;
+  const list = card.querySelector('.wm-levels');
+  keys.forEach(key => {
+    const d = GRAMMAR_DB[key];
+    const unlocked = isLevelUnlocked(key);
+    const s = stars[key] || 0;
+    const b = document.createElement('button');
+    b.className = 'wm-level' + (unlocked ? '' : ' locked') + (assigned.includes(key) ? ' assigned' : '') + (d.difficulty === 'boss' ? ' boss' : '');
+    b.innerHTML = `<span class="wl-icon">${unlocked ? d.icon : '🔒'}</span>
+      <span class="wl-text"><span class="wl-name">${esc(levelLabel(key))}${assigned.includes(key) ? ' 📋' : ''}</span><span class="wl-topic">${esc(d.topic)}</span></span>
+      <span class="wl-stars">${[0, 1, 2].map(i => `<i class="${i < s ? 'on' : ''}">★</i>`).join('')}</span>`;
+    b.setAttribute('aria-label', `${levelLabel(key)}: ${d.topic}. ${unlocked ? `${s} of 3 stars` : 'Locked'}`);
+    b.onclick = () => unlocked ? startLevelKey(key) : showToast('🔒 Finish the previous level to unlock this one!');
+    list.appendChild(b);
   });
-  renderMenuProgress();
+  paintScene(card.querySelector('.wm-scene'), WORLD_THEMES[w], 0, 0.55);
+
+  const worlds = worldNumbers();
+  const i = worlds.indexOf(w);
+  document.getElementById('wm-prev').disabled = i <= 0;
+  document.getElementById('wm-next').disabled = i >= worlds.length - 1;
+  document.getElementById('wm-dots').innerHTML = worlds.map(x =>
+    `<button role="tab" aria-selected="${x === w}" aria-label="World ${x}: ${esc(worldName(x))}" class="wm-dot ${x === w ? 'on' : ''}" onclick="showWorld('${x}')"></button>`).join('');
+}
+
+function showWorld(w) { menuWorld = w; renderWorldCard(); }
+function moveWorld(step) {
+  const worlds = worldNumbers();
+  const i = Math.min(worlds.length - 1, Math.max(0, worlds.indexOf(menuWorld) + step));
+  if (worlds[i] !== menuWorld) showWorld(worlds[i]);
+}
+// Swipe left/right on the world map
+(() => {
+  const el = document.getElementById('world-map');
+  let startX = null;
+  el.addEventListener('pointerdown', e => { startX = e.clientX; });
+  el.addEventListener('pointerup', e => {
+    if (startX !== null && Math.abs(e.clientX - startX) > 45) moveWorld(e.clientX < startX ? 1 : -1);
+    startX = null;
+  });
+})();
+
+function continuePlaying() {
+  const key = nextLevelToPlay();
+  const seen = (() => { try { return localStorage.getItem(CS_INTRO_KEY); } catch (e) { return '1'; } })();
+  if (!seen) {
+    try { localStorage.setItem(CS_INTRO_KEY, '1'); } catch (e) {}
+    showIntroCutscene(() => startLevelKey(key));
+    return;
+  }
+  startLevelKey(key);
+}
+
+// Draw a world's scenery into any canvas (menu background, world card)
+function paintScene(canvas, theme, camX, scale = 1) {
+  const w = canvas.clientWidth || canvas.width, h = canvas.clientHeight || canvas.height;
+  if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+  const ctx = canvas.getContext('2d');
+  if (!theme) { ctx.fillStyle = '#1e1b4b'; ctx.fillRect(0, 0, w, h); return; }
+  const saveW = CW, saveH = CH;
+  CW = w / scale; CH = h / scale;
+  ctx.save();
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  try { drawThemedBackground(ctx, theme, camX, WORLD_GROUND_Y - CH * 0.86); }
+  finally { ctx.restore(); CW = saveW; CH = saveH; }
+}
+
+// Live, slowly scrolling scenery behind the menu
+let menuBgRaf = null, menuBgX = 0;
+function startMenuBackground() {
+  if (menuBgRaf) return;
+  const canvas = document.getElementById('menu-bg');
+  const frame = () => {
+    const menu = document.getElementById('menu-screen');
+    if (game || menu.classList.contains('hidden')) { menuBgRaf = null; return; }
+    if (!prefersReducedMotion()) menuBgX += 0.5;
+    paintScene(canvas, WORLD_THEMES[menuWorld], menuBgX);
+    menuBgRaf = requestAnimationFrame(frame);
+  };
+  menuBgRaf = requestAnimationFrame(frame);
 }
 
 function renderMenuProgress() {
-  const row = document.getElementById('menu-progress-row');
-  if (!row) return;
-  row.innerHTML = '';
-  const streak = getPlayStreak();
-  const chip = (cls, text, onclick) => {
-    const el = document.createElement(onclick ? 'button' : 'div');
-    el.className = `menu-chip ${cls}`;
-    el.textContent = text;
-    if (onclick) el.onclick = onclick;
-    row.appendChild(el);
-  };
   const prof = currentProfile();
-  chip('player', prof ? `${prof.avatar} ${prof.name} · switch` : '👤 Who\'s playing?', () => showProfilePicker());
-  if (streak.count > 0) chip('streak', streak.playedToday ? `🔥 ${streak.count}-day streak` : `🔥 ${streak.count}-day streak — play today to keep it!`);
-  const next = SKINS.find(s => !isSkinUnlocked(s.id));
+  document.getElementById('menu-player').innerHTML = prof
+    ? `<span class="mp-avatar">${prof.avatar}</span><span class="mp-name">${esc(prof.name)}</span>`
+    : `<span class="mp-avatar">👤</span><span class="mp-name">Who's playing?</span>`;
+  const counters = document.getElementById('menu-counters');
   const total = getTotalStars();
-  chip('', next ? `⭐ ${total} · ${next.unlock - total} more for ${next.emoji} ${next.name}` : `⭐ ${total} · all skins unlocked!`);
+  const nextSkin = SKINS.find(s => !isSkinUnlocked(s.id));
+  const streak = getPlayStreak();
   const cls = getClassInfo();
-  if (cls && cls.assignment && cls.assignment.levels?.length) {
-    const left = cls.assignment.levels.filter(k => !getLevelStars()[k]).length;
-    chip('assign', left ? `📋 Homework: ${left} level${left > 1 ? 's' : ''} to go` : '📋 Homework done! 🎉', showLevelPicker);
-  }
+  const hwLeft = cls?.assignment?.levels?.length ? cls.assignment.levels.filter(k => !getLevelStars()[k]).length : null;
+  counters.innerHTML = `
+    <span class="counter" title="${nextSkin ? `${nextSkin.unlock - total} more stars for ${esc(nextSkin.name)}` : 'All skins unlocked'}">⭐ ${total}</span>
+    <span class="counter ${streak.count && !streak.playedToday ? 'warn' : ''}" title="${streak.playedToday ? 'Day streak' : 'Play today to keep your streak!'}">🔥 ${streak.count}</span>
+    ${hwLeft !== null ? `<button class="counter hw" onclick="showLevelPicker()" title="Homework">📋 ${hwLeft ? hwLeft : '✓'}</button>` : ''}`;
 }
 
 function showLevelPicker() {
@@ -475,27 +557,6 @@ function canvasFont(size) {
   return getSettings().readableFont ? `bold ${Math.round(size * 1.05)}px 'Atkinson Hyperlegible', sans-serif` : `${size}px 'Fredoka One', cursive`;
 }
 
-function spawnMenuStars() {
-  const menu = document.getElementById('menu-screen');
-  // Remove old stars
-  menu.querySelectorAll('.menu-star').forEach(s => s.remove());
-  const icons = ['⭐','✨','🌟','💫','🌙','⚡','🎉','🌈'];
-  const count = 18;
-  for (let i = 0; i < count; i++) {
-    const el = document.createElement('span');
-    el.className = 'menu-star';
-    el.textContent = icons[Math.floor(Math.random() * icons.length)];
-    el.style.cssText = [
-      `left:${5 + Math.random()*90}%`,
-      `top:${10 + Math.random()*80}%`,
-      `font-size:${0.8 + Math.random()*1.2}rem`,
-      `animation-duration:${3 + Math.random()*5}s`,
-      `animation-delay:${Math.random()*4}s`,
-    ].join(';');
-    menu.appendChild(el);
-  }
-}
-
 function showMenu() {
   closeCertificate();
   document.getElementById('menu-screen').classList.remove('hidden');
@@ -522,7 +583,6 @@ function showMenu() {
   stopWorldMusic();
   updateRotateTip();
   renderMenuWorlds();
-  spawnMenuStars();
 }
 
 function showModeSelect() {
@@ -1026,6 +1086,10 @@ document.addEventListener('keydown', e => {
     if (e.key === 'r' || e.key === 'R') { speakCurrentQuestion(); return; }
   }
   if ((e.key === 'p' || e.key === 'P') && game) { togglePause(); return; }
+  if (!game && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !document.getElementById('menu-screen').classList.contains('hidden')) {
+    moveWorld(e.key === 'ArrowLeft' ? -1 : 1);
+    return;
+  }
   if (!game || game.state !== 'playing') {
     if (e.key === ' ' && e.target === document.body) e.preventDefault();
     return;
