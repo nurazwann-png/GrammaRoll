@@ -73,7 +73,7 @@
   },
   "world2-0": {
     "file": "world2-0.mp3",
-    "hash": "wp7sp7",
+    "hash": "i92ea1",
     "voice": "Lily",
     "provider": "elevenlabs"
   },
@@ -207,6 +207,24 @@
     "file": "boss4-1.mp3",
     "hash": "z50t2x",
     "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "world2-jumble": {
+    "file": "world2-jumble.mp3",
+    "hash": "hsdy6p",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "world3-rhino": {
+    "file": "world3-rhino.mp3",
+    "hash": "wlhd8k",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "world4-robo": {
+    "file": "world4-robo.mp3",
+    "hash": "158kjsd",
+    "voice": "Lily",
     "provider": "elevenlabs"
   }
 }

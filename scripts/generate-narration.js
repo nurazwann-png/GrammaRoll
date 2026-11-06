@@ -31,13 +31,13 @@ const ctx = vm.createContext({
   setTimeout, clearTimeout, setInterval, clearInterval, console,
 });
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'story.js'), 'utf8'), ctx);
-const { INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, narrationHash } =
-  vm.runInContext('({ INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, narrationHash })', ctx);
+const { INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, sceneAudioId, narrationHash } =
+  vm.runInContext('({ INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, sceneAudioId, narrationHash })', ctx);
 
 const lines = [
   ...INTRO_SCENES.map((s, i) => ({ s, id: narrationId('intro', i) })),
   ...ENDING_SCENES.map((s, i) => ({ s, id: narrationId('ending', i) })),
-  ...Object.entries(WORLD_STORIES).flatMap(([w, scenes]) => scenes.map((s, i) => ({ s, id: narrationId(`world${w}`, i) }))),
+  ...Object.entries(WORLD_STORIES).flatMap(([w, scenes]) => scenes.map(s => ({ s, id: sceneAudioId(`world${w}`, scenes, s) }))),
   ...Object.entries(BOSS_STORIES).flatMap(([k, scenes]) => scenes.map((s, i) => ({ s, id: narrationId(`boss${k.split('-')[0]}`, i) }))),
 ].map(({ s, id }) => ({
   id,

@@ -128,14 +128,25 @@ const ENDING_SCENES = [
 const WORLD_STORIES = {
   2: [
     {
+      audioKey: 'jumble',
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['cheer',200],['boing',700]],
+      bg: 'playground', stars: false,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'jumble', side:'right', big:true, defeated:true },
+      ],
+      narrator: true,
+      text: 'With a POP and a CLATTER, King Jumble tumbled back into the toy box. Grammo had beaten the Playground boss!',
+    },
+    {
       fx:['fireflies','sparkles'], music:'calm', camera:'zoom', sfx:[['cheer',300]],
       bg: 'victory', stars: true,
       chars: [
         { id:'grammo', emoji:'😊', side:'left', big:true, ball:true, bounce:true },
-        { id:'jumble', side:'right', big:true, defeated:true },
+        { id:'baron',  emoji:'👹', side:'right', big:true, defeated:true },
       ],
       narrator: true,
-      text: 'The Playground was saved! King Jumble tumbled back into the toy box, and every sentence sparkled again...\n\nBut Baron Von Error was not finished yet.',
+      text: 'The Playground was saved! The children laughed, and every sentence sparkled again...\n\nBut Baron Von Error was not finished yet.',
     },
     {
       fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
@@ -175,6 +186,17 @@ const WORLD_STORIES = {
     },
   ],
   3: [
+    {
+      audioKey: 'rhino',
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['cheer',200],['boing',700]],
+      bg: 'safari', stars: false,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'rhino', side:'right', big:true, defeated:true },
+      ],
+      narrator: true,
+      text: 'Rumble the Rhino sneezed, wobbled, and sat down with a big BUMP. Grammo had beaten the Safari boss!',
+    },
     {
       fx:['sunrays','confetti'], music:'calm', camera:'pan', sfx:[['cheer',300]],
       bg: 'safari', stars: false,
@@ -223,6 +245,17 @@ const WORLD_STORIES = {
     },
   ],
   4: [
+    {
+      audioKey: 'robo',
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['cheer',200],['boing',700]],
+      bg: 'city', stars: true,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'robo', side:'right', big:true, defeated:true },
+      ],
+      narrator: true,
+      text: 'Robo Rush fizzed, beeped, and switched off with a CLICK. Grammo had beaten the City boss!',
+    },
     {
       fx:['fireflies','sparkles'], music:'calm', camera:'pan', sfx:[['cheer',300]],
       bg: 'city', stars: true,
@@ -525,6 +558,10 @@ function csSpokenText(text) {
 }
 // Pre-generated narration (scripts/generate-narration.js); hash guards against outdated audio
 function narrationId(set, index) { return `${set}-${index}`; }
+function sceneAudioId(set, scenes, scene) {
+  if (scene.audioKey) return `${set}-${scene.audioKey}`;
+  return narrationId(set, scenes.filter(s => !s.audioKey).indexOf(scene));
+}
 function narrationHash(text) {
   let h = 5381;
   for (let i = 0; i < text.length; i++) h = ((h << 5) + h + text.charCodeAt(i)) >>> 0;
@@ -564,7 +601,7 @@ function csNarrate(scene) {
   if (!scene) return;
   if (!getSettings().narrateStory) { csScheduleAuto(csReadMs(scene)); return; }
   const text = csSpokenText(scene.text);
-  const id = narrationId(csSetId, csScenes.indexOf(scene));
+  const id = sceneAudioId(csSetId, csScenes, scene);
   const entry = csAudioManifest[id];
   const voice = (!scene.narrator && CS_VOICES[scene.speaker]) || { pitch: 1, rate: 0.9 };
   if (entry && entry.hash === narrationHash(text)) {
