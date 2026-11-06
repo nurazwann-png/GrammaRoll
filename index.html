@@ -325,10 +325,10 @@
 </div>
 
 <!-- RACE RESULT overlay -->
-<div id="race-result" class="overlay hidden">
-  <div class="overlay-title" id="race-result-title" style="color:var(--gold);">🏆 Congratulations!</div>
-  <p class="overlay-sub" id="race-result-sub">You won the race!</p>
-  <button class="btn btn-primary" onclick="closeRaceResult()">🏠 Back to Menu</button>
+<div id="race-result" class="hidden">
+  <h2 id="race-result-title">🏆 Congratulations!</h2>
+  <p id="race-result-sub">You won the race!</p>
+  <button class="btn btn-primary" onclick="closeRaceResult()">Back to Menu</button>
 </div>
 
 <!-- CO-OP OVERLAY -->
@@ -603,7 +603,7 @@
 </div>
 
 <!-- CERTIFICATE OVERLAY -->
-<div id="cert-overlay" class="overlay hidden">
+<div id="cert-overlay" class="hidden">
   <canvas id="cert-canvas"></canvas>
   <div id="cert-actions">
     <button class="btn btn-primary" onclick="shareCertificate()">📤 Share</button>
