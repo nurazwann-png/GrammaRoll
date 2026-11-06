@@ -1,0 +1,67 @@
+{
+  "music-calm": {
+    "file": "sfx-music-calm.mp3",
+    "key": "Gentle magical fairy-tale background music loop for a children's storybook, soft harp, glockenspiel and warm strings, calm and wondrous, no vocals|22|0.5|true",
+    "loop": true
+  },
+  "music-dark": {
+    "file": "sfx-music-dark.mp3",
+    "key": "Mischievous cartoon villain background music loop for a children's game, low pizzicato strings and bassoon, sneaky and playful but not scary, no vocals|22|0.5|true",
+    "loop": true
+  },
+  "whoosh": {
+    "file": "sfx-whoosh.mp3",
+    "key": "Soft magical whoosh transition, cartoon, airy|1.2|0.6|false",
+    "loop": false
+  },
+  "sparkle": {
+    "file": "sfx-sparkle.mp3",
+    "key": "Magical fairy sparkle chime, twinkling bells, bright and gentle|2|0.6|false",
+    "loop": false
+  },
+  "thunder": {
+    "file": "sfx-thunder.mp3",
+    "key": "Rolling thunder clap with light rain, dramatic but suitable for children|4|0.5|false",
+    "loop": false
+  },
+  "chaos": {
+    "file": "sfx-chaos.mp3",
+    "key": "Cartoon chaos: boings, slide whistles, clattering letters and a comedic crash|3|0.5|false",
+    "loop": false
+  },
+  "cheer": {
+    "file": "sfx-cheer.mp3",
+    "key": "Crowd of happy children cheering and clapping, celebration|4|0.5|false",
+    "loop": false
+  },
+  "fanfare": {
+    "file": "sfx-fanfare.mp3",
+    "key": "Short triumphant orchestral fanfare with trumpets and cymbal, victory|3|0.6|false",
+    "loop": false
+  },
+  "boing": {
+    "file": "sfx-boing.mp3",
+    "key": "Single cheerful cartoon ball bounce boing|1|0.7|false",
+    "loop": false
+  },
+  "music-w1": {
+    "file": "sfx-music-w1.mp3",
+    "key": "Cheerful playful children's game background music loop, ukulele, xylophone and soft claps, bouncy and happy, no vocals|22|0.5|true",
+    "loop": true
+  },
+  "music-w2": {
+    "file": "sfx-music-w2.mp3",
+    "key": "Upbeat safari adventure background music loop for a children's game, marimba, kalimba and light hand drums, no vocals|22|0.5|true",
+    "loop": true
+  },
+  "music-w3": {
+    "file": "sfx-music-w3.mp3",
+    "key": "Light funky evening city background music loop for a children's game, groovy bass, soft electric piano and finger snaps, no vocals|22|0.5|true",
+    "loop": true
+  },
+  "music-w4": {
+    "file": "sfx-music-w4.mp3",
+    "key": "Dreamy space adventure background music loop for a children's game, twinkling synth arpeggios and soft warm pads, full of wonder, no vocals|22|0.5|true",
+    "loop": true
+  }
+}

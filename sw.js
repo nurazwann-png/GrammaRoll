@@ -1,5 +1,8 @@
-const CACHE = 'grammar-ball-v2'; // bump version to evict stale v1 assets
-const ASSETS = ['/', '/index.html', '/logo.jpg', '/manifest.json', '/icon-maskable.svg'];
+const CACHE = 'grammar-ball-v3'; // bump version to evict stale assets
+const ASSETS = [
+  '/', '/index.html', '/logo.jpg', '/manifest.json', '/icon-maskable.svg', '/css/style.css',
+  ...['data','engine','scenery','questions','render','progress','teacher','story','ui','multiplayer','main'].map(f => `/js/${f}.js`),
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -17,8 +20,9 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
-  // bug7 fix: network-first for HTML so new deploys reach users immediately
-  const isNavigation = e.request.mode === 'navigate' || e.request.url.endsWith('/') || e.request.url.endsWith('.html');
+  if (new URL(e.request.url).pathname.startsWith('/api/')) return;
+  // Network-first for HTML, scripts and styles so new deploys reach pupils immediately
+  const isNavigation = e.request.mode === 'navigate' || /(\/|\.html|\.js|\.css|\.json)$/.test(new URL(e.request.url).pathname);
   if (isNavigation) {
     e.respondWith(
       fetch(e.request).then(res => {

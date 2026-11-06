@@ -1,0 +1,74 @@
+{
+  "intro-0": {
+    "file": "intro-0.mp3",
+    "hash": "z8ykmn",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "intro-1": {
+    "file": "intro-1.mp3",
+    "hash": "1g9i3r4",
+    "voice": "Matilda",
+    "provider": "elevenlabs"
+  },
+  "intro-2": {
+    "file": "intro-2.mp3",
+    "hash": "1x4kk5q",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "intro-3": {
+    "file": "intro-3.mp3",
+    "hash": "n8e80p",
+    "voice": "Callum",
+    "provider": "elevenlabs"
+  },
+  "intro-4": {
+    "file": "intro-4.mp3",
+    "hash": "1ur044i",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "intro-5": {
+    "file": "intro-5.mp3",
+    "hash": "gg9e6a",
+    "voice": "Matilda",
+    "provider": "elevenlabs"
+  },
+  "intro-6": {
+    "file": "intro-6.mp3",
+    "hash": "c46dn7",
+    "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "ending-0": {
+    "file": "ending-0.mp3",
+    "hash": "l601re",
+    "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "ending-1": {
+    "file": "ending-1.mp3",
+    "hash": "t86wrq",
+    "voice": "Callum",
+    "provider": "elevenlabs"
+  },
+  "ending-2": {
+    "file": "ending-2.mp3",
+    "hash": "mhivqr",
+    "voice": "Matilda",
+    "provider": "elevenlabs"
+  },
+  "ending-3": {
+    "file": "ending-3.mp3",
+    "hash": "q2gj63",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  },
+  "ending-4": {
+    "file": "ending-4.mp3",
+    "hash": "eccytq",
+    "voice": "Lily",
+    "provider": "elevenlabs"
+  }
+}

@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: grammarball
+      POSTGRES_PASSWORD: grammarball
+      POSTGRES_DB: grammarball
+    ports:
+      - "5432:5432"
+    volumes:
+      - grammarball-db:/var/lib/postgresql/data
+
+volumes:
+  grammarball-db:

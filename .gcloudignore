@@ -3,3 +3,8 @@ node_modules
 *.txt
 README.md
 .claude
+.env
+data
+.backup-*
+.playwright-mcp
+*.png

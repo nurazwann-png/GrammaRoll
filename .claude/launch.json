@@ -3,10 +3,10 @@
   "configurations": [
     {
       "name": "GrammaRoll",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8115"],
-      "port": 8115,
-      "url": "http://localhost:8115"
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000,
+      "url": "http://localhost:3000"
     }
   ]
 }
