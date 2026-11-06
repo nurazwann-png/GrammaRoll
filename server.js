@@ -60,14 +60,16 @@ if (pool) {
 }
 
 // ── Teacher authentication ────────────────────────────────────────────────────
+// Teachers register their own accounts (email + PIN). TEACHER_PIN is the school admin PIN:
+// it can see every class, remove reviews and view certificates.
 const TEACHER_PIN = process.env.TEACHER_PIN || (IS_PROD ? '' : '1234');
 if (!process.env.TEACHER_PIN) {
   console.warn(IS_PROD
-    ? '[Auth] TEACHER_PIN is not set — Teacher Mode is disabled.'
-    : '[Auth] TEACHER_PIN is not set — using the development PIN 1234. Set TEACHER_PIN in .env.');
+    ? '[Auth] TEACHER_PIN is not set — the admin login is disabled (teacher accounts still work).'
+    : '[Auth] TEACHER_PIN is not set — using the development admin PIN 1234. Set TEACHER_PIN in .env.');
 }
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
-const tokens = new Map(); // token -> expiry time
+const tokens = new Map(); // token -> { exp, teacherId, admin }
 const loginFailures = new Map(); // ip -> { count, resetAt }
 const MAX_LOGIN_FAILURES = 5;
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
@@ -79,26 +81,47 @@ function pinMatches(pin) {
 function clientIp(req) {
   return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
 }
-function isTeacher(req) {
+function teacherSession(req) {
   const m = (req.headers.authorization || '').match(/^Bearer ([a-f0-9]{48})$/);
-  if (!m) return false;
-  const exp = tokens.get(m[1]);
-  if (!exp || exp < Date.now()) { tokens.delete(m[1]); return false; }
-  return true;
+  if (!m) return null;
+  const t = tokens.get(m[1]);
+  if (!t || t.exp < Date.now()) { tokens.delete(m[1]); return null; }
+  return t;
 }
+function issueToken(teacherId, admin) {
+  const token = crypto.randomBytes(24).toString('hex');
+  tokens.set(token, { exp: Date.now() + TOKEN_TTL_MS, teacherId, admin });
+  return token;
+}
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,120}\.[^\s@]{2,20}$/;
+const TEACHER_PIN_RE = /^\d{4,8}$/;
+function hashPin(pin) {
+  const salt = crypto.randomBytes(16);
+  return `scrypt$${salt.toString('hex')}$${crypto.scryptSync(pin, salt, 32).toString('hex')}`;
+}
+function pinHashMatches(pin, stored) {
+  const [kind, salt, hash] = String(stored).split('$');
+  if (kind !== 'scrypt' || !salt || !hash) return false;
+  const want = Buffer.from(hash, 'hex');
+  const got = crypto.scryptSync(String(pin), Buffer.from(salt, 'hex'), want.length);
+  return crypto.timingSafeEqual(got, want);
+}
+const publicTeacher = t => ({ id: t.id, name: t.name, school: t.school, email: t.email });
 
 // Simple fixed-window limiter for public write endpoints
 const writeHits = new Map();
-function rateLimited(req, max = 60) {
-  const ip = clientIp(req), now = Date.now();
-  const e = writeHits.get(ip);
-  if (!e || e.resetAt < now) { writeHits.set(ip, { count: 1, resetAt: now + 60000 }); return false; }
+// Each kind of request has its own counter, so a classroom sharing one school IP
+// posting game results does not block reviews or teacher sign-ups.
+function rateLimited(req, max = 60, bucket = 'write') {
+  const key = `${bucket}:${clientIp(req)}`, now = Date.now();
+  const e = writeHits.get(key);
+  if (!e || e.resetAt < now) { writeHits.set(key, { count: 1, resetAt: now + 60000 }); return false; }
   e.count++;
   return e.count > max;
 }
 setInterval(() => {
   const now = Date.now();
-  for (const [k, v] of tokens) if (v < now) tokens.delete(k);
+  for (const [k, v] of tokens) if (v.exp < now) tokens.delete(k);
   for (const [k, v] of loginFailures) if (v.resetAt < now) loginFailures.delete(k);
   for (const [k, v] of writeHits) if (v.resetAt < now) writeHits.delete(k);
 }, 60000).unref();
@@ -223,32 +246,53 @@ async function handleApi(req, res, url) {
   const method = req.method;
   let m;
 
-  // ── Teacher login ──
+  // ── Teacher sign-in: email + PIN for teachers, PIN only for the school admin ──
   if (method === 'POST' && url === '/api/teacher/login') {
     const ip = clientIp(req), now = Date.now();
     const f = loginFailures.get(ip);
     if (f && f.resetAt > now && f.count >= MAX_LOGIN_FAILURES) {
-      return json(res, 429, { error: 'Too many wrong PINs. Try again in a few minutes.' });
+      return json(res, 429, { error: 'Too many wrong tries. Please wait 10 minutes and try again.' });
     }
-    if (!TEACHER_PIN) return json(res, 503, { error: 'Teacher Mode is not set up on this server (TEACHER_PIN missing).' });
-    const { pin } = await parseBody(req);
-    if (!pinMatches(str(pin, 64))) {
+    const fail = msg => {
       const e = f && f.resetAt > now ? f : { count: 0, resetAt: now + LOGIN_WINDOW_MS };
       e.count++;
       loginFailures.set(ip, e);
-      return json(res, 401, { error: 'Wrong PIN. Try again.' });
+      return json(res, 401, { error: msg });
+    };
+    const body = await parseBody(req);
+    const pin = str(body.pin, 64);
+    const email = str(body.email, 200).toLowerCase();
+    if (!email) {
+      if (!TEACHER_PIN) return json(res, 503, { error: 'The admin PIN is not set up on this server.' });
+      if (!pinMatches(pin)) return fail('Wrong admin PIN. Try again.');
+      loginFailures.delete(ip);
+      return json(res, 200, { token: issueToken(null, true), teacher: { name: 'School admin', school: '', admin: true } });
     }
+    const teacher = await store.getTeacherByEmail(email);
+    if (!teacher || !pinHashMatches(pin, teacher.pin_hash)) return fail('Wrong email or PIN. Try again.');
     loginFailures.delete(ip);
-    const token = crypto.randomBytes(24).toString('hex');
-    tokens.set(token, now + TOKEN_TTL_MS);
-    return json(res, 200, { token });
+    return json(res, 200, { token: issueToken(teacher.id, false), teacher: publicTeacher(teacher) });
   }
 
-  // ── Reviews: anyone can read and post; teachers can remove ──
+  // ── Teacher registration ──
+  if (method === 'POST' && url === '/api/teacher/register') {
+    if (rateLimited(req, 10, 'register')) return json(res, 429, { error: 'Too many sign-ups. Please try again in a minute.' });
+    const b = await parseBody(req);
+    const name = str(b.name, 60), school = str(b.school, 80), pin = String(b.pin ?? '');
+    const email = str(b.email, 200).toLowerCase();
+    if (name.length < 2) return json(res, 400, { error: 'Please type your name.' });
+    if (!EMAIL_RE.test(email)) return json(res, 400, { error: 'Please type a valid email address.' });
+    if (!TEACHER_PIN_RE.test(pin)) return json(res, 400, { error: 'Your PIN must be 4 to 8 numbers.' });
+    const teacher = await store.createTeacher({ email, name, school, pin_hash: hashPin(pin) });
+    if (!teacher) return json(res, 409, { error: 'This email already has an account. Please sign in.' });
+    return json(res, 200, { token: issueToken(teacher.id, false), teacher: publicTeacher(teacher) });
+  }
+
+  // ── Reviews: anyone can read and post; the school admin can remove ──
   if (url === '/api/reviews') {
     if (method === 'GET') return json(res, 200, await store.listReviews(200));
     if (method === 'POST') {
-      if (rateLimited(req, 5)) return json(res, 429, { error: 'Too many reviews. Please try again in a minute.' });
+      if (rateLimited(req, 20, 'reviews')) return json(res, 429, { error: 'Too many reviews. Please try again in a minute.' });
       const b = await parseBody(req);
       const rating = Math.floor(Number(b.rating));
       const role = str(b.role, 20);
@@ -267,24 +311,33 @@ async function handleApi(req, res, url) {
 
   // ── Teacher-only routes ──
   if (url.startsWith('/api/teacher/')) {
-    if (!isTeacher(req)) return json(res, 401, { error: 'Please log in to Teacher Mode again.' });
+    const session = teacherSession(req);
+    if (!session) return json(res, 401, { error: 'Please sign in to Teacher Mode again.' });
+    const adminOnly = () => json(res, 403, { error: 'Only the school admin can do this.' });
+    const ownsClass = cls => session.admin || (cls.teacher_id != null && cls.teacher_id === session.teacherId);
 
+    if (method === 'GET' && url === '/api/teacher/me') {
+      if (session.admin) return json(res, 200, { name: 'School admin', school: '', admin: true });
+      const t = await store.getTeacher(session.teacherId);
+      return t ? json(res, 200, { ...publicTeacher(t), admin: false }) : json(res, 401, { error: 'Please sign in again.' });
+    }
     if (method === 'DELETE' && (m = url.match(/^\/api\/teacher\/reviews\/(\d{1,9})$/))) {
+      if (!session.admin) return adminOnly();
       return (await store.deleteReview(Number(m[1]))) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Review not found' });
     }
     if (method === 'GET' && url === '/api/teacher/classes') {
-      return json(res, 200, await store.listClasses());
+      return json(res, 200, await store.listClasses(session.admin ? null : session.teacherId));
     }
     if (method === 'POST' && url === '/api/teacher/classes') {
       const { name } = await parseBody(req);
       let code;
       for (let i = 0; i < 20; i++) { code = newClassCode(); if (!(await store.getClass(code))) break; }
-      return json(res, 200, await store.createClass(code, str(name, 60) || 'My Class'));
+      return json(res, 200, await store.createClass(code, str(name, 60) || 'My Class', session.admin ? null : session.teacherId));
     }
     if ((m = url.match(/^\/api\/teacher\/classes\/([A-Z0-9]{6})\/(assignment|questions|report)$/))) {
       const [, code, what] = m;
       const cls = await store.getClass(code);
-      if (!cls) return json(res, 404, { error: 'Class not found' });
+      if (!cls || !ownsClass(cls)) return json(res, 404, { error: 'Class not found' });
       if (method === 'PUT' && what === 'assignment') {
         const body = await parseBody(req);
         const levels = (Array.isArray(body.levels) ? body.levels : []).map(l => str(l, 8)).filter(l => LEVEL_RE.test(l)).slice(0, 20);
@@ -303,6 +356,7 @@ async function handleApi(req, res, url) {
       }
     }
     if (method === 'GET' && url === '/api/teacher/certificates') {
+      if (!session.admin) return adminOnly();
       if (!pool) return json(res, 200, certStore.slice(0, 200));
       try {
         const { rows } = await pool.query(
@@ -337,7 +391,7 @@ async function handleApi(req, res, url) {
       return p ? json(res, 200, p) : json(res, 404, { error: 'No saved progress' });
     }
     if (method === 'PUT') {
-      if (rateLimited(req, 30)) return json(res, 429, { error: 'slow down' });
+      if (rateLimited(req, 30, 'progress')) return json(res, 429, { error: 'slow down' });
       const body = await parseBody(req);
       const clean = {};
       let size = 0;

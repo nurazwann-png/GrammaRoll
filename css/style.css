@@ -2395,3 +2395,27 @@ button.counter.hw { border-color: rgba(6,214,160,.8); cursor: pointer; }
 .fb-empty { text-align: center; color: rgba(255,255,255,.6); font-weight: 700; padding: 24px 8px; }
 .fb-write { width: 100%; }
 #fb-form.hidden, #fb-thanks.hidden { display: none; }
+
+/* ══ TEACHER SIGN IN / REGISTER ══ */
+#guru-pin-section .hidden, #guru-who.hidden { display: none; }
+.ga-tabs { display: flex; gap: 6px; background: rgba(0,0,0,.25); border-radius: 14px; padding: 4px; margin-bottom: 14px; }
+.ga-tab { flex: 1; border: none; border-radius: 10px; padding: 9px; background: none; color: rgba(255,255,255,.7); font: 800 .95rem 'Nunito', sans-serif; cursor: pointer; }
+.ga-tab.on { background: var(--gold); color: #2b1a00; }
+.ga-form { display: flex; flex-direction: column; gap: 8px; align-items: stretch; max-width: 320px; margin: 0 auto; }
+.ga-form input {
+  background: rgba(255,255,255,.08); border: 1.5px solid rgba(255,255,255,.2); color: #fff; border-radius: 12px;
+  padding: 11px 14px; font: 700 .95rem 'Nunito', sans-serif;
+}
+.ga-form input:focus { outline: none; border-color: var(--gold); }
+.ga-form .btn { margin-top: 4px; }
+.ga-hint { color: rgba(255,255,255,.6); font-size: .8rem; line-height: 1.4; margin: 2px 0; }
+#guru-pin-section #guru-pin-input { width: 100%; }
+#guru-pin-section #guru-pin-error { margin: 10px 0 4px; }
+.ga-link { background: none; border: none; color: rgba(255,255,255,.55); font: 700 .8rem 'Nunito', sans-serif; text-decoration: underline; cursor: pointer; margin-top: 4px; }
+#guru-who {
+  display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 10px;
+  background: rgba(255,255,255,.08); border-radius: 999px; padding: 6px 8px 6px 14px; font-size: .85rem; color: rgba(255,255,255,.85);
+}
+#guru-who b { color: var(--gold); }
+#guru-who button { border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; border-radius: 999px; padding: 4px 12px; font: 800 .78rem 'Nunito', sans-serif; cursor: pointer; }
+.ga-form .btn { font-size: 1.15rem; padding-top: 12px; padding-bottom: 12px; }

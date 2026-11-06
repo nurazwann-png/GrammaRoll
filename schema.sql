@@ -75,3 +75,13 @@ CREATE TABLE IF NOT EXISTS reviews (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS teachers (
+  id         SERIAL PRIMARY KEY,
+  email      TEXT        NOT NULL UNIQUE,
+  name       TEXT        NOT NULL,
+  school     TEXT        NOT NULL DEFAULT '',
+  pin_hash   TEXT        NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+ALTER TABLE classes ADD COLUMN IF NOT EXISTS teacher_id INTEGER REFERENCES teachers(id);

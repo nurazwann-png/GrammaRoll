@@ -15,7 +15,7 @@ function summarise(rows) {
 }
 
 function createFileStore(file) {
-  let data = { classes: {}, attempts: [], progress: {}, reviews: [] };
+  let data = { classes: {}, attempts: [], progress: {}, reviews: [], teachers: {} };
   try {
     data = { ...data, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
   } catch (e) {
@@ -34,15 +34,29 @@ function createFileStore(file) {
 
   return {
     kind: 'file',
-    async createClass(code, name) {
-      const cls = { code, name, assignment: null, questions: {}, created_at: new Date().toISOString() };
+    async createTeacher(t) {
+      data.teachers ||= {};
+      if (Object.values(data.teachers).some(x => x.email === t.email)) return null;
+      const id = Object.values(data.teachers).reduce((m, x) => Math.max(m, x.id), 0) + 1;
+      data.teachers[id] = { ...t, id, created_at: new Date().toISOString() };
+      save();
+      return data.teachers[id];
+    },
+    async getTeacherByEmail(email) {
+      return Object.values(data.teachers || {}).find(x => x.email === email) || null;
+    },
+    async getTeacher(id) { return (data.teachers || {})[id] || null; },
+    async createClass(code, name, teacherId) {
+      const cls = { code, name, teacher_id: teacherId ?? null, assignment: null, questions: {}, created_at: new Date().toISOString() };
       data.classes[code] = cls;
       save();
       return cls;
     },
     async getClass(code) { return data.classes[code] || null; },
-    async listClasses() {
-      return Object.values(data.classes).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    async listClasses(teacherId) {
+      return Object.values(data.classes)
+        .filter(c => teacherId == null || c.teacher_id === teacherId)
+        .sort((a, b) => b.created_at.localeCompare(a.created_at));
     },
     async setAssignment(code, assignment) {
       if (!data.classes[code]) return false;
@@ -96,22 +110,40 @@ function createFileStore(file) {
 
 function createPgStore(pool) {
   const toClass = r => r && ({
-    code: r.code, name: r.name, assignment: r.assignment, questions: r.questions || {},
+    code: r.code, name: r.name, teacher_id: r.teacher_id ?? null, assignment: r.assignment, questions: r.questions || {},
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
   });
   return {
     kind: 'postgres',
-    async createClass(code, name) {
+    async createTeacher(t) {
       const { rows } = await pool.query(
-        'INSERT INTO classes(code,name) VALUES($1,$2) RETURNING code,name,assignment,questions,created_at', [code, name]);
+        `INSERT INTO teachers(email,name,school,pin_hash) VALUES($1,$2,$3,$4)
+         ON CONFLICT(email) DO NOTHING RETURNING id,email,name,school,pin_hash,created_at`,
+        [t.email, t.name, t.school, t.pin_hash]);
+      return rows[0] || null;
+    },
+    async getTeacherByEmail(email) {
+      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash FROM teachers WHERE email=$1', [email]);
+      return rows[0] || null;
+    },
+    async getTeacher(id) {
+      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash FROM teachers WHERE id=$1', [id]);
+      return rows[0] || null;
+    },
+    async createClass(code, name, teacherId) {
+      const { rows } = await pool.query(
+        'INSERT INTO classes(code,name,teacher_id) VALUES($1,$2,$3) RETURNING code,name,teacher_id,assignment,questions,created_at',
+        [code, name, teacherId ?? null]);
       return toClass(rows[0]);
     },
     async getClass(code) {
-      const { rows } = await pool.query('SELECT code,name,assignment,questions,created_at FROM classes WHERE code=$1', [code]);
+      const { rows } = await pool.query('SELECT code,name,teacher_id,assignment,questions,created_at FROM classes WHERE code=$1', [code]);
       return toClass(rows[0]) || null;
     },
-    async listClasses() {
-      const { rows } = await pool.query('SELECT code,name,assignment,questions,created_at FROM classes ORDER BY created_at DESC');
+    async listClasses(teacherId) {
+      const { rows } = await pool.query(
+        `SELECT code,name,teacher_id,assignment,questions,created_at FROM classes
+         WHERE $1::int IS NULL OR teacher_id=$1 ORDER BY created_at DESC`, [teacherId ?? null]);
       return rows.map(toClass);
     },
     async setAssignment(code, assignment) {

@@ -3,6 +3,7 @@
 // ══════════════════════════════════════════════
 const GURU_LS_KEY = 'gr_guru_questions'; // {levelKey: [{q,correct,wrong:[]},...]}
 const GURU_TOKEN_KEY = 'gr_teacher_token';
+const GURU_WHO_KEY = 'gr_teacher_who';
 let guruCurrentLevel = '1-1';
 let guruUnlocked = false;
 let guruClasses = [];
@@ -10,6 +11,18 @@ let guruClassCode = null;
 let guruLastReport = null;
 
 function guruToken() { try { return sessionStorage.getItem(GURU_TOKEN_KEY); } catch(e) { return null; } }
+function guruWho() { try { return JSON.parse(sessionStorage.getItem(GURU_WHO_KEY)) || null; } catch(e) { return null; } }
+function guruIsAdmin() { return !!guruToken() && !!guruWho()?.admin; }
+function guruSaveSession(body) {
+  try {
+    sessionStorage.setItem(GURU_TOKEN_KEY, body.token);
+    sessionStorage.setItem(GURU_WHO_KEY, JSON.stringify(body.teacher || {}));
+  } catch(e) {}
+}
+function guruSignOut() {
+  try { sessionStorage.removeItem(GURU_TOKEN_KEY); sessionStorage.removeItem(GURU_WHO_KEY); } catch(e) {}
+  showGuruMode();
+}
 async function guruFetch(url, options = {}) {
   const res = await fetch(url, {
     ...options,
@@ -17,7 +30,7 @@ async function guruFetch(url, options = {}) {
   });
   const body = await res.json().catch(() => ({}));
   if (res.status === 401) {
-    try { sessionStorage.removeItem(GURU_TOKEN_KEY); } catch(e) {}
+    try { sessionStorage.removeItem(GURU_TOKEN_KEY); sessionStorage.removeItem(GURU_WHO_KEY); } catch(e) {}
     showGuruMode();
     throw new Error(body.error || 'Please log in again.');
   }
@@ -61,35 +74,80 @@ function showGuruMode() {
   document.getElementById('guru-overlay').classList.remove('hidden');
   if (guruToken()) { openGuruMain(); return; }
   guruUnlocked = false;
-  document.getElementById('guru-pin-input').value = '';
-  document.getElementById('guru-pin-error').textContent = '';
+  document.querySelectorAll('#guru-pin-section input').forEach(i => { i.value = ''; });
   document.getElementById('guru-pin-section').style.display = '';
   document.getElementById('guru-main').classList.add('hidden');
-  setTimeout(() => document.getElementById('guru-pin-input').focus(), 100);
+  document.getElementById('guru-who').classList.add('hidden');
+  guruAuthTab('login');
 }
 
-async function checkGuruPin() {
-  const input = document.getElementById('guru-pin-input');
+function guruAuthTab(which) {
+  ['login', 'register', 'admin'].forEach(t => document.getElementById(`ga-${t}`).classList.toggle('hidden', t !== which));
+  document.getElementById('ga-tab-login').classList.toggle('on', which === 'login');
+  document.getElementById('ga-tab-register').classList.toggle('on', which === 'register');
+  document.getElementById('ga-admin-link').textContent = which === 'admin' ? '← Back to teacher sign in' : 'School admin? Use the admin PIN';
+  document.getElementById('guru-pin-error').textContent = '';
+  const first = { login: 'ga-email', register: 'ga-r-name', admin: 'guru-pin-input' }[which];
+  setTimeout(() => document.getElementById(first)?.focus(), 100);
+}
+
+// Sends a sign-in or registration request and opens Teacher Mode on success
+async function guruAuthRequest(url, payload, pinInput) {
   const err = document.getElementById('guru-pin-error');
-  if (!input.value) { err.textContent = 'Please type the PIN.'; return; }
   err.textContent = 'Checking…';
   try {
-    const res = await fetch('/api/teacher/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: input.value }),
-    });
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const body = await res.json().catch(() => ({}));
-    if (!res.ok) { err.textContent = body.error || 'Wrong PIN. Try again.'; input.select(); return; }
-    try { sessionStorage.setItem(GURU_TOKEN_KEY, body.token); } catch(e) {}
-    input.value = '';
+    if (!res.ok) { err.textContent = body.error || 'Something went wrong. Try again.'; pinInput?.select(); return; }
+    guruSaveSession(body);
+    document.querySelectorAll('#guru-pin-section input').forEach(i => { i.value = ''; });
     err.textContent = '';
     openGuruMain();
+    if (url.endsWith('/register')) showToast(`🎉 Welcome, ${body.teacher.name}! Your account is ready.`, 3500);
   } catch (e) {
     err.textContent = 'Teacher Mode needs the game server. Ask your school admin to run it with "npm start".';
   }
 }
 
+function guruLogin() {
+  const email = document.getElementById('ga-email').value.trim();
+  const pin = document.getElementById('ga-pin');
+  const err = document.getElementById('guru-pin-error');
+  if (!email) { err.textContent = 'Please type your email.'; return; }
+  if (!pin.value) { err.textContent = 'Please type your PIN.'; return; }
+  guruAuthRequest('/api/teacher/login', { email, pin: pin.value }, pin);
+}
+
+function guruRegister() {
+  const v = id => document.getElementById(id).value.trim();
+  const err = document.getElementById('guru-pin-error');
+  const pin = v('ga-r-pin');
+  if (v('ga-r-name').length < 2) { err.textContent = 'Please type your name.'; return; }
+  if (!/^\S+@\S+\.\S+$/.test(v('ga-r-email'))) { err.textContent = 'Please type a valid email address.'; return; }
+  if (!/^\d{4,8}$/.test(pin)) { err.textContent = 'Your PIN must be 4 to 8 numbers.'; return; }
+  if (pin !== v('ga-r-pin2')) { err.textContent = 'The two PINs do not match. Please type them again.'; return; }
+  guruAuthRequest('/api/teacher/register', { name: v('ga-r-name'), email: v('ga-r-email'), school: v('ga-r-school'), pin }, document.getElementById('ga-r-pin2'));
+}
+
+function checkGuruPin() {
+  const input = document.getElementById('guru-pin-input');
+  if (!input.value) { document.getElementById('guru-pin-error').textContent = 'Please type the admin PIN.'; return; }
+  guruAuthRequest('/api/teacher/login', { pin: input.value }, input);
+}
+
+function renderGuruWho() {
+  const who = guruWho() || {};
+  const el = document.getElementById('guru-who');
+  el.innerHTML = `<span>${who.admin ? '🛡️' : '👩‍🏫'} Signed in as <b>${esc(who.name || 'Teacher')}</b>${who.school ? ' · ' + esc(who.school) : ''}</span>
+    <button type="button" onclick="guruSignOut()">Sign out</button>`;
+  el.classList.remove('hidden');
+}
+
 function openGuruMain() {
   guruUnlocked = true;
+  renderGuruWho();
+  document.getElementById('guru-cert-section').style.display = guruIsAdmin() ? '' : 'none';
+  document.getElementById('guru-overlay').scrollTop = 0;
   document.getElementById('guru-pin-section').style.display = 'none';
   document.getElementById('guru-main').classList.remove('hidden');
   document.querySelectorAll('.guru-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
@@ -347,7 +405,7 @@ async function loadClassCertificates() {
       listEl.appendChild(row);
     });
   } catch(e) {
-    listEl.innerHTML = '<div style="color:#EF476F;text-align:center;padding:12px;">Could not load certificates.</div>';
+    listEl.innerHTML = `<div style="color:#EF476F;text-align:center;padding:12px;">${esc(e.message || 'Could not load certificates.')}</div>`;
   }
 }
 

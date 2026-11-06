@@ -187,7 +187,7 @@ function renderFeedbackWall() {
     .filter(([id]) => id === 'all' || counts[id])
     .map(([id, label]) => `<button type="button" class="fb-chip${fbWallFilter === id ? ' on' : ''}" onclick="fbSetFilter('${id}')">${label} <b>${counts[id] || 0}</b></button>`).join('');
 
-  const teacher = typeof guruToken === 'function' && !!guruToken();
+  const teacher = typeof guruIsAdmin === 'function' && guruIsAdmin();
   const shown = reviews.filter(r => fbWallFilter === 'all' || r.role === fbWallFilter);
   document.getElementById('fb-list').innerHTML = shown.length ? shown.map(r => {
     const role = FB_ROLES[r.role] || FB_ROLES.public;

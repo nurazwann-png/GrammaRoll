@@ -393,14 +393,41 @@
     <div id="guru-header">
       <h2>🧑‍🏫 Teacher Mode</h2>
       <p>Custom questions, homework and class results</p>
+      <div id="guru-who" class="hidden"></div>
     </div>
 
-    <!-- PIN gate -->
+    <!-- Teacher sign in / register -->
     <div id="guru-pin-section">
-      <p>Enter teacher PIN to access</p>
-      <input type="password" id="guru-pin-input" maxlength="32" placeholder="••••" autocomplete="off" aria-label="Teacher PIN" onkeydown="if(event.key==='Enter')checkGuruPin(true)">
-      <div id="guru-pin-error"></div>
-      <button class="btn btn-primary" style="width:140px;" onclick="checkGuruPin(true)">Enter</button>
+      <div class="ga-tabs" role="tablist">
+        <button type="button" id="ga-tab-login" class="ga-tab on" role="tab" onclick="guruAuthTab('login')">Sign in</button>
+        <button type="button" id="ga-tab-register" class="ga-tab" role="tab" onclick="guruAuthTab('register')">Register</button>
+      </div>
+
+      <form id="ga-login" class="ga-form" onsubmit="event.preventDefault();guruLogin()">
+        <input id="ga-email" type="email" maxlength="200" placeholder="Email" autocomplete="username" aria-label="Email">
+        <input id="ga-pin" type="password" inputmode="numeric" maxlength="8" placeholder="Your PIN" autocomplete="current-password" aria-label="PIN">
+        <button class="btn btn-primary" type="submit">Sign in</button>
+        <p class="ga-hint">New teacher? Tap <b>Register</b> to make your own account.</p>
+      </form>
+
+      <form id="ga-register" class="ga-form hidden" onsubmit="event.preventDefault();guruRegister()">
+        <input id="ga-r-name" maxlength="60" placeholder="Your name (e.g. Cikgu Aminah)" autocomplete="name" aria-label="Your name">
+        <input id="ga-r-email" type="email" maxlength="200" placeholder="Email" autocomplete="username" aria-label="Email">
+        <input id="ga-r-school" maxlength="80" placeholder="School (optional)" autocomplete="organization" aria-label="School">
+        <input id="ga-r-pin" type="password" inputmode="numeric" maxlength="8" placeholder="Choose a PIN (4–8 numbers)" autocomplete="new-password" aria-label="Choose a PIN">
+        <input id="ga-r-pin2" type="password" inputmode="numeric" maxlength="8" placeholder="Type your PIN again" autocomplete="new-password" aria-label="Type your PIN again">
+        <p class="ga-hint">🔒 You will sign in with your email and this PIN. Keep it secret from your pupils.</p>
+        <button class="btn btn-primary" type="submit">Create my account</button>
+      </form>
+
+      <form id="ga-admin" class="ga-form hidden" onsubmit="event.preventDefault();checkGuruPin()">
+        <p class="ga-hint">School admin only: enter the admin PIN.</p>
+        <input type="password" id="guru-pin-input" maxlength="32" placeholder="••••" autocomplete="off" aria-label="Admin PIN">
+        <button class="btn btn-primary" type="submit">Enter</button>
+      </form>
+
+      <div id="guru-pin-error" role="alert"></div>
+      <button type="button" class="ga-link" id="ga-admin-link" onclick="guruAuthTab(document.getElementById('ga-admin').classList.contains('hidden') ? 'admin' : 'login')">School admin? Use the admin PIN</button>
     </div>
 
     <!-- Main editor (hidden until PIN ok) -->
@@ -494,7 +521,7 @@
       </div>
 
       <!-- STUDENT CERTIFICATES -->
-      <div style="margin-top:18px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;">
+      <div id="guru-cert-section" style="margin-top:18px;border-top:1px solid rgba(255,255,255,.1);padding-top:14px;">
         <h3 style="font-family:'Fredoka One',cursive;color:#FFD166;margin:0 0 10px;">📜 Student Certificates</h3>
         <button onclick="loadClassCertificates()" class="btn btn-secondary" style="width:100%;font-size:.9rem;">🔄 Load Certificates</button>
         <div id="cert-list" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;"></div>
