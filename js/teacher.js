@@ -206,7 +206,6 @@ function renderGuruWho() {
   const who = guruWho() || {};
   const el = document.getElementById('guru-who');
   el.innerHTML = `<span>${who.admin ? '🛡️' : '👩‍🏫'} Signed in as <b>${esc(who.name || 'Teacher')}</b>${who.school ? ' · ' + esc(who.school) : ''}</span>
-    ${who.admin ? '' : '<button type="button" onclick="guruToggleAccount()">My account</button>'}
     <button type="button" onclick="guruSignOut()">Sign out</button>`;
   el.classList.remove('hidden');
 }
@@ -214,15 +213,17 @@ function renderGuruWho() {
 function openGuruMain() {
   guruUnlocked = true;
   renderGuruWho();
-  document.getElementById('guru-cert-section').style.display = guruIsAdmin() ? '' : 'none';
-  document.getElementById('guru-admin').classList.toggle('hidden', !guruIsAdmin());
-  document.getElementById('guru-account').classList.add('hidden');
-  document.getElementById('guru-overlay').scrollTop = 0;
+  const admin = guruIsAdmin();
+  document.querySelectorAll('#guru-nav .admin-only').forEach(el => el.classList.toggle('hidden', !admin));
+  document.querySelectorAll('#guru-nav .teacher-only').forEach(el => el.classList.toggle('hidden', admin));
+  let pane = 'home';
+  try { pane = sessionStorage.getItem('gr_guru_pane') || 'home'; } catch(e) {}
+  if ((pane === 'admin' && !admin) || (pane === 'account' && admin)) pane = 'home';
+  guruShowPane(pane);
   guruLoadDashboard();
-  if (guruIsAdmin()) guruLoadAdmin();
   document.getElementById('guru-pin-section').style.display = 'none';
   document.getElementById('guru-main').classList.remove('hidden');
-  document.querySelectorAll('.guru-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+  document.getElementById('guru-level-select').value = guruCurrentLevel;
   renderGuruQuestions();
   loadGuruClasses();
   document.getElementById('guru-unlock-all').checked = !!getSettings().unlockAll;
@@ -386,10 +387,8 @@ function printClassReport() {
   w.document.close();
 }
 
-function guruSelectLevel(key, tabEl) {
+function guruSelectLevel(key) {
   guruCurrentLevel = key;
-  document.querySelectorAll('.guru-tab').forEach(t => t.classList.remove('active'));
-  tabEl.classList.add('active');
   clearGuruForm();
   renderGuruQuestions();
 }
@@ -674,15 +673,23 @@ function showWinLBPreview(entries) {
 // ══════════════════════════════════════════════
 //  TEACHER ACCOUNT, CLASS TOOLS, DASHBOARD, ADMIN
 // ══════════════════════════════════════════════
-function guruToggleAccount() {
-  const panel = document.getElementById('guru-account');
-  const open = panel.classList.toggle('hidden') === false;
-  if (!open) return;
-  const who = guruWho() || {};
-  document.getElementById('acc-name').value = who.name || '';
-  document.getElementById('acc-school').value = who.school || '';
-  document.getElementById('acc-msg').textContent = '';
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+// Teacher Mode tabs: Home, Classes, Questions, Account (teachers) and Admin (school admin)
+function guruShowPane(name) {
+  document.querySelectorAll('#guru-nav button').forEach(b => {
+    const on = b.dataset.pane === name;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', String(on));
+  });
+  document.querySelectorAll('.guru-pane').forEach(p => p.classList.toggle('hidden', p.dataset.pane !== name));
+  try { sessionStorage.setItem('gr_guru_pane', name); } catch(e) {}
+  document.getElementById('guru-overlay').scrollTop = 0;
+  if (name === 'account') {
+    const who = guruWho() || {};
+    document.getElementById('acc-name').value = who.name || '';
+    document.getElementById('acc-school').value = who.school || '';
+    document.getElementById('acc-msg').textContent = '';
+  }
+  if (name === 'admin') guruLoadAdmin();
 }
 
 async function guruSaveProfile() {
@@ -715,7 +722,7 @@ async function guruLoadDashboard() {
           ? `📋 Homework: <b>${c.homework.done}/${c.pupils}</b> done${c.homework.message ? ` · ${esc(c.homework.message)}` : ''}`
           : '📋 No homework set'}</div>
       </button>`).join('')
-      : '<div class="settings-hint">No classes yet. Create your first class below in 🏫 My Classes.</div>';
+      : '<div class="settings-hint">No classes yet. Tap <b>➕ New class</b> below to make your first one.</div>';
     weak.innerHTML = d.weakTopics.length ? `
       <div class="ga-label" style="margin-top:10px;">🎯 Topics your pupils find hardest (last 30 days)</div>
       <div class="dash-weak">${d.weakTopics.map(t => {
@@ -730,7 +737,7 @@ async function guruOpenClass(code) {
   if (!guruClasses.some(c => c.code === code)) { box.checked = true; await loadGuruClasses(code); }
   document.getElementById('guru-class-select').value = code;
   guruSelectClass(code);
-  document.getElementById('guru-class-select').closest('.guru-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  guruShowPane('classes');
 }
 
 // ── Class management ──

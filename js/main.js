@@ -15,9 +15,7 @@ document.getElementById('ctrl-jump').setAttribute('aria-label', 'Jump');
 function populateLevelSelects() {
   const options = LEVEL_KEYS.map(k => `<option value="${k}">${levelLabel(k)} — ${esc(GRAMMAR_DB[k].topic)}</option>`).join('');
   ['mp-level-select', 'coop-level-select'].forEach(id => { document.getElementById(id).innerHTML = options; });
-  document.getElementById('guru-tabs').innerHTML = LEVEL_KEYS.map((k, i) =>
-    `<button class="guru-tab${i === 0 ? ' active' : ''}" onclick="guruSelectLevel('${k}',this)">${levelLabel(k)} ${esc(GRAMMAR_DB[k].topic)}</button>`
-  ).join('');
+  document.getElementById('guru-level-select').innerHTML = options;
 }
 populateLevelSelects();
 applyMotionSetting();

@@ -2463,3 +2463,21 @@ button.counter.hw { border-color: rgba(6,214,160,.8); cursor: pointer; }
 #qr-box svg { width: 100%; height: auto; display: block; }
 #qr-code-big { font-family: 'Fredoka One', cursive; font-size: 2.2rem; letter-spacing: 6px; color: #FFD166; }
 #guru-qr-overlay .btn { width: 100%; margin-top: 6px; }
+
+/* ══ TEACHER MODE TABS ══ */
+.guru-nav {
+  position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; margin: 0 0 12px;
+  background: rgba(12,16,48,.95); border: 1px solid rgba(255,255,255,.12); border-radius: 16px; padding: 4px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.guru-nav button {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  background: none; border: none; border-radius: 12px; padding: 7px 2px; color: rgba(255,255,255,.65);
+  font-size: 1.2rem; cursor: pointer; transition: background .15s, color .15s;
+}
+.guru-nav button span { font: 800 .7rem 'Nunito', sans-serif; }
+.guru-nav button.on { background: var(--gold); color: #2b1a00; }
+.guru-nav button.hidden { display: none !important; }
+.guru-pane > .guru-section:first-child, .guru-pane > div:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+.guru-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.guru-quick .ga-small { flex: 1; margin-top: 0; }
