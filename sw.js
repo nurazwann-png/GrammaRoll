@@ -1,7 +1,7 @@
-const CACHE = 'grammar-ball-v4'; // bump version to evict stale assets
+const CACHE = 'grammar-ball-v5'; // bump version to evict stale assets
 const ASSETS = [
   '/', '/index.html', '/logo.jpg', '/manifest.json', '/icon-maskable.svg', '/css/style.css',
-  ...['data','engine','scenery','questions','render','progress','teacher','story','ui','feedback','multiplayer','main'].map(f => `/js/${f}.js`),
+  ...['data','engine','characters','scenery','questions','render','progress','teacher','story','ui','feedback','multiplayer','main'].map(f => `/js/${f}.js`),
 ];
 
 self.addEventListener('install', e => {

@@ -73,7 +73,7 @@
   },
   "world2-0": {
     "file": "world2-0.mp3",
-    "hash": "i92ea1",
+    "hash": "wp7sp7",
     "voice": "Lily",
     "provider": "elevenlabs"
   },
@@ -159,6 +159,54 @@
     "file": "world3-2.mp3",
     "hash": "b98tg6",
     "voice": "Alice",
+    "provider": "elevenlabs"
+  },
+  "boss1-0": {
+    "file": "boss1-0.mp3",
+    "hash": "1627vih",
+    "voice": "Daniel",
+    "provider": "elevenlabs"
+  },
+  "boss1-1": {
+    "file": "boss1-1.mp3",
+    "hash": "a7gg1h",
+    "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "boss2-0": {
+    "file": "boss2-0.mp3",
+    "hash": "4mm6g3",
+    "voice": "Bill",
+    "provider": "elevenlabs"
+  },
+  "boss2-1": {
+    "file": "boss2-1.mp3",
+    "hash": "tzp3u2",
+    "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "boss3-0": {
+    "file": "boss3-0.mp3",
+    "hash": "1n333ya",
+    "voice": "Liam",
+    "provider": "elevenlabs"
+  },
+  "boss3-1": {
+    "file": "boss3-1.mp3",
+    "hash": "11zdy11",
+    "voice": "Charlie",
+    "provider": "elevenlabs"
+  },
+  "boss4-0": {
+    "file": "boss4-0.mp3",
+    "hash": "142gtg1",
+    "voice": "Callum",
+    "provider": "elevenlabs"
+  },
+  "boss4-1": {
+    "file": "boss4-1.mp3",
+    "hash": "z50t2x",
+    "voice": "Charlie",
     "provider": "elevenlabs"
   }
 }

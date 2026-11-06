@@ -132,10 +132,10 @@ const WORLD_STORIES = {
       bg: 'victory', stars: true,
       chars: [
         { id:'grammo', emoji:'😊', side:'left', big:true, ball:true, bounce:true },
-        { id:'baron',  emoji:'👹', side:'right', big:true, defeated:true },
+        { id:'jumble', side:'right', big:true, defeated:true },
       ],
       narrator: true,
-      text: 'The Playground was saved! The children laughed, and every sentence sparkled again...\n\nBut Baron Von Error was not finished yet.',
+      text: 'The Playground was saved! King Jumble tumbled back into the toy box, and every sentence sparkled again...\n\nBut Baron Von Error was not finished yet.',
     },
     {
       fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
@@ -272,6 +272,94 @@ const WORLD_STORIES = {
   ],
 };
 
+// A short scene before each boss fight (first time only). Bosses use the same art as in the game.
+const BOSS_STORIES = {
+  '1-3': [
+    {
+      fx:['scramble'], music:'dark', camera:'push', sfx:[['chaos',150]],
+      bg: 'playground', stars: false,
+      chars: [ { id:'jumble', side:'center', big:true, shake:true } ],
+      speaker:'King Jumble', speakerColor:'#F2C27B',
+      text: 'HALT! I am King Jumble, ruler of the toy box! Baron Von Error gave me the power to jumble every sentence in this playground!',
+    },
+    {
+      fx:['sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
+      bg: 'playground', stars: false,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'jumble', side:'right', big:true },
+      ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'Not so fast! I know my simple present: he plays, she runs, it jumps. Let\'s do this!',
+      last: true,
+      cta: '⚔️ Fight King Jumble!',
+    },
+  ],
+  '2-3': [
+    {
+      fx:['scramble'], music:'dark', camera:'push', sfx:[['chaos',150]],
+      bg: 'safari', stars: false,
+      chars: [ { id:'rhino', side:'center', big:true, shake:true } ],
+      speaker:'Rumble the Rhino', speakerColor:'#AEB6C4',
+      text: 'GRRRUMBLE! Nobody passes my watering hole! Baron says plurals are too hard. One lion, two lion. Who cares?',
+    },
+    {
+      fx:['sunrays','sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
+      bg: 'safari', stars: false,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'rhino', side:'right', big:true },
+      ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'I care! One lion, two lions. One box, two boxes. And a rhino HAS a big horn. Charge!',
+      last: true,
+      cta: '⚔️ Fight Rumble the Rhino!',
+    },
+  ],
+  '3-3': [
+    {
+      fx:['scramble'], music:'dark', camera:'shake', sfx:[['chaos',150]],
+      bg: 'city', stars: true,
+      chars: [ { id:'robo', side:'center', big:true, shake:true } ],
+      speaker:'Robo Rush', speakerColor:'#7CF7FF',
+      text: 'BEEP BOOP. Robo Rush online. Question: Where you going? Who you are? ERROR, ERROR! Ha ha ha!',
+    },
+    {
+      fx:['sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
+      bg: 'city', stars: true,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'robo', side:'right', big:true },
+      ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'Your questions are all mixed up, Robo! Where ARE you going? Who ARE you? Do you want to lose? Let\'s go!',
+      last: true,
+      cta: '⚔️ Fight Robo Rush!',
+    },
+  ],
+  '4-3': [
+    {
+      fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
+      bg: 'space', stars: true,
+      chars: [ { id:'baron', side:'center', big:true, shake:true } ],
+      speaker:'Baron Von Error', speakerColor:'#EF476F',
+      text: 'So, you beat all my helpers. Impressive... for a little ball. But now you face ME, Baron Von Error!',
+    },
+    {
+      fx:['sparkles'], music:'calm', camera:'zoom', sfx:[['fanfare',200]],
+      bg: 'space', stars: true,
+      chars: [
+        { id:'grammo', side:'left', big:true, bounce:true },
+        { id:'baron', side:'right', big:true },
+      ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'This ends today, Baron! I will fix every sentence, and Linguia will be free!',
+      last: true,
+      cta: '⚔️ Final battle!',
+    },
+  ],
+};
+
 let csScenes = [];
 let csSetId = 'intro';
 let csIndex = 0;
@@ -302,6 +390,19 @@ function csBuildChar(ch) {
   wrap.className = classes.join(' ');
   wrap.dataset.id = ch.id;
   wrap.style.animationDelay = (ch.delay || 0) + 's';
+
+  if (CS_ART_IDS.includes(ch.id)) {
+    const art = document.createElement('canvas');
+    art.className = 'cs-art' + (ch.id === 'grammo' ? ' round' : '');
+    art.dataset.art = ch.id;
+    art.setAttribute('aria-hidden', 'true');
+    wrap.appendChild(art);
+    const label = document.createElement('div');
+    label.className = 'cs-char-name';
+    label.textContent = CS_CHAR_NAMES[ch.id] || '';
+    wrap.appendChild(label);
+    return wrap;
+  }
 
   if (ch.ball) {
     const ball = document.createElement('div');
@@ -403,8 +504,14 @@ const CS_VOICES = {
   'Leo the Lion':      { pitch: 0.7, rate: 0.9 },
   'Mayor Molly':       { pitch: 1.1, rate: 1.0 },
   'Captain Nova':      { pitch: 1.2, rate: 1.0 },
+  'King Jumble':       { pitch: 0.8, rate: 1.0 },
+  'Rumble the Rhino':  { pitch: 0.45, rate: 0.85 },
+  'Robo Rush':         { pitch: 1.4, rate: 1.1 },
 };
-const CS_CHAR_NAMES = { grammo:'Grammo', fairy:'Whisper', baron:'Baron Von Error', lion:'Leo', mayor:'Mayor Molly', nova:'Captain Nova' };
+const CS_CHAR_NAMES = { grammo:'Grammo', fairy:'Whisper', baron:'Baron Von Error', lion:'Leo', mayor:'Mayor Molly', nova:'Captain Nova',
+  jumble:'King Jumble', rhino:'Rumble the Rhino', robo:'Robo Rush' };
+// Characters drawn with the same art as in the game (characters.js) instead of an emoji
+const CS_ART_IDS = ['grammo', 'baron', 'jumble', 'rhino', 'robo'];
 function csSpokenText(text) {
   return text
     .replace(/\b(?:[A-Z] ){2,}[A-Z]\b/g, m => m.replace(/ /g, '').toLowerCase().replace(/^./, c => c.toUpperCase()))
@@ -579,7 +686,8 @@ function csVoiceLevel(ts) {
 // ══════════════════════════════════════════════
 //  CUTSCENE EFFECTS (canvas particles, lightning)
 // ══════════════════════════════════════════════
-const CS_SPEAKER_IDS = { 'Whisper the Fairy': 'fairy', 'Baron Von Error': 'baron', 'Grammo': 'grammo', 'Leo the Lion': 'lion', 'Mayor Molly': 'mayor', 'Captain Nova': 'nova' };
+const CS_SPEAKER_IDS = { 'Whisper the Fairy': 'fairy', 'Baron Von Error': 'baron', 'Grammo': 'grammo', 'Leo the Lion': 'lion', 'Mayor Molly': 'mayor', 'Captain Nova': 'nova',
+  'King Jumble': 'jumble', 'Rumble the Rhino': 'rhino', 'Robo Rush': 'robo' };
 const CS_COLORS = ['#FFD166', '#06D6A0', '#EF476F', '#4A90D9', '#8B5CF6', '#FF8C42'];
 const CS_WORDS = ['a', 'an', 'the', 'is', 'are', 'am', 'go', 'went', '-ed', '-s', '?', '!', 'was', 'were', 'he', 'she'];
 const CS_FX_COUNTS = { rain: 150, sparkles: 40, fireflies: 32, confetti: 90, scramble: 26, flowers: 16 };
@@ -746,6 +854,34 @@ function csFxFrame(ts) {
   csFx.talk += (target - csFx.talk) * 0.35;
   const speaker = csFx.speakerId && document.querySelector(`#cs-chars .cs-char[data-id="${csFx.speakerId}"]`);
   if (speaker) speaker.style.setProperty('--talk', csFx.talk.toFixed(3));
+  csDrawArt(ts);
+}
+
+// Grammo and the bosses: same drawings as in the game, mouth moving with their voice
+function csDrawArt(ts) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  document.querySelectorAll('#cs-chars canvas.cs-art').forEach(c => {
+    const size = c.clientWidth;
+    if (!size) return;
+    if (c.width !== Math.round(size * dpr)) { c.width = c.height = Math.round(size * dpr); }
+    const ctx = c.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+    const wrap = c.parentElement;
+    const id = c.dataset.art;
+    const talk = csFx.speakerId === id ? Math.min(1, csFx.talk * 1.6) : 0;
+    const look = wrap.classList.contains('left') ? 1 : wrap.classList.contains('right') ? -1 : 0;
+    if (id === 'grammo') {
+      const cols = (typeof SKIN_COLORS !== 'undefined' && SKIN_COLORS[getActiveSkin()]) || ['#FFA040', '#FF6B00', '#C04000'];
+      ctx.translate(size / 2, size / 2);
+      drawGrammoBall(ctx, size * 0.46, cols, { mood: wrap.classList.contains('bounce') ? 'excited' : 'happy', talk, look, t: ts });
+    } else {
+      const mood = wrap.classList.contains('defeated') ? 'defeated' : wrap.classList.contains('shake') && !talk ? 'charge' : 'normal';
+      const pad = size * 0.14;
+      ctx.translate(pad, pad * 1.2);
+      drawBoss(ctx, id, size - pad * 2, size - pad * 2, { mood, talk, look, t: ts });
+    }
+  });
 }
 
 function csTypeText(fullText, isLast, scene) {
@@ -811,6 +947,24 @@ function showWorldStory(world, onDone) {
   stopWorldMusic();
   csScenes = WORLD_STORIES[world];
   csSetId = `world${world}`;
+  csIndex = 0;
+  csOnDone = onDone || null;
+  const overlay = document.getElementById('cutscene-overlay');
+  overlay.classList.remove('hidden', 'fade-out');
+  csUpdateVoiceBtn();
+  csShowFrame(0);
+}
+
+function bossStoryKey(levelKey) { return pk(`gr_boss_story_${levelKey}`); }
+function hasSeenBossStory(levelKey) {
+  try { return !!localStorage.getItem(bossStoryKey(levelKey)); } catch (e) { return true; }
+}
+function showBossStory(levelKey, onDone) {
+  if (!BOSS_STORIES[levelKey]) { if (onDone) onDone(); return; }
+  try { localStorage.setItem(bossStoryKey(levelKey), '1'); } catch (e) {}
+  stopWorldMusic();
+  csScenes = BOSS_STORIES[levelKey];
+  csSetId = `boss${levelKey.split('-')[0]}`;
   csIndex = 0;
   csOnDone = onDone || null;
   const overlay = document.getElementById('cutscene-overlay');

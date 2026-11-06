@@ -602,67 +602,11 @@ class Enemy {
     const ox = this.alive ? 0 : 0;
     const oy = 0;
 
-    // Flyer wings
-    if (this.type === 'flyer') {
-      const wingFlap = Math.sin(this.bobPhase * 3) * 8;
-      ctx.fillStyle = 'rgba(255,220,100,0.7)';
-      ctx.beginPath();
-      ctx.ellipse(ox - 14, oy + h/2 - wingFlap, 14, 9, -0.4, 0, Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(ox + w + 14, oy + h/2 - wingFlap, 14, 9, 0.4, 0, Math.PI*2);
-      ctx.fill();
-    }
-    // Chaser exclamation glow when near (just a red outline pulse)
-    if (this.type === 'chaser' && this.speed > 1.8) {
-      ctx.save();
-      ctx.shadowColor='#FF4D6D'; ctx.shadowBlur=12*(0.5+0.5*Math.sin(this.bobPhase*2));
-      ctx.restore();
-    }
-
-    // Body
-    const typeColor0 = this.type==='flyer' ? '#7C3AED' : this.type==='chaser' ? '#DC2626' : (this.isCorrect ? '#2563EB' : '#FF8C42');
-    const typeColor1 = this.type==='flyer' ? '#4C1D95' : this.type==='chaser' ? '#991B1B' : (this.isCorrect ? '#1E40AF' : '#C0451A');
-    const bodyGrad = ctx.createLinearGradient(ox,oy,ox,oy+h);
-    bodyGrad.addColorStop(0, typeColor0);
-    bodyGrad.addColorStop(1, typeColor1);
-    ctx.fillStyle = bodyGrad;
-    ctx.beginPath();
-    roundRect(ctx, ox, oy, w, h, 10);
-    ctx.fill();
-    // Border
-    ctx.strokeStyle = this.type==='flyer' ? '#C4B5FD' : this.type==='chaser' ? '#FCA5A5' : (this.isCorrect ? '#60A5FA' : '#FFD166');
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    roundRect(ctx, ox+1, oy+1, w-2, h-2, 9);
-    ctx.stroke();
-
-    // Face
-    const eyeX1 = ox + (this.eyeDir>0 ? 12 : w-22);
-    const eyeX2 = ox + (this.eyeDir>0 ? 24 : w-10);
-    ctx.fillStyle='#fff';
-    ctx.beginPath(); ctx.arc(eyeX1, oy+16, 6, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(eyeX2, oy+16, 6, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#1a1a2e';
-    ctx.beginPath(); ctx.arc(eyeX1+(this.eyeDir), oy+17, 3, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(eyeX2+(this.eyeDir), oy+17, 3, 0, Math.PI*2); ctx.fill();
-
-    // Mouth
-    ctx.strokeStyle='#fff'; ctx.lineWidth=2;
-    ctx.beginPath();
-    if (this.isCorrect) {
-      ctx.arc(ox+w/2, oy+30, 8, 0, Math.PI);
-    } else {
-      ctx.arc(ox+w/2, oy+36, 8, Math.PI, 0);
-    }
-    ctx.stroke();
-
-    // Label
-    ctx.fillStyle='#fff';
-    ctx.font=`bold ${Math.min(13,w*0.22)}px 'Fredoka One',cursive`;
-    ctx.textAlign='center';
-    ctx.textBaseline='bottom';
-    ctx.fillText(this.label, ox+w/2, oy+h-4);
+    // Baron's Errorling minion (shared art in characters.js)
+    drawErrorling(ctx, w, h, {
+      type: this.type, friendly: this.isCorrect, look: this.eyeDir || 1,
+      t: performance.now(), seed: (this.patrolL || 0) % 7, label: this.label,
+    });
 
     ctx.restore();
   }
@@ -672,11 +616,12 @@ class Enemy {
 //  BOSS CLASS
 // ══════════════════════════════════════════════
 class Boss {
-  constructor(x, y, name) {
+  constructor(x, y, name, kind = 'jumble') {
     this.x = x; this.y = y;
     this.w = BALL_R * 6;   // 3x ball diameter
     this.h = BALL_R * 6;
-    this.name = name || 'Grammar King';
+    this.kind = kind;
+    this.name = name || BOSSES[kind]?.name || 'King Jumble';
     this.hp = 5; this.maxHp = 5;
     this.alive = true; this.dead = false;
     this.bobPhase = 0;
@@ -792,91 +737,14 @@ class Boss {
     ctx.fillStyle = grd;
     ctx.beginPath(); ctx.arc(sx+w/2, sy+h/2, w/2+glowSize, 0, Math.PI*2); ctx.fill();
 
-    // Body — color by phase
+    // The world's boss (shared art in characters.js)
     const flash = (this.flashTimer > 0 && this.flashTimer % 3 < 2) || (this.phaseFlash > 0 && this.phaseFlash % 4 < 2);
-    const phaseTopColor    = this.phase === 3 ? '#7B0000' : this.phase === 2 ? '#B91C1C' : '#DC2626';
-    const phaseBottomColor = this.phase === 3 ? '#1a0000' : this.phase === 2 ? '#4A0808' : '#7F1D1D';
-    const phaseBorderColor = this.phase === 3 ? '#FF2020' : this.phase === 2 ? '#F87171' : '#F87171';
-    const bodyGrd = ctx.createLinearGradient(sx, sy, sx, sy+h);
-    bodyGrd.addColorStop(0, flash ? '#fff' : phaseTopColor);
-    bodyGrd.addColorStop(1, flash ? '#fca5a5' : phaseBottomColor);
-    ctx.fillStyle = bodyGrd;
-    ctx.beginPath(); roundRect(ctx, sx, sy, w, h, 18); ctx.fill();
-
-    // Phase 3: add fiery outer glow ring
-    if (this.phase === 3) {
-      ctx.strokeStyle = `rgba(255,${Math.round(50+Math.sin(this.bobPhase*3)*50)},0,0.8)`;
-      ctx.lineWidth = 5 + Math.sin(this.bobPhase*2)*2;
-      ctx.beginPath(); roundRect(ctx, sx-3, sy-3, w+6, h+6, 21); ctx.stroke();
-    }
-
-    // Border
-    ctx.strokeStyle = flash ? '#fff' : phaseBorderColor;
-    ctx.lineWidth = 3;
-    ctx.beginPath(); roundRect(ctx, sx+2, sy+2, w-4, h-4, 16); ctx.stroke();
-
-    // Eyes & mouth — swap expression based on state
-    const eyeY = sy + h*0.3;
-    const isPain   = this.painTimer > 0;
-    const isCharge = !isPain && this.chargeTimer > 0;
-
-    if (isPain) {
-      // Pain face: X eyes + open-mouth "O"
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      // X left eye
-      ctx.beginPath(); ctx.moveTo(sx+w*0.22,eyeY-10); ctx.lineTo(sx+w*0.38,eyeY+6); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+w*0.38,eyeY-10); ctx.lineTo(sx+w*0.22,eyeY+6); ctx.stroke();
-      // X right eye
-      ctx.beginPath(); ctx.moveTo(sx+w*0.62,eyeY-10); ctx.lineTo(sx+w*0.78,eyeY+6); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+w*0.78,eyeY-10); ctx.lineTo(sx+w*0.62,eyeY+6); ctx.stroke();
-      // Brows raised (shocked)
-      ctx.strokeStyle='#fff'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(sx+w*0.18,eyeY-18); ctx.lineTo(sx+w*0.42,eyeY-22); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+w*0.82,eyeY-18); ctx.lineTo(sx+w*0.58,eyeY-22); ctx.stroke();
-      // Mouth open "O"
-      ctx.fillStyle = '#7F1D1D';
-      ctx.beginPath(); ctx.ellipse(sx+w/2, sy+h*0.72, 16, 12, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(sx+w/2, sy+h*0.72, 10, 7, 0, 0, Math.PI*2); ctx.fill();
-    } else if (isCharge) {
-      // Charge face: squinting eyes + gritted teeth (wide angry)
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(sx+w*0.3, eyeY, 14, 8, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(sx+w*0.7, eyeY, 14, 8, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#1a1a2e';
-      ctx.beginPath(); ctx.arc(sx+w*0.3+2, eyeY, 7, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(sx+w*0.7+2, eyeY, 7, 0, Math.PI*2); ctx.fill();
-      // Heavy brows (very angry)
-      ctx.strokeStyle = '#7F1D1D'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(sx+w*0.15,eyeY-10); ctx.lineTo(sx+w*0.45,eyeY-2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+w*0.85,eyeY-10); ctx.lineTo(sx+w*0.55,eyeY-2); ctx.stroke();
-      // Gritted teeth
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); roundRect(ctx, sx+w*0.25, sy+h*0.65, w*0.5, 14, 4); ctx.fill();
-      ctx.strokeStyle = '#DC2626'; ctx.lineWidth = 2;
-      for (let t=1;t<4;t++) { ctx.beginPath(); ctx.moveTo(sx+w*0.25+t*(w*0.5/4), sy+h*0.65); ctx.lineTo(sx+w*0.25+t*(w*0.5/4), sy+h*0.65+14); ctx.stroke(); }
-    } else {
-      // Normal angry face
-      ctx.fillStyle = '#fff';
-      ctx.beginPath(); ctx.ellipse(sx+w*0.3, eyeY, 14, 16, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(sx+w*0.7, eyeY, 14, 16, 0, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#1a1a2e';
-      ctx.beginPath(); ctx.arc(sx+w*0.3+2, eyeY+2, 8, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(sx+w*0.7+2, eyeY+2, 8, 0, Math.PI*2); ctx.fill();
-      // Angry brows
-      ctx.strokeStyle = '#7F1D1D'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(sx+w*0.18,eyeY-14); ctx.lineTo(sx+w*0.42,eyeY-8); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+w*0.82,eyeY-14); ctx.lineTo(sx+w*0.58,eyeY-8); ctx.stroke();
-      // Angry frown
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(sx+w/2, sy+h*0.72, 18, Math.PI*0.15, Math.PI*0.85); ctx.stroke();
-    }
-
-    // Crown 👑 atas kepala boss
-    const crownBob = Math.sin(this.bobPhase * 1.5) * 3;
-    ctx.font = `${Math.round(w * 0.45)}px sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillText('👑', sx + w/2, sy - 90 + crownBob);
+    const mood = !this.alive ? 'defeated' : this.painTimer > 0 ? 'pain' : this.chargeTimer > 0 ? 'charge' : 'normal';
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (flash) ctx.globalAlpha *= 0.45;
+    drawBoss(ctx, this.kind, w, h, { mood, phase: this.phase, look: Math.sign(Math.cos(this.movePhase)) || 1 });
+    ctx.restore();
 
     // Name tag (below crown, above HP bar)
     ctx.fillStyle = 'rgba(0,0,0,0.72)';
@@ -1148,7 +1016,7 @@ function buildLevel(key) {
     const bossX = curX + 220;
     const bossW = BALL_R * 6;
     // In jump mode the boss hovers high so answer bubbles fit between it and the ground
-    boss = new Boss(bossX, GH - bossW - (jumpMode ? 170 : 10), data.bossName || 'Grammar King');
+    boss = new Boss(bossX, GH - bossW - (jumpMode ? 170 : 10), data.bossName, data.bossId);
     boss.baseX = bossX;
     boss.arena = { x0: curX, x1: curX + 600, groundY: GH, ground: arenaGround };
   } else {

@@ -409,7 +409,7 @@ function showBossMCQ(g) {
   questionEl.innerHTML = `<span style="color:#EF4444;font-size:0.8em;">👑 BOSS QUESTION ${qi+1}/${questions.length}</span><br>${esc(q.q)}`; // bug6 xss fix
   // Update hint
   const hint = document.getElementById('mcq-hint');
-  if (hint) hint.textContent = 'Attack Grammar King! 👑';
+  if (hint) hint.textContent = `Attack ${g.level.boss?.name || 'the boss'}! ⚔️`;
   // Boss badge
   const badge = document.getElementById('mcq-badge');
   if (badge) badge.textContent = '👑 Boss Fight!';

@@ -195,26 +195,12 @@ function drawPlayer(g) {
     ctx.rotate(-g.pRot); // counter-rotate → face stays upright
     ctx.drawImage(selfieCanvas, -BALL_R, -BALL_R, BALL_R*2, BALL_R*2);
     ctx.restore();
-  } else if (g.hurtTimer > 0) {
-    // Pained face: squeezed eyes, frown, sweat drop
-    ctx.save();
-    ctx.rotate(-g.pRot);
-    ctx.strokeStyle='#1a0a00'; ctx.lineWidth=2.4; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(-10,-8); ctx.lineTo(-3,-4); ctx.lineTo(-10,0); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(10,-8); ctx.lineTo(3,-4); ctx.lineTo(10,0); ctx.stroke();
-    ctx.beginPath(); ctx.arc(0, 11, 6, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
-    ctx.fillStyle='#7dd3fc';
-    ctx.beginPath(); ctx.moveTo(BALL_R*0.62,-BALL_R*0.55); ctx.quadraticCurveTo(BALL_R*0.85,-BALL_R*0.2, BALL_R*0.62,-BALL_R*0.1); ctx.quadraticCurveTo(BALL_R*0.4,-BALL_R*0.2, BALL_R*0.62,-BALL_R*0.55); ctx.fill();
-    ctx.restore();
   } else {
-    // Emoji face — counter-rotated to stay upright
+    // Grammo's face (shared with the story scenes), counter-rotated to stay upright
     ctx.save();
     ctx.rotate(-g.pRot);
-    ctx.fillStyle='#1a0a00';
-    ctx.beginPath(); ctx.arc(-6,-4,4,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(6,-4,4,0,Math.PI*2); ctx.fill();
-    ctx.strokeStyle='#1a0a00'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.arc(0, 4, 6, 0, Math.PI); ctx.stroke();
+    const mood = g.hurtTimer > 0 ? 'hurt' : (!g.pOnGround || g.correctGlow > 0) ? 'excited' : 'happy';
+    drawGrammoFace(ctx, BALL_R, { mood, look: Math.max(-1, Math.min(1, g.pvx / 4)) });
     ctx.restore();
   }
 
@@ -229,11 +215,16 @@ function drawPlayer(g) {
   ctx.beginPath();
   ctx.arc(-BALL_R*0.28,-BALL_R*0.28,BALL_R*0.32,0,Math.PI*2);
   ctx.fill();
-  // Rolling edge highlight
+  // Rolling edge highlight and a soft ink outline, matching the story art
   ctx.strokeStyle='rgba(255,255,255,0.15)';
   ctx.lineWidth=3;
   ctx.beginPath();
   ctx.arc(0,0,BALL_R-1,0,Math.PI*2);
+  ctx.stroke();
+  ctx.strokeStyle='rgba(36,18,58,0.55)';
+  ctx.lineWidth=1.6;
+  ctx.beginPath();
+  ctx.arc(0,0,BALL_R-0.5,0,Math.PI*2);
   ctx.stroke();
 
   // Green glow after correct answer
@@ -354,12 +345,15 @@ function drawBossBattle(ctx, g) {
   // Question banner across the top while bubbles are up
   const q = g.bossLastQ;
   const live = (g.bossBubbles || []).some(b => !b.pop);
-  if (g.bossPhase === 'fight' && q && live) {
+  // The question card sits under the arena floor so it never covers the boss.
+  // On short screens there is no room there, and the top bar already shows the question.
+  const cardY = g.level.boss.arena.groundY - g.camY + 52;
+  if (g.bossPhase === 'fight' && q && live && cardY + 60 < CH - 8) {
     ctx.save();
     ctx.font = canvasFont(20);
-    const text = `👑 ${q.q.replace(/_{3,}/, '____')}`;
+    const text = `⚔️ ${q.q.replace(/_{3,}/, '____')}`;
     const w = Math.min(CW - 24, ctx.measureText(text).width + 40);
-    const x = CW / 2 - w / 2, y = 78;
+    const x = CW / 2 - w / 2, y = cardY;
     ctx.fillStyle = 'rgba(40,10,20,0.88)';
     ctx.strokeStyle = '#FF6B6B'; ctx.lineWidth = 2.5;
     ctx.beginPath(); roundRect(ctx, x, y, w, 56, 14); ctx.fill(); ctx.stroke();

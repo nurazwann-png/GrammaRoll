@@ -523,7 +523,7 @@ const ACHIEVEMENTS = [
   { id:'streak3',     icon:'🔥', name:'On Fire',          desc:'Reach a 3-streak',                   check: (s)=>s.maxStreak>=3 },
   { id:'streak5',     icon:'⚡', name:'Unstoppable',      desc:'Reach a 5-streak',                   check: (s)=>s.maxStreak>=5 },
   { id:'streak10',    icon:'👑', name:'Grammar King',     desc:'Reach a 10-streak',                  check: (s)=>s.maxStreak>=10 },
-  { id:'boss_first',  icon:'⚔️', name:'Boss Slayer',      desc:'Defeat the Grammar King boss',       check: (s)=>s.bossDefeated>=1 },
+  { id:'boss_first',  icon:'⚔️', name:'Boss Slayer',      desc:'Defeat your first boss',       check: (s)=>s.bossDefeated>=1 },
   { id:'boss_perfect',icon:'🏆', name:'Perfect Duel',     desc:'Defeat boss without taking damage',  check: (s)=>s.bossDefeatedNoDmg>=1 },
   { id:'perfect_lvl', icon:'🌟', name:'Flawless',         desc:'Complete a level with no mistakes',  check: (s)=>s.perfectLevels>=1 },
   { id:'daily3',      icon:'📅', name:'Daily Devotee',    desc:'Complete 3 daily challenges',        check: (s)=>s.dailyDone>=3 },

@@ -2481,3 +2481,9 @@ button.counter.hw { border-color: rgba(6,214,160,.8); cursor: pointer; }
 .guru-pane > .guru-section:first-child, .guru-pane > div:first-child { margin-top: 0; border-top: none; padding-top: 0; }
 .guru-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .guru-quick .ga-small { flex: 1; margin-top: 0; }
+
+/* ══ STORY CHARACTERS DRAWN WITH THE GAME ART ══ */
+.cs-art { display: block; width: clamp(130px, 28vmin, 200px); height: clamp(130px, 28vmin, 200px);
+  animation: cs-breathe 3.2s ease-in-out infinite; filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
+.cs-char.big .cs-art { width: clamp(160px, 36vmin, 260px); height: clamp(160px, 36vmin, 260px); }
+.cs-bg-playground { background: linear-gradient(180deg, #7ec8e3 0%, #b9e6f5 45%, #c9f0c2 72%, #6fbf5a 100%); }

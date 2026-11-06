@@ -31,13 +31,14 @@ const ctx = vm.createContext({
   setTimeout, clearTimeout, setInterval, clearInterval, console,
 });
 vm.runInContext(fs.readFileSync(path.join(ROOT, 'js', 'story.js'), 'utf8'), ctx);
-const { INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, csSpokenText, narrationId, narrationHash } =
-  vm.runInContext('({ INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, csSpokenText, narrationId, narrationHash })', ctx);
+const { INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, narrationHash } =
+  vm.runInContext('({ INTRO_SCENES, ENDING_SCENES, WORLD_STORIES, BOSS_STORIES, csSpokenText, narrationId, narrationHash })', ctx);
 
 const lines = [
   ...INTRO_SCENES.map((s, i) => ({ s, id: narrationId('intro', i) })),
   ...ENDING_SCENES.map((s, i) => ({ s, id: narrationId('ending', i) })),
   ...Object.entries(WORLD_STORIES).flatMap(([w, scenes]) => scenes.map((s, i) => ({ s, id: narrationId(`world${w}`, i) }))),
+  ...Object.entries(BOSS_STORIES).flatMap(([k, scenes]) => scenes.map((s, i) => ({ s, id: narrationId(`boss${k.split('-')[0]}`, i) }))),
 ].map(({ s, id }) => ({
   id,
   role: s.narrator || !s.speaker ? 'narrator' : s.speaker,
@@ -53,6 +54,9 @@ const AZURE_CAST = {
   'Leo the Lion':      { voice: 'en-GB-RyanNeural',    style: null,       pitch: '-10%', rate: '-5%' },
   'Mayor Molly':       { voice: 'en-US-JennyNeural',   style: null,       pitch: '+0%',  rate: '+0%' },
   'Captain Nova':      { voice: 'en-US-AriaNeural',    style: null,       pitch: '+0%',  rate: '+0%' },
+  'King Jumble':       { voice: 'en-GB-ThomasNeural',  style: null,       pitch: '-5%',  rate: '+0%' },
+  'Rumble the Rhino':  { voice: 'en-US-GuyNeural',     style: null,       pitch: '-20%', rate: '-10%' },
+  'Robo Rush':         { voice: 'en-US-EricNeural',    style: null,       pitch: '+10%', rate: '+10%' },
 };
 // ElevenLabs default voices, tried in order (IDs work without the voices_read permission)
 const ELEVEN_CAST = {
@@ -63,6 +67,9 @@ const ELEVEN_CAST = {
   'Leo the Lion':      [['George', 'JBFqnCBsd6RMkjVDRZzb'], ['Callum', 'N2lVS1w4EtoT3dr4eOWO']],
   'Mayor Molly':       [['Alice', 'Xb7hH8MSUJpSbSDYk0k2']],
   'Captain Nova':      [['Charlotte', 'XB0fDUnXU5powFXDhCwa'], ['Alice', 'Xb7hH8MSUJpSbSDYk0k2']],
+  'King Jumble':       [['Daniel', 'onwK4e9ZLuTAKqWW03F9'], ['Brian', 'nPczCjzI2devNBz1zQrb'], ['George', 'JBFqnCBsd6RMkjVDRZzb']],
+  'Rumble the Rhino':  [['Bill', 'pqHfZKP75CvOlQylNhV4'], ['Brian', 'nPczCjzI2devNBz1zQrb'], ['Callum', 'N2lVS1w4EtoT3dr4eOWO']],
+  'Robo Rush':         [['Liam', 'TX3LPaxmHKxFdv7VOQHJ'], ['Will', 'bIHbv24MWmeRgasZH58o'], ['Charlie', 'IKne3meq5aSn9XLyUdCD']],
 };
 
 const xml = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

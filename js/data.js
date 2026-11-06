@@ -72,7 +72,7 @@ const GRAMMAR_DB = {
   },
   "1-3": {
     world:"Playground Boss 👑", year:1, difficulty:'boss', topic:"Simple Present", icon:"👑", word:"KING",
-    bossName:"Grammar King",
+    bossName:"King Jumble", bossId:"jumble",
     questions:[
       {q:"He ___ to school daily.",  correct:"goes",  wrong:["go","going"], tip:"With he/she/it in simple present, add '-s' or '-es' to the verb."},
       {q:"They ___ football.",       correct:"play",  wrong:["plays","played"], tip:"'They' is plural — no '-s' needed on the verb in simple present."},
@@ -152,7 +152,7 @@ const GRAMMAR_DB = {
   },
   "2-3": {
     world:"Safari Boss 🦁", year:2, difficulty:'boss', topic:"Plurals & have / has", icon:"👑", word:"LION",
-    bossName:"Lion Lord",
+    bossName:"Rumble the Rhino", bossId:"rhino",
     questions:[
       {q:"I have two ___.",                 correct:"cats",  wrong:["cat","cates"],   tip:"For more than one, add '-s': one cat → two cats."},
       {q:"There are three ___ on the shelf.", correct:"boxes", wrong:["boxs","box"],  tip:"Words ending in s, x, ch or sh add '-es': box → boxes."},
@@ -234,7 +234,7 @@ const GRAMMAR_DB = {
   },
   "3-3": {
     world:"City Boss 🏙️", year:3, difficulty:'boss', topic:"Question words & Do / Does / Did", icon:"👑", word:"WHAT",
-    bossName:"Question Queen",
+    bossName:"Robo Rush", bossId:"robo",
     questions:[
       {q:"___ you like ice cream?",          correct:"Do",    wrong:["Does","Is"],     tip:"Use 'Do' with I, you, we, they in present questions."},
       {q:"___ she play the piano?",          correct:"Does",  wrong:["Do","Is"],       tip:"Use 'Does' with he, she, it in present questions."},
@@ -316,7 +316,7 @@ const GRAMMAR_DB = {
   },
   "4-3": {
     world:"Space Boss 🚀", year:5, difficulty:'boss', topic:"Conjunctions & modal verbs", icon:"👑", word:"COMET",
-    bossName:"Captain Chaos",
+    bossName:"Baron Von Error", bossId:"baron",
     questions:[
       {q:"I like apples ___ bananas.", correct:"and", wrong:["but","because"], tip:"Use 'and' to add things together."},
       {q:"I wanted to play, ___ it was raining.", correct:"but", wrong:["and","so"], tip:"Use 'but' for a surprise or contrast."},

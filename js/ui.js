@@ -13,6 +13,11 @@ function startLevelKey(key) {
     showFeedbackForm(() => startLevelKey(key));
     return;
   }
+  if (BOSS_STORIES[key] && !hasSeenBossStory(key)) {
+    if (game) { game.state = 'paused'; game = null; }
+    showBossStory(key, () => startLevelKey(key));
+    return;
+  }
   const world = Number(key.split('-')[0]);
   if (key.endsWith('-1') && WORLD_STORIES[world] && !hasSeenWorldStory(world)) {
     if (game) { game.state = 'paused'; game = null; }
