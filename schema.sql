@@ -63,3 +63,15 @@ CREATE TABLE IF NOT EXISTS player_progress (
   unlocked_skins TEXT[]    NOT NULL DEFAULT '{}',
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id           SERIAL PRIMARY KEY,
+  name         TEXT        NOT NULL,
+  role         TEXT        NOT NULL,
+  organisation TEXT        NOT NULL DEFAULT '',
+  rating       SMALLINT    NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  tags         JSONB       NOT NULL DEFAULT '[]',
+  comment      TEXT        NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);

@@ -7,6 +7,12 @@ function startLevel(world, level) {
 
 function startLevelKey(key) {
   if (!GRAMMAR_DB[key]) { showToast('That level is not available yet!'); return; }
+  // After finishing World 1, ask for a review once before World 2 begins
+  if (key === '2-1' && !hasAskedFeedback()) {
+    if (game) { game.state = 'paused'; game = null; }
+    showFeedbackForm(() => startLevelKey(key));
+    return;
+  }
   const world = Number(key.split('-')[0]);
   if (key.endsWith('-1') && WORLD_STORIES[world] && !hasSeenWorldStory(world)) {
     if (game) { game.state = 'paused'; game = null; }
@@ -1122,6 +1128,8 @@ const ESCAPABLE = [
   ['leaderboard-overlay',  () => closeLeaderboard()],
   ['name-overlay',         () => skipName()],
   ['review-overlay',       () => closeReview()],
+  ['fb-form-overlay',      () => closeFeedbackForm()],
+  ['fb-wall-overlay',      () => closeFeedbackWall()],
   ['guru-overlay',         () => closeGuruMode()],
   ['mp-overlay',           () => closeMultiplayer()],
   ['coop-overlay',         () => closeCoopMenu()],

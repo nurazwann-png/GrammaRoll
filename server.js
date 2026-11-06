@@ -110,6 +110,8 @@ const PROGRESS_KEYS = ['gr_level_stars', 'gr_total_stars', 'gr_total_score', 'gr
   'gr_sr_wrong', 'gr_play_days', 'gr_daily', 'gr_active_skin'];
 const LEVEL_RE = /^[0-9]{1,2}-[0-9]{1,2}$/;
 const str = (v, max) => String(v ?? '').trim().slice(0, max);
+const REVIEW_ROLES = ['student', 'teacher', 'parent', 'institution', 'public'];
+const REVIEW_TAGS = ['fun', 'learn', 'story', 'graphics', 'sounds', 'boss'];
 
 function cleanQuestions(input) {
   const out = {};
@@ -242,10 +244,34 @@ async function handleApi(req, res, url) {
     return json(res, 200, { token });
   }
 
+  // ── Reviews: anyone can read and post; teachers can remove ──
+  if (url === '/api/reviews') {
+    if (method === 'GET') return json(res, 200, await store.listReviews(200));
+    if (method === 'POST') {
+      if (rateLimited(req, 5)) return json(res, 429, { error: 'Too many reviews. Please try again in a minute.' });
+      const b = await parseBody(req);
+      const rating = Math.floor(Number(b.rating));
+      const role = str(b.role, 20);
+      if (!(rating >= 1 && rating <= 5) || !REVIEW_ROLES.includes(role)) return json(res, 400, { error: 'Please choose a rating and who you are.' });
+      const review = await store.addReview({
+        name: str(b.name, 40) || 'Anonymous',
+        role,
+        organisation: str(b.organisation, 80),
+        rating,
+        tags: (Array.isArray(b.tags) ? b.tags : []).filter(t => REVIEW_TAGS.includes(t)).slice(0, REVIEW_TAGS.length),
+        comment: str(b.comment, 500),
+      });
+      return json(res, 200, review);
+    }
+  }
+
   // ── Teacher-only routes ──
   if (url.startsWith('/api/teacher/')) {
     if (!isTeacher(req)) return json(res, 401, { error: 'Please log in to Teacher Mode again.' });
 
+    if (method === 'DELETE' && (m = url.match(/^\/api\/teacher\/reviews\/(\d{1,9})$/))) {
+      return (await store.deleteReview(Number(m[1]))) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Review not found' });
+    }
     if (method === 'GET' && url === '/api/teacher/classes') {
       return json(res, 200, await store.listClasses());
     }

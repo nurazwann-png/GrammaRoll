@@ -3,9 +3,19 @@ const fs   = require('fs');
 const path = require('path');
 
 const MAX_FILE_ATTEMPTS = 20000;
+const MAX_FILE_REVIEWS = 5000;
+
+// Average, count and star breakdown for the reviews wall
+function summarise(rows) {
+  const dist = [0, 0, 0, 0, 0];
+  let total = 0;
+  for (const r of rows) { dist[r.rating - 1] += r.n || 1; total += r.rating * (r.n || 1); }
+  const count = dist.reduce((a, b) => a + b, 0);
+  return { count, average: count ? Math.round((total / count) * 10) / 10 : 0, dist };
+}
 
 function createFileStore(file) {
-  let data = { classes: {}, attempts: [], progress: {} };
+  let data = { classes: {}, attempts: [], progress: {}, reviews: [] };
   try {
     data = { ...data, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
   } catch (e) {
@@ -63,6 +73,24 @@ function createFileStore(file) {
       save();
       return data.progress[code][pupil].updated_at;
     },
+    async addReview(r) {
+      data.reviews ||= [];
+      const review = { ...r, id: (data.reviews.reduce((m, x) => Math.max(m, x.id), 0) + 1), created_at: new Date().toISOString() };
+      data.reviews.unshift(review);
+      if (data.reviews.length > MAX_FILE_REVIEWS) data.reviews.length = MAX_FILE_REVIEWS;
+      save();
+      return review;
+    },
+    async listReviews(limit) {
+      const all = data.reviews || [];
+      return { reviews: all.slice(0, limit), summary: summarise(all) };
+    },
+    async deleteReview(id) {
+      const before = (data.reviews || []).length;
+      data.reviews = (data.reviews || []).filter(r => r.id !== id);
+      save();
+      return data.reviews.length < before;
+    },
   };
 }
 
@@ -119,6 +147,27 @@ function createPgStore(pool) {
          RETURNING updated_at`,
         [code, pupil, name, JSON.stringify(progress)]);
       return rows[0].updated_at.toISOString();
+    },
+    async addReview(r) {
+      const { rows } = await pool.query(
+        `INSERT INTO reviews(name,role,organisation,rating,tags,comment) VALUES($1,$2,$3,$4,$5,$6)
+         RETURNING id,name,role,organisation,rating,tags,comment,created_at`,
+        [r.name, r.role, r.organisation, r.rating, JSON.stringify(r.tags), r.comment]);
+      return { ...rows[0], created_at: rows[0].created_at.toISOString() };
+    },
+    async listReviews(limit) {
+      const [list, dist] = await Promise.all([
+        pool.query('SELECT id,name,role,organisation,rating,tags,comment,created_at FROM reviews ORDER BY created_at DESC LIMIT $1', [limit]),
+        pool.query('SELECT rating, COUNT(*)::int AS n FROM reviews GROUP BY rating'),
+      ]);
+      return {
+        reviews: list.rows.map(r => ({ ...r, created_at: r.created_at.toISOString() })),
+        summary: summarise(dist.rows),
+      };
+    },
+    async deleteReview(id) {
+      const r = await pool.query('DELETE FROM reviews WHERE id=$1', [id]);
+      return r.rowCount > 0;
     },
   };
 }

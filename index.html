@@ -109,6 +109,7 @@
     <button class="dock-btn" onclick="showSkinsMenu()">🎨<span>Skins</span></button>
     <button class="dock-btn" onclick="showAchievementsMenu()">🏅<span>Badges</span></button>
     <button class="dock-btn" onclick="showSelfieScreen()">📸<span>Selfie</span></button>
+    <button class="dock-btn" onclick="showFeedbackWall()">⭐<span>Reviews</span></button>
     <button class="dock-btn" onclick="showSettings()">⚙️<span>Settings</span></button>
   </nav>
 </div>
@@ -603,6 +604,56 @@
   </div>
 </div>
 
+<!-- REVIEW FORM -->
+<div class="overlay hidden" id="fb-form-overlay">
+  <div class="fb-card" role="dialog" aria-labelledby="fb-title">
+    <div id="fb-form">
+      <div class="fb-trophy" id="fb-trophy">🏆</div>
+      <h2 id="fb-title">World 1 complete! 🎉</h2>
+      <p class="fb-sub" id="fb-sub">How do you like Grammar Ball so far?</p>
+      <div id="fb-stars" role="radiogroup" aria-label="Your rating"></div>
+      <div id="fb-mood" data-level="0"><span id="fb-mood-emoji">🤔</span><span id="fb-mood-text">Tap a star to rate!</span></div>
+
+      <div class="fb-label">What did you like?</div>
+      <div id="fb-tags" class="fb-chips"></div>
+
+      <div class="fb-label">I am a…</div>
+      <div id="fb-roles" class="fb-chips"></div>
+
+      <div class="fb-row">
+        <input id="fb-name" maxlength="40" placeholder="Your name (optional)" aria-label="Your name">
+        <input id="fb-org" maxlength="80" placeholder="School or organisation (optional)" aria-label="School or organisation">
+      </div>
+      <textarea id="fb-comment" maxlength="500" rows="3" placeholder="Tell us more… (optional)" aria-label="Your comment"></textarea>
+      <div id="fb-count">0/500</div>
+      <div id="fb-error" role="alert"></div>
+      <button class="btn btn-primary" id="fb-submit" onclick="submitFeedback()">Send review ✨</button>
+      <button class="btn btn-secondary" id="fb-later" onclick="closeFeedbackForm()">Maybe later</button>
+    </div>
+    <div id="fb-thanks" class="hidden">
+      <div class="fb-trophy">💖</div>
+      <h2>Thank you!</h2>
+      <div id="fb-thanks-stars"></div>
+      <p class="fb-sub">Your review helps make Grammar Ball even better.</p>
+      <button class="btn btn-primary" onclick="closeFeedbackForm()">Continue ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEWS WALL -->
+<div class="overlay hidden" id="fb-wall-overlay">
+  <div class="fb-wall" role="dialog" aria-labelledby="fb-wall-title">
+    <div class="fb-wall-top">
+      <h2 id="fb-wall-title">⭐ Player Reviews</h2>
+      <button class="fb-close" onclick="closeFeedbackWall()" aria-label="Close reviews">✕</button>
+    </div>
+    <div id="fb-summary"></div>
+    <div id="fb-filter" class="fb-chips"></div>
+    <div id="fb-list"></div>
+    <button class="btn btn-primary fb-write" onclick="openFeedbackFormFromWall()">✍️ Write a review</button>
+  </div>
+</div>
+
 <!-- CERTIFICATE OVERLAY -->
 <div id="cert-overlay" class="hidden">
   <canvas id="cert-canvas"></canvas>
@@ -622,5 +673,6 @@
 <script src="/js/teacher.js"></script>
 <script src="/js/story.js"></script>
 <script src="/js/ui.js"></script>
+<script src="/js/feedback.js"></script>
 <script src="/js/multiplayer.js"></script>
 <script src="/js/main.js"></script>
