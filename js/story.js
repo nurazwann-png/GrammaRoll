@@ -124,7 +124,156 @@ const ENDING_SCENES = [
   },
 ];
 
+// Story chapters that play when Grammo first enters each new world
+const WORLD_STORIES = {
+  2: [
+    {
+      fx:['fireflies','sparkles'], music:'calm', camera:'zoom', sfx:[['cheer',300]],
+      bg: 'victory', stars: true,
+      chars: [
+        { id:'grammo', emoji:'😊', side:'left', big:true, ball:true, bounce:true },
+        { id:'baron',  emoji:'👹', side:'right', big:true, defeated:true },
+      ],
+      narrator: true,
+      text: 'The Playground was saved! The children laughed, and every sentence sparkled again...\n\nBut Baron Von Error was not finished yet.',
+    },
+    {
+      fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
+      bg: 'dark', stars: false,
+      chars: [ { id:'baron', emoji:'👹', side:'center', big:true, shake:true } ],
+      speaker:'Baron Von Error', speakerColor:'#EF476F',
+      text: 'You fixed one little playground? HA! I am flying to the Safari. The animals will never say what they are doing correctly!',
+    },
+    {
+      fx:['sunrays','scramble'], music:'dark', camera:'shake', sfx:[['chaos',150]],
+      bg: 'safari', stars: false,
+      chars: [
+        { id:'lion',   emoji:'🦁', side:'left', big:true },
+        { id:'monkey', emoji:'🐒', side:'right', shake:true },
+      ],
+      speaker:'Leo the Lion', speakerColor:'#F59E0B',
+      text: 'Help! Baron scrambled our words! Now the monkeys say "I swinging" instead of "I am swinging"!',
+    },
+    {
+      fx:['sunrays','sparkles'], music:'calm', camera:'pan', sfx:[['sparkle',300]],
+      bg: 'safari', stars: false,
+      chars: [
+        { id:'fairy',  emoji:'🧚', side:'left', big:true },
+        { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
+      ],
+      speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+      text: 'Grammo, the Safari needs you! Remember: we use am, is or are with -ing to say what is happening now.',
+    },
+    {
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
+      bg: 'safari', stars: false,
+      chars: [ { id:'grammo', emoji:'😊', side:'center', big:true, ball:true, bounce:true } ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'I am bouncing to the Safari right now! Hold on, Leo! 🦁',
+      last: true,
+      cta: '🦁 Enter the Safari!',
+    },
+  ],
+  3: [
+    {
+      fx:['sunrays','confetti'], music:'calm', camera:'pan', sfx:[['cheer',300]],
+      bg: 'safari', stars: false,
+      chars: [
+        { id:'lion',   emoji:'🦁', side:'left', big:true, bounce:true },
+        { id:'grammo', emoji:'😊', side:'right', big:true, ball:true, bounce:true },
+      ],
+      narrator: true,
+      text: 'The Safari bloomed again! The lions were roaring, the birds were singing, and the monkeys were swinging happily.',
+    },
+    {
+      fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
+      bg: 'dark', stars: false,
+      chars: [ { id:'baron', emoji:'👹', side:'center', big:true, shake:true } ],
+      speaker:'Baron Von Error', speakerColor:'#EF476F',
+      text: 'Grrr! Fine! I will hide in the busy City and mix up every story about yesterday. Nobody will remember what happened!',
+    },
+    {
+      fx:['scramble'], music:'dark', camera:'shake', sfx:[['chaos',150]],
+      bg: 'city', stars: true,
+      chars: [
+        { id:'mayor', emoji:'👩‍💼', side:'left', big:true },
+        { id:'bus',   emoji:'🚌', side:'right', static:true, shake:true },
+      ],
+      speaker:'Mayor Molly', speakerColor:'#38BDF8',
+      text: 'Oh no! Yesterday our bus driver said, "I drive to school." But it was yesterday. He drove!',
+    },
+    {
+      fx:['sparkles'], music:'calm', camera:'pan', sfx:[['sparkle',300]],
+      bg: 'city', stars: true,
+      chars: [
+        { id:'fairy',  emoji:'🧚', side:'left', big:true },
+        { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
+      ],
+      speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+      text: 'Grammo, the City needs help with the past. Yesterday we played, we walked, and we went home!',
+    },
+    {
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['boing',300]],
+      bg: 'city', stars: true,
+      chars: [ { id:'grammo', emoji:'😊', side:'center', big:true, ball:true, bounce:true } ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'Last time, I won. This time, I will win again! Let\'s go! 🏙️',
+      last: true,
+      cta: '🏙️ Enter the City!',
+    },
+  ],
+  4: [
+    {
+      fx:['fireflies','sparkles'], music:'calm', camera:'pan', sfx:[['cheer',300]],
+      bg: 'city', stars: true,
+      chars: [
+        { id:'mayor',  emoji:'👩‍💼', side:'left', big:true, bounce:true },
+        { id:'grammo', emoji:'😊', side:'right', big:true, ball:true, bounce:true },
+      ],
+      narrator: true,
+      text: 'The City lights shone brightly again. Everyone told their stories about yesterday perfectly.',
+    },
+    {
+      fx:['rain','lightning'], music:'dark', camera:'push', sfx:[['whoosh',200]],
+      bg: 'dark', stars: true,
+      chars: [ { id:'baron', emoji:'👹', side:'center', big:true, shake:true } ],
+      speaker:'Baron Von Error', speakerColor:'#EF476F',
+      text: 'You have not won yet! I am going to blast into Space. Tomorrow, the whole universe will speak wrongly! MWAHAHAHA!',
+    },
+    {
+      fx:['sparkles'], music:'dark', camera:'shake', sfx:[['chaos',150]],
+      bg: 'space', stars: true,
+      chars: [
+        { id:'nova',   emoji:'👩‍🚀', side:'left', big:true },
+        { id:'rocket', emoji:'🚀', side:'right', static:true, shake:true },
+      ],
+      speaker:'Captain Nova', speakerColor:'#C084FC',
+      text: 'Grammo, come quickly! Baron is breaking our future sentences. Our rocket will not launch until we fix them!',
+    },
+    {
+      fx:['sparkles'], music:'calm', camera:'pan', sfx:[['sparkle',300]],
+      bg: 'space', stars: true,
+      chars: [
+        { id:'fairy',  emoji:'🧚', side:'left', big:true },
+        { id:'grammo', emoji:'😊', side:'right', big:true, ball:true },
+      ],
+      speaker:'Whisper the Fairy', speakerColor:'#A78BFA',
+      text: 'This is the final battle, Grammo. Use will and going to for the future. You are faster, braver and smarter than ever!',
+    },
+    {
+      fx:['confetti','sparkles'], music:'calm', camera:'zoom', sfx:[['fanfare',200],['boing',900]],
+      bg: 'space', stars: true,
+      chars: [ { id:'grammo', emoji:'😊', side:'center', big:true, ball:true, bounce:true } ],
+      speaker:'Grammo', speakerColor:'#06D6A0',
+      text: 'I will stop Baron Von Error once and for all. Three, two, one... BLAST OFF! 🚀',
+      last: true,
+      cta: '🚀 Blast off to Space!',
+    },
+  ],
+};
+
 let csScenes = [];
+let csSetId = 'intro';
 let csIndex = 0;
 let csTyping = false;
 let csTypeTimer = null;
@@ -167,7 +316,7 @@ function csBuildChar(ch) {
   }
   const label = document.createElement('div');
   label.className = 'cs-char-name';
-  label.textContent = ch.id === 'grammo' ? 'Grammo' : ch.id === 'fairy' ? 'Whisper' : ch.id === 'baron' ? 'Baron Von Error' : '';
+  label.textContent = CS_CHAR_NAMES[ch.id] || '';
   wrap.appendChild(label);
   return wrap;
 }
@@ -251,7 +400,11 @@ const CS_VOICES = {
   'Whisper the Fairy': { pitch: 1.6, rate: 0.95 },
   'Baron Von Error':   { pitch: 0.5, rate: 0.8 },
   'Grammo':            { pitch: 1.3, rate: 1.05 },
+  'Leo the Lion':      { pitch: 0.7, rate: 0.9 },
+  'Mayor Molly':       { pitch: 1.1, rate: 1.0 },
+  'Captain Nova':      { pitch: 1.2, rate: 1.0 },
 };
+const CS_CHAR_NAMES = { grammo:'Grammo', fairy:'Whisper', baron:'Baron Von Error', lion:'Leo', mayor:'Mayor Molly', nova:'Captain Nova' };
 function csSpokenText(text) {
   return text
     .replace(/\b(?:[A-Z] ){2,}[A-Z]\b/g, m => m.replace(/ /g, '').toLowerCase().replace(/^./, c => c.toUpperCase()))
@@ -284,7 +437,7 @@ function csNarrate(scene) {
   csStopNarration();
   if (!getSettings().narrateStory || !scene) return;
   const text = csSpokenText(scene.text);
-  const id = narrationId(csScenes === ENDING_SCENES ? 'ending' : 'intro', csScenes.indexOf(scene));
+  const id = narrationId(csSetId, csScenes.indexOf(scene));
   const entry = csAudioManifest[id];
   const voice = (!scene.narrator && CS_VOICES[scene.speaker]) || { pitch: 1, rate: 0.9 };
   if (entry && entry.hash === narrationHash(text)) {
@@ -401,7 +554,7 @@ function csVoiceLevel(ts) {
 // ══════════════════════════════════════════════
 //  CUTSCENE EFFECTS (canvas particles, lightning)
 // ══════════════════════════════════════════════
-const CS_SPEAKER_IDS = { 'Whisper the Fairy': 'fairy', 'Baron Von Error': 'baron', 'Grammo': 'grammo' };
+const CS_SPEAKER_IDS = { 'Whisper the Fairy': 'fairy', 'Baron Von Error': 'baron', 'Grammo': 'grammo', 'Leo the Lion': 'lion', 'Mayor Molly': 'mayor', 'Captain Nova': 'nova' };
 const CS_COLORS = ['#FFD166', '#06D6A0', '#EF476F', '#4A90D9', '#8B5CF6', '#FF8C42'];
 const CS_WORDS = ['a', 'an', 'the', 'is', 'are', 'am', 'go', 'went', '-ed', '-s', '?', '!', 'was', 'were', 'he', 'she'];
 const CS_FX_COUNTS = { rain: 150, sparkles: 40, fireflies: 32, confetti: 90, scramble: 26, flowers: 16 };
@@ -636,8 +789,27 @@ function csFinish() {
   }, 400);
 }
 
+function worldStoryKey(world) { return pk(`gr_world_story_${world}`); }
+function hasSeenWorldStory(world) {
+  try { return !!localStorage.getItem(worldStoryKey(world)); } catch (e) { return true; }
+}
+function showWorldStory(world, onDone) {
+  if (!WORLD_STORIES[world]) { if (onDone) onDone(); return; }
+  try { localStorage.setItem(worldStoryKey(world), '1'); } catch (e) {}
+  stopWorldMusic();
+  csScenes = WORLD_STORIES[world];
+  csSetId = `world${world}`;
+  csIndex = 0;
+  csOnDone = onDone || null;
+  const overlay = document.getElementById('cutscene-overlay');
+  overlay.classList.remove('hidden', 'fade-out');
+  csUpdateVoiceBtn();
+  csShowFrame(0);
+}
+
 function showIntroCutscene(onDone) {
   csScenes = INTRO_SCENES;
+  csSetId = 'intro';
   csIndex = 0;
   csOnDone = onDone || null;
   const overlay = document.getElementById('cutscene-overlay');
@@ -649,6 +821,7 @@ function showIntroCutscene(onDone) {
 function showEndingCutscene(onDone) {
   stopWorldMusic(); // the story has its own music
   csScenes = ENDING_SCENES;
+  csSetId = 'ending';
   csIndex = 0;
   csOnDone = onDone || (() => showMenu());
   const overlay = document.getElementById('cutscene-overlay');

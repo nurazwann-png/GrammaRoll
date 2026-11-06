@@ -714,6 +714,9 @@ body {
 .cs-bg-dark    { background: radial-gradient(ellipse at 50% 30%, #4a0a20 0%, #1a0030 50%, #000 100%); }
 .cs-bg-chaos   { background: linear-gradient(135deg, #7f1d1d, #451a03, #1e1b4b); }
 .cs-bg-victory { background: radial-gradient(ellipse at 50% 40%, #065f46 0%, #1e3a5f 50%, #0f172a 100%); }
+.cs-bg-safari  { background: linear-gradient(180deg, #f59e0b 0%, #fb923c 30%, #fcd34d 60%, #84cc16 85%, #4d7c0f 100%); }
+.cs-bg-city    { background: linear-gradient(180deg, #0f172a 0%, #312e81 45%, #7c3aed 75%, #f472b6 100%); }
+.cs-bg-space   { background: radial-gradient(ellipse at 70% 20%, #4c1d95 0%, #1e1b4b 40%, #020617 100%); }
 .cs-bg-ending  { background: radial-gradient(ellipse at 50% 50%, #451a03 0%, #78350f 30%, #0f172a 100%); }
 
 /* SELFIE SCREEN */

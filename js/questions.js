@@ -1041,7 +1041,7 @@ function triggerWin(g) {
   };
   setTimeout(() => {
     if (game !== g) return;
-    if (isBossLevel) showEndingCutscene(showWin);
+    if (isBossLevel && currentLevelKey === LEVEL_KEYS[LEVEL_KEYS.length - 1]) showEndingCutscene(showWin);
     else showWin();
   }, 800);
 }

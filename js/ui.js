@@ -7,6 +7,12 @@ function startLevel(world, level) {
 
 function startLevelKey(key) {
   if (!GRAMMAR_DB[key]) { showToast('That level is not available yet!'); return; }
+  const world = Number(key.split('-')[0]);
+  if (key.endsWith('-1') && WORLD_STORIES[world] && !hasSeenWorldStory(world)) {
+    if (game) { game.state = 'paused'; game = null; }
+    showWorldStory(world, () => startLevelKey(key));
+    return;
+  }
   currentLevelKey = key;
 
   closeLevelPicker();
