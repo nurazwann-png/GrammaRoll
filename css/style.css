@@ -222,6 +222,9 @@ body {
   transition: opacity .35s ease;
 }
 .screen.hidden { opacity:0; pointer-events:none; }
+.hidden:not(.overlay):not(.screen) { display:none !important; }
+#cert-canvas { max-width: 92vw; max-height: 70vh; border-radius: 12px; }
+#cert-actions { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:14px; }
 
 /* MENU */
 #menu-screen {
