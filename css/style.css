@@ -2419,3 +2419,47 @@ button.counter.hw { border-color: rgba(6,214,160,.8); cursor: pointer; }
 #guru-who b { color: var(--gold); }
 #guru-who button { border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; border-radius: 999px; padding: 4px 12px; font: 800 .78rem 'Nunito', sans-serif; cursor: pointer; }
 .ga-form .btn { font-size: 1.15rem; padding-top: 12px; padding-bottom: 12px; }
+
+/* ══ TEACHER ACCOUNT, DASHBOARD, CLASS TOOLS, ADMIN ══ */
+#guru-main .hidden, #guru-qr-overlay .hidden { display: none !important; }
+.ga-check { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,.8); font-size: .85rem; font-weight: 700; cursor: pointer; }
+.ga-check input { width: 18px; height: 18px; accent-color: #FFD166; }
+.ga-big { font-size: 2.6rem; text-align: center; margin: 0; }
+.ga-label { font-weight: 800; font-size: .85rem; color: rgba(255,255,255,.75); margin: 10px 0 6px; }
+.ga-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.ga-grid .guru-input { margin: 0; }
+.ga-small { font-size: .85rem !important; padding: 8px 12px !important; margin-top: 8px; }
+.ga-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.ga-actions .ga-small { margin-top: 0; }
+.ga-danger { border-color: rgba(239,71,111,.6) !important; color: #fca5a5 !important; }
+.ga-co { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.06); border-radius: 10px; padding: 6px 10px; margin-bottom: 6px; color: #fff; font-weight: 800; font-size: .85rem; }
+.ga-co span { color: rgba(255,255,255,.55); font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.ga-co button, .ga-x {
+  border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.25); color: #fff; border-radius: 999px;
+  padding: 3px 10px; font: 800 .74rem 'Nunito', sans-serif; cursor: pointer; white-space: nowrap;
+}
+.ga-x.ok { border-color: #06D6A0; background: rgba(6,214,160,.2); }
+.adm-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.adm-pin { font-family: 'Fredoka One', cursive; font-size: 1.3rem; letter-spacing: 3px; color: #FFD166; }
+.ga-radios { display: flex; flex-direction: column; gap: 6px; color: #fff; font-size: .88rem; font-weight: 700; }
+.ga-radios input { accent-color: #FFD166; margin-right: 6px; }
+.dash-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.dash-card {
+  text-align: left; background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.14); border-radius: 16px;
+  padding: 12px; color: #fff; cursor: pointer; font-family: 'Nunito', sans-serif; transition: transform .15s, border-color .15s;
+}
+.dash-card:hover { transform: translateY(-2px); border-color: #FFD166; }
+.dash-card-name { font-family: 'Fredoka One', cursive; font-size: 1.05rem; color: #FFD166; }
+.dash-badge { font: 800 .65rem 'Nunito', sans-serif; background: rgba(56,189,248,.25); color: #bae6fd; border-radius: 999px; padding: 1px 7px; vertical-align: middle; }
+.dash-card-code { font-size: .72rem; letter-spacing: 2px; color: rgba(255,255,255,.5); font-weight: 800; }
+.dash-card-stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; font-size: .82rem; font-weight: 800; }
+.dash-card-hw { margin-top: 6px; font-size: .78rem; color: rgba(255,255,255,.75); }
+.dash-weak { display: flex; flex-wrap: wrap; gap: 6px; }
+.dash-weak span { background: rgba(239,71,111,.15); border: 1px solid rgba(239,71,111,.4); color: #fff; border-radius: 999px; padding: 4px 10px; font-size: .78rem; font-weight: 800; }
+.dash-weak b { color: #fca5a5; }
+#guru-who { flex-wrap: wrap; }
+#guru-qr-overlay { z-index: 270; background: rgba(5,8,30,.92); }
+#qr-box { background: #fff; border-radius: 16px; padding: 10px; width: min(260px, 70vw); margin: 8px auto; }
+#qr-box svg { width: 100%; height: auto; display: block; }
+#qr-code-big { font-family: 'Fredoka One', cursive; font-size: 2.2rem; letter-spacing: 6px; color: #FFD166; }
+#guru-qr-overlay .btn { width: 100%; margin-top: 6px; }

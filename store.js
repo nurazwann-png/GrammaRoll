@@ -15,7 +15,7 @@ function summarise(rows) {
 }
 
 function createFileStore(file) {
-  let data = { classes: {}, attempts: [], progress: {}, reviews: [], teachers: {} };
+  let data = { classes: {}, attempts: [], progress: {}, reviews: [], teachers: {}, settings: {} };
   try {
     data = { ...data, ...JSON.parse(fs.readFileSync(file, 'utf8')) };
   } catch (e) {
@@ -38,7 +38,10 @@ function createFileStore(file) {
       data.teachers ||= {};
       if (Object.values(data.teachers).some(x => x.email === t.email)) return null;
       const id = Object.values(data.teachers).reduce((m, x) => Math.max(m, x.id), 0) + 1;
-      data.teachers[id] = { ...t, id, created_at: new Date().toISOString() };
+      data.teachers[id] = {
+        status: 'active', must_change_pin: false, pin_version: 0, last_login_at: null,
+        ...t, id, created_at: new Date().toISOString(),
+      };
       save();
       return data.teachers[id];
     },
@@ -46,8 +49,22 @@ function createFileStore(file) {
       return Object.values(data.teachers || {}).find(x => x.email === email) || null;
     },
     async getTeacher(id) { return (data.teachers || {})[id] || null; },
+    async updateTeacher(id, fields) {
+      const t = (data.teachers || {})[id];
+      if (!t) return null;
+      Object.assign(t, fields);
+      save();
+      return t;
+    },
+    async listTeachers() {
+      return Object.values(data.teachers || {}).map(t => ({
+        ...t, classes: Object.values(data.classes).filter(c => c.teacher_id === t.id).length,
+      })).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    },
+    async getSetting(key) { return data.settings?.[key] ?? null; },
+    async setSetting(key, value) { (data.settings ||= {})[key] = value; save(); },
     async createClass(code, name, teacherId) {
-      const cls = { code, name, teacher_id: teacherId ?? null, assignment: null, questions: {}, created_at: new Date().toISOString() };
+      const cls = { code, name, teacher_id: teacherId ?? null, archived: false, co_teacher_ids: [], assignment: null, questions: {}, created_at: new Date().toISOString() };
       data.classes[code] = cls;
       save();
       return cls;
@@ -55,8 +72,34 @@ function createFileStore(file) {
     async getClass(code) { return data.classes[code] || null; },
     async listClasses(teacherId) {
       return Object.values(data.classes)
-        .filter(c => teacherId == null || c.teacher_id === teacherId)
+        .filter(c => teacherId == null || c.teacher_id === teacherId || (c.co_teacher_ids || []).includes(teacherId))
+        .map(c => ({ archived: false, co_teacher_ids: [], ...c }))
         .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    },
+    async updateClass(code, fields) {
+      const c = data.classes[code];
+      if (!c) return null;
+      Object.assign(c, fields);
+      save();
+      return c;
+    },
+    async deleteClass(code) {
+      if (!data.classes[code]) return false;
+      delete data.classes[code];
+      data.attempts = data.attempts.filter(a => a.class_code !== code);
+      if (data.progress) delete data.progress[code];
+      save();
+      return true;
+    },
+    async listProgress(code) {
+      return Object.entries(data.progress?.[code] || {}).map(([pupil, v]) => ({ pupil, name: v.name, data: v.data, updated_at: v.updated_at }));
+    },
+    async deletePupil(code, pupil) {
+      const before = data.attempts.length + Object.keys(data.progress?.[code] || {}).length;
+      data.attempts = data.attempts.filter(a => !(a.class_code === code && a.player_name.toLowerCase() === pupil));
+      if (data.progress?.[code]) delete data.progress[code][pupil];
+      save();
+      return data.attempts.length + Object.keys(data.progress?.[code] || {}).length < before;
     },
     async setAssignment(code, assignment) {
       if (!data.classes[code]) return false;
@@ -110,41 +153,91 @@ function createFileStore(file) {
 
 function createPgStore(pool) {
   const toClass = r => r && ({
-    code: r.code, name: r.name, teacher_id: r.teacher_id ?? null, assignment: r.assignment, questions: r.questions || {},
+    code: r.code, name: r.name, teacher_id: r.teacher_id ?? null, archived: !!r.archived, co_teacher_ids: r.co_teacher_ids || [],
+    assignment: r.assignment, questions: r.questions || {},
     created_at: r.created_at instanceof Date ? r.created_at.toISOString() : r.created_at,
   });
   return {
     kind: 'postgres',
     async createTeacher(t) {
       const { rows } = await pool.query(
-        `INSERT INTO teachers(email,name,school,pin_hash) VALUES($1,$2,$3,$4)
-         ON CONFLICT(email) DO NOTHING RETURNING id,email,name,school,pin_hash,created_at`,
-        [t.email, t.name, t.school, t.pin_hash]);
+        `INSERT INTO teachers(email,name,school,pin_hash,status) VALUES($1,$2,$3,$4,$5)
+         ON CONFLICT(email) DO NOTHING RETURNING id,email,name,school,pin_hash,status,must_change_pin,pin_version,last_login_at,created_at`,
+        [t.email, t.name, t.school, t.pin_hash, t.status || 'active']);
       return rows[0] || null;
     },
     async getTeacherByEmail(email) {
-      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash FROM teachers WHERE email=$1', [email]);
+      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash,status,must_change_pin,pin_version,last_login_at,created_at FROM teachers WHERE email=$1', [email]);
       return rows[0] || null;
     },
     async getTeacher(id) {
-      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash FROM teachers WHERE id=$1', [id]);
+      const { rows } = await pool.query('SELECT id,email,name,school,pin_hash,status,must_change_pin,pin_version,last_login_at,created_at FROM teachers WHERE id=$1', [id]);
       return rows[0] || null;
+    },
+    async updateTeacher(id, fields) {
+      const allowed = ['name', 'school', 'pin_hash', 'status', 'must_change_pin', 'pin_version', 'last_login_at'];
+      const keys = Object.keys(fields).filter(k => allowed.includes(k));
+      if (!keys.length) return this.getTeacher(id);
+      const { rows } = await pool.query(
+        `UPDATE teachers SET ${keys.map((k, i) => `${k}=$${i + 2}`).join(',')} WHERE id=$1 RETURNING id,email,name,school,pin_hash,status,must_change_pin,pin_version,last_login_at,created_at`,
+        [id, ...keys.map(k => fields[k])]);
+      return rows[0] || null;
+    },
+    async listTeachers() {
+      const { rows } = await pool.query(
+        `SELECT t.id,t.email,t.name,t.school,t.status,t.must_change_pin,t.last_login_at,t.created_at,
+                (SELECT COUNT(*)::int FROM classes c WHERE c.teacher_id=t.id) AS classes
+         FROM teachers t ORDER BY t.created_at DESC`);
+      return rows;
+    },
+    async getSetting(key) {
+      const { rows } = await pool.query('SELECT value FROM settings WHERE key=$1', [key]);
+      return rows[0]?.value ?? null;
+    },
+    async setSetting(key, value) {
+      await pool.query(
+        'INSERT INTO settings(key,value) VALUES($1,$2) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value',
+        [key, JSON.stringify(value)]);
     },
     async createClass(code, name, teacherId) {
       const { rows } = await pool.query(
-        'INSERT INTO classes(code,name,teacher_id) VALUES($1,$2,$3) RETURNING code,name,teacher_id,assignment,questions,created_at',
+        'INSERT INTO classes(code,name,teacher_id) VALUES($1,$2,$3) RETURNING code,name,teacher_id,archived,co_teacher_ids,assignment,questions,created_at',
         [code, name, teacherId ?? null]);
       return toClass(rows[0]);
     },
     async getClass(code) {
-      const { rows } = await pool.query('SELECT code,name,teacher_id,assignment,questions,created_at FROM classes WHERE code=$1', [code]);
+      const { rows } = await pool.query('SELECT code,name,teacher_id,archived,co_teacher_ids,assignment,questions,created_at FROM classes WHERE code=$1', [code]);
       return toClass(rows[0]) || null;
     },
     async listClasses(teacherId) {
       const { rows } = await pool.query(
-        `SELECT code,name,teacher_id,assignment,questions,created_at FROM classes
-         WHERE $1::int IS NULL OR teacher_id=$1 ORDER BY created_at DESC`, [teacherId ?? null]);
+        `SELECT code,name,teacher_id,archived,co_teacher_ids,assignment,questions,created_at FROM classes
+         WHERE $1::int IS NULL OR teacher_id=$1 OR co_teacher_ids @> to_jsonb($1::int) ORDER BY created_at DESC`, [teacherId ?? null]);
       return rows.map(toClass);
+    },
+    async updateClass(code, fields) {
+      const sets = [], vals = [code];
+      if ('name' in fields) { vals.push(fields.name); sets.push(`name=$${vals.length}`); }
+      if ('archived' in fields) { vals.push(!!fields.archived); sets.push(`archived=$${vals.length}`); }
+      if ('co_teacher_ids' in fields) { vals.push(JSON.stringify(fields.co_teacher_ids)); sets.push(`co_teacher_ids=$${vals.length}`); }
+      if (!sets.length) return this.getClass(code);
+      const { rows } = await pool.query(`UPDATE classes SET ${sets.join(',')} WHERE code=$1 RETURNING code,name,teacher_id,archived,co_teacher_ids,assignment,questions,created_at`, vals);
+      return toClass(rows[0]) || null;
+    },
+    async deleteClass(code) {
+      await pool.query('DELETE FROM attempts WHERE class_code=$1', [code]);
+      await pool.query('DELETE FROM pupil_progress WHERE class_code=$1', [code]);
+      const r = await pool.query('DELETE FROM classes WHERE code=$1', [code]);
+      return r.rowCount > 0;
+    },
+    async listProgress(code) {
+      const { rows } = await pool.query('SELECT pupil_key AS pupil, name, data, updated_at FROM pupil_progress WHERE class_code=$1', [code]);
+      return rows.map(r => ({ ...r, updated_at: r.updated_at.toISOString() }));
+    },
+    async deletePupil(code, pupil) {
+      const a = await pool.query('DELETE FROM attempts WHERE class_code=$1 AND LOWER(player_name)=$2', [code, pupil]);
+      const b = await pool.query('DELETE FROM pupil_progress WHERE class_code=$1 AND pupil_key=$2', [code, pupil]);
+      return a.rowCount + b.rowCount > 0;
     },
     async setAssignment(code, assignment) {
       const r = await pool.query('UPDATE classes SET assignment=$2 WHERE code=$1', [code, JSON.stringify(assignment)]);

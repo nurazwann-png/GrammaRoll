@@ -68,8 +68,8 @@ if (!process.env.TEACHER_PIN) {
     ? '[Auth] TEACHER_PIN is not set — the admin login is disabled (teacher accounts still work).'
     : '[Auth] TEACHER_PIN is not set — using the development admin PIN 1234. Set TEACHER_PIN in .env.');
 }
-const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;
-const tokens = new Map(); // token -> { exp, teacherId, admin }
+const TOKEN_TTL_MS = 12 * 60 * 60 * 1000;          // a normal sign-in lasts one school day
+const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;   // "Remember me on this device"
 const loginFailures = new Map(); // ip -> { count, resetAt }
 const MAX_LOGIN_FAILURES = 5;
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
@@ -81,18 +81,42 @@ function pinMatches(pin) {
 function clientIp(req) {
   return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || '';
 }
-function teacherSession(req) {
-  const m = (req.headers.authorization || '').match(/^Bearer ([a-f0-9]{48})$/);
+
+// Sessions are signed tokens (not kept in memory), so they survive restarts and deploys.
+// A token stops working when the teacher's PIN changes or is reset, or the account is turned off.
+let sessionSecretValue = process.env.SESSION_SECRET || null;
+async function sessionSecret() {
+  if (sessionSecretValue) return sessionSecretValue;
+  let secret = await store.getSetting('session_secret');
+  if (!secret) { secret = crypto.randomBytes(32).toString('hex'); await store.setSetting('session_secret', secret); }
+  return (sessionSecretValue = secret);
+}
+const adminPinVersion = () => sha('admin:' + TEACHER_PIN).toString('hex').slice(0, 12);
+const b64 = buf => Buffer.from(buf).toString('base64url');
+async function issueToken({ teacherId = null, admin = false, pinVersion = 0, remember = false }) {
+  const payload = b64(JSON.stringify({
+    t: teacherId, a: admin, v: admin ? adminPinVersion() : pinVersion, r: !!remember,
+    e: Date.now() + (remember ? REMEMBER_TTL_MS : TOKEN_TTL_MS),
+  }));
+  const sig = b64(crypto.createHmac('sha256', await sessionSecret()).update(payload).digest());
+  return `${payload}.${sig}`;
+}
+// Returns { admin, teacherId, teacher, remember } or null
+async function teacherSession(req) {
+  const m = (req.headers.authorization || '').match(/^Bearer ([A-Za-z0-9_-]{10,600})\.([A-Za-z0-9_-]{43})$/);
   if (!m) return null;
-  const t = tokens.get(m[1]);
-  if (!t || t.exp < Date.now()) { tokens.delete(m[1]); return null; }
-  return t;
+  const want = crypto.createHmac('sha256', await sessionSecret()).update(m[1]).digest();
+  const got = Buffer.from(m[2], 'base64url');
+  if (got.length !== want.length || !crypto.timingSafeEqual(got, want)) return null;
+  let p;
+  try { p = JSON.parse(Buffer.from(m[1], 'base64url').toString('utf8')); } catch (e) { return null; }
+  if (!p || p.e < Date.now()) return null;
+  if (p.a) return TEACHER_PIN && p.v === adminPinVersion() ? { admin: true, teacherId: null, teacher: null, remember: p.r } : null;
+  const teacher = await store.getTeacher(p.t);
+  if (!teacher || teacher.status !== 'active' || (teacher.pin_version || 0) !== p.v) return null;
+  return { admin: false, teacherId: teacher.id, teacher, remember: p.r };
 }
-function issueToken(teacherId, admin) {
-  const token = crypto.randomBytes(24).toString('hex');
-  tokens.set(token, { exp: Date.now() + TOKEN_TTL_MS, teacherId, admin });
-  return token;
-}
+
 const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,120}\.[^\s@]{2,20}$/;
 const TEACHER_PIN_RE = /^\d{4,8}$/;
 function hashPin(pin) {
@@ -106,7 +130,15 @@ function pinHashMatches(pin, stored) {
   const got = crypto.scryptSync(String(pin), Buffer.from(salt, 'hex'), want.length);
   return crypto.timingSafeEqual(got, want);
 }
-const publicTeacher = t => ({ id: t.id, name: t.name, school: t.school, email: t.email });
+const publicTeacher = t => ({
+  id: t.id, name: t.name, school: t.school, email: t.email, admin: false, must_change_pin: !!t.must_change_pin,
+});
+const ADMIN_PROFILE = { name: 'School admin', school: '', admin: true, must_change_pin: false };
+const SIGNUP_MODES = ['open', 'code', 'approval'];
+async function signupSettings() {
+  const v = await store.getSetting('signup');
+  return { mode: SIGNUP_MODES.includes(v?.mode) ? v.mode : 'open', code: v?.code || '' };
+}
 
 // Simple fixed-window limiter for public write endpoints
 const writeHits = new Map();
@@ -121,7 +153,6 @@ function rateLimited(req, max = 60, bucket = 'write') {
 }
 setInterval(() => {
   const now = Date.now();
-  for (const [k, v] of tokens) if (v.exp < now) tokens.delete(k);
   for (const [k, v] of loginFailures) if (v.resetAt < now) loginFailures.delete(k);
   for (const [k, v] of writeHits) if (v.resetAt < now) writeHits.delete(k);
 }, 60000).unref();
@@ -262,16 +293,26 @@ async function handleApi(req, res, url) {
     const body = await parseBody(req);
     const pin = str(body.pin, 64);
     const email = str(body.email, 200).toLowerCase();
+    const remember = !!body.remember;
     if (!email) {
       if (!TEACHER_PIN) return json(res, 503, { error: 'The admin PIN is not set up on this server.' });
       if (!pinMatches(pin)) return fail('Wrong admin PIN. Try again.');
       loginFailures.delete(ip);
-      return json(res, 200, { token: issueToken(null, true), teacher: { name: 'School admin', school: '', admin: true } });
+      return json(res, 200, { token: await issueToken({ admin: true, remember }), teacher: ADMIN_PROFILE });
     }
     const teacher = await store.getTeacherByEmail(email);
     if (!teacher || !pinHashMatches(pin, teacher.pin_hash)) return fail('Wrong email or PIN. Try again.');
     loginFailures.delete(ip);
-    return json(res, 200, { token: issueToken(teacher.id, false), teacher: publicTeacher(teacher) });
+    if (teacher.status === 'pending') return json(res, 403, { error: 'Your account is waiting for the school admin to approve it.' });
+    if (teacher.status !== 'active') return json(res, 403, { error: 'This account has been turned off. Please ask your school admin.' });
+    const updated = await store.updateTeacher(teacher.id, { last_login_at: new Date().toISOString() });
+    const token = await issueToken({ teacherId: teacher.id, pinVersion: teacher.pin_version || 0, remember });
+    return json(res, 200, { token, teacher: publicTeacher(updated || teacher) });
+  }
+
+  // What the Register form needs to show (never reveals the sign-up code itself)
+  if (method === 'GET' && url === '/api/teacher/signup-info') {
+    return json(res, 200, { mode: (await signupSettings()).mode });
   }
 
   // ── Teacher registration ──
@@ -283,9 +324,16 @@ async function handleApi(req, res, url) {
     if (name.length < 2) return json(res, 400, { error: 'Please type your name.' });
     if (!EMAIL_RE.test(email)) return json(res, 400, { error: 'Please type a valid email address.' });
     if (!TEACHER_PIN_RE.test(pin)) return json(res, 400, { error: 'Your PIN must be 4 to 8 numbers.' });
-    const teacher = await store.createTeacher({ email, name, school, pin_hash: hashPin(pin) });
+    const signup = await signupSettings();
+    if (signup.mode === 'code' && str(b.signupCode, 40).toUpperCase() !== signup.code.toUpperCase()) {
+      return json(res, 403, { error: 'That school sign-up code is not right. Ask your school admin for it.' });
+    }
+    const status = signup.mode === 'approval' ? 'pending' : 'active';
+    const teacher = await store.createTeacher({ email, name, school, pin_hash: hashPin(pin), status });
     if (!teacher) return json(res, 409, { error: 'This email already has an account. Please sign in.' });
-    return json(res, 200, { token: issueToken(teacher.id, false), teacher: publicTeacher(teacher) });
+    if (status === 'pending') return json(res, 200, { pending: true });
+    const token = await issueToken({ teacherId: teacher.id, pinVersion: 0, remember: !!b.remember });
+    return json(res, 200, { token, teacher: publicTeacher(teacher) });
   }
 
   // ── Reviews: anyone can read and post; the school admin can remove ──
@@ -311,22 +359,124 @@ async function handleApi(req, res, url) {
 
   // ── Teacher-only routes ──
   if (url.startsWith('/api/teacher/')) {
-    const session = teacherSession(req);
+    const session = await teacherSession(req);
     if (!session) return json(res, 401, { error: 'Please sign in to Teacher Mode again.' });
     const adminOnly = () => json(res, 403, { error: 'Only the school admin can do this.' });
-    const ownsClass = cls => session.admin || (cls.teacher_id != null && cls.teacher_id === session.teacherId);
+    const isOwner = cls => session.admin || (cls.teacher_id != null && cls.teacher_id === session.teacherId);
+    const canTeach = cls => isOwner(cls) || (cls.co_teacher_ids || []).includes(session.teacherId);
 
-    if (method === 'GET' && url === '/api/teacher/me') {
-      if (session.admin) return json(res, 200, { name: 'School admin', school: '', admin: true });
-      const t = await store.getTeacher(session.teacherId);
-      return t ? json(res, 200, { ...publicTeacher(t), admin: false }) : json(res, 401, { error: 'Please sign in again.' });
+    // ── My account ──
+    if (url === '/api/teacher/me') {
+      if (method === 'GET') return json(res, 200, session.admin ? ADMIN_PROFILE : publicTeacher(session.teacher));
+      if (method === 'PUT' && !session.admin) {
+        const b = await parseBody(req);
+        const name = str(b.name, 60), school = str(b.school, 80);
+        if (name.length < 2) return json(res, 400, { error: 'Please type your name.' });
+        return json(res, 200, publicTeacher(await store.updateTeacher(session.teacherId, { name, school })));
+      }
     }
+    if (method === 'PUT' && url === '/api/teacher/me/pin' && !session.admin) {
+      const b = await parseBody(req);
+      const t = session.teacher;
+      if (!pinHashMatches(str(b.oldPin, 64), t.pin_hash)) return json(res, 400, { error: 'Your current PIN is not right.' });
+      const newPin = String(b.newPin ?? '');
+      if (!TEACHER_PIN_RE.test(newPin)) return json(res, 400, { error: 'Your new PIN must be 4 to 8 numbers.' });
+      if (newPin === str(b.oldPin, 64)) return json(res, 400, { error: 'Please choose a different PIN from the old one.' });
+      const pinVersion = (t.pin_version || 0) + 1;
+      const updated = await store.updateTeacher(t.id, { pin_hash: hashPin(newPin), pin_version: pinVersion, must_change_pin: false });
+      const token = await issueToken({ teacherId: t.id, pinVersion, remember: session.remember });
+      return json(res, 200, { token, teacher: publicTeacher(updated) });
+    }
+    // A teacher given a temporary PIN must choose a new one before doing anything else
+    if (!session.admin && session.teacher.must_change_pin) {
+      return json(res, 403, { error: 'Please choose a new PIN first.', mustChangePin: true });
+    }
+
+    // ── School admin tools ──
+    if (url.startsWith('/api/teacher/admin/')) {
+      if (!session.admin) return adminOnly();
+      if (method === 'GET' && url === '/api/teacher/admin/teachers') {
+        return json(res, 200, (await store.listTeachers()).map(t => ({
+          id: t.id, name: t.name, email: t.email, school: t.school, status: t.status,
+          must_change_pin: !!t.must_change_pin, last_login_at: t.last_login_at, created_at: t.created_at, classes: t.classes,
+        })));
+      }
+      if ((m = url.match(/^\/api\/teacher\/admin\/teachers\/(\d{1,9})(\/reset-pin)?$/))) {
+        const t = await store.getTeacher(Number(m[1]));
+        if (!t) return json(res, 404, { error: 'Teacher not found' });
+        if (method === 'POST' && m[2]) {
+          const tempPin = String(crypto.randomInt(100000, 1000000));
+          await store.updateTeacher(t.id, { pin_hash: hashPin(tempPin), pin_version: (t.pin_version || 0) + 1, must_change_pin: true });
+          return json(res, 200, { tempPin });
+        }
+        if (method === 'PUT' && !m[2]) {
+          const { status } = await parseBody(req);
+          if (!['active', 'disabled'].includes(status)) return json(res, 400, { error: 'invalid' });
+          // Turning an account off also signs it out everywhere
+          await store.updateTeacher(t.id, { status, pin_version: (t.pin_version || 0) + (status === 'disabled' ? 1 : 0) });
+          return json(res, 200, { ok: true });
+        }
+      }
+      if (url === '/api/teacher/admin/signup') {
+        if (method === 'GET') return json(res, 200, await signupSettings());
+        if (method === 'PUT') {
+          const b = await parseBody(req);
+          const mode = SIGNUP_MODES.includes(b.mode) ? b.mode : 'open';
+          const code = str(b.code, 40);
+          if (mode === 'code' && code.length < 4) return json(res, 400, { error: 'The sign-up code needs at least 4 letters or numbers.' });
+          await store.setSetting('signup', { mode, code });
+          return json(res, 200, { mode, code });
+        }
+      }
+      return json(res, 404, { error: 'Not found' });
+    }
+
     if (method === 'DELETE' && (m = url.match(/^\/api\/teacher\/reviews\/(\d{1,9})$/))) {
       if (!session.admin) return adminOnly();
       return (await store.deleteReview(Number(m[1]))) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Review not found' });
     }
+
+    // ── Dashboard: the teacher's classes at a glance ──
+    if (method === 'GET' && url === '/api/teacher/dashboard') {
+      const classes = (await store.listClasses(session.admin ? null : session.teacherId)).filter(c => !c.archived);
+      const weekAgo = new Date(Date.now() - 7 * 864e5), monthAgo = new Date(Date.now() - 30 * 864e5);
+      const levelStats = new Map();
+      const out = [];
+      for (const c of classes) {
+        const [attempts, progress] = await Promise.all([store.getAttempts(c.code, monthAgo), store.listProgress(c.code)]);
+        const pupils = new Set(progress.map(p => p.pupil));
+        attempts.forEach(a => pupils.add(a.player_name.toLowerCase()));
+        const active = new Set(attempts.filter(a => a.created_at >= weekAgo.toISOString()).map(a => a.player_name.toLowerCase()));
+        const levels = c.assignment?.levels || [];
+        const wins = new Map();
+        for (const a of attempts) {
+          if (a.won) (wins.get(a.player_name.toLowerCase()) || wins.set(a.player_name.toLowerCase(), new Set()).get(a.player_name.toLowerCase())).add(a.level_key);
+          const t = levelStats.get(a.level_key) || { level: a.level_key, acc: 0, n: 0 };
+          t.acc += a.accuracy; t.n++;
+          levelStats.set(a.level_key, t);
+        }
+        const homeworkDone = levels.length ? [...wins.values()].filter(w => levels.every(l => w.has(l))).length : 0;
+        out.push({
+          code: c.code, name: c.name, shared: !isOwner(c), pupils: pupils.size, activeThisWeek: active.size,
+          homework: levels.length ? { levels, message: c.assignment.message, setAt: c.assignment.setAt, done: homeworkDone } : null,
+        });
+      }
+      const weakTopics = [...levelStats.values()]
+        .map(t => ({ level: t.level, accuracy: Math.round(t.acc / t.n), attempts: t.n }))
+        .filter(t => t.accuracy < 80).sort((a, b) => a.accuracy - b.accuracy).slice(0, 3);
+      return json(res, 200, { classes: out, weakTopics });
+    }
+
+    // ── Classes ──
     if (method === 'GET' && url === '/api/teacher/classes') {
-      return json(res, 200, await store.listClasses(session.admin ? null : session.teacherId));
+      const list = await store.listClasses(session.admin ? null : session.teacherId);
+      const names = new Map();
+      for (const c of list) for (const id of c.co_teacher_ids || []) {
+        if (!names.has(id)) { const t = await store.getTeacher(id); names.set(id, t ? { id: t.id, name: t.name, email: t.email } : null); }
+      }
+      return json(res, 200, list.map(c => ({
+        ...c, mine: isOwner(c), co_teachers: (c.co_teacher_ids || []).map(id => names.get(id)).filter(Boolean),
+      })));
     }
     if (method === 'POST' && url === '/api/teacher/classes') {
       const { name } = await parseBody(req);
@@ -334,10 +484,68 @@ async function handleApi(req, res, url) {
       for (let i = 0; i < 20; i++) { code = newClassCode(); if (!(await store.getClass(code))) break; }
       return json(res, 200, await store.createClass(code, str(name, 60) || 'My Class', session.admin ? null : session.teacherId));
     }
-    if ((m = url.match(/^\/api\/teacher\/classes\/([A-Z0-9]{6})\/(assignment|questions|report)$/))) {
-      const [, code, what] = m;
+    if ((m = url.match(/^\/api\/teacher\/classes\/([A-Z0-9]{6})(?:\/(assignment|questions|report|pupils|share)(?:\/([^/]{1,90}))?)?$/))) {
+      const [, code, what, arg] = m;
       const cls = await store.getClass(code);
-      if (!cls || !ownsClass(cls)) return json(res, 404, { error: 'Class not found' });
+      if (!cls || !canTeach(cls)) return json(res, 404, { error: 'Class not found' });
+      const ownerOnly = () => json(res, 403, { error: 'Only the teacher who made this class can do this.' });
+
+      if (!what) {
+        if (method === 'PUT') {
+          if (!isOwner(cls)) return ownerOnly();
+          const b = await parseBody(req);
+          const fields = {};
+          if (b.name !== undefined) { fields.name = str(b.name, 60); if (!fields.name) return json(res, 400, { error: 'Please type a class name.' }); }
+          if (b.archived !== undefined) fields.archived = !!b.archived;
+          return json(res, 200, await store.updateClass(code, fields));
+        }
+        if (method === 'DELETE') {
+          if (!isOwner(cls)) return ownerOnly();
+          await store.deleteClass(code);
+          return json(res, 200, { ok: true });
+        }
+      }
+      if (what === 'share') {
+        if (!isOwner(cls)) return ownerOnly();
+        const ids = cls.co_teacher_ids || [];
+        if (method === 'POST' && !arg) {
+          const { email } = await parseBody(req);
+          const t = await store.getTeacherByEmail(str(email, 200).toLowerCase());
+          if (!t || t.status !== 'active') return json(res, 404, { error: 'No teacher account uses that email. Ask them to register first.' });
+          if (t.id === cls.teacher_id) return json(res, 400, { error: 'That is you! You already own this class.' });
+          if (!ids.includes(t.id)) await store.updateClass(code, { co_teacher_ids: [...ids, t.id] });
+          return json(res, 200, { ok: true, teacher: { id: t.id, name: t.name, email: t.email } });
+        }
+        if (method === 'DELETE' && /^\d{1,9}$/.test(arg || '')) {
+          await store.updateClass(code, { co_teacher_ids: ids.filter(id => id !== Number(arg)) });
+          return json(res, 200, { ok: true });
+        }
+      }
+      if (what === 'pupils') {
+        if (method === 'GET' && !arg) {
+          const [attempts, progress] = await Promise.all([store.getAttempts(code), store.listProgress(code)]);
+          const pupils = new Map();
+          for (const p of progress) {
+            pupils.set(p.pupil, { key: p.pupil, name: p.name, stars: Number(p.data?.gr_total_stars) || 0, attempts: 0, lastPlayed: p.updated_at });
+          }
+          // Stars: the best of the device-synced total and the best stars per level from results
+          const best = new Map();
+          for (const a of attempts) {
+            const k = a.player_name.toLowerCase();
+            const p = pupils.get(k) || { key: k, name: a.player_name, stars: 0, attempts: 0, lastPlayed: a.created_at };
+            p.attempts++;
+            if (a.created_at > p.lastPlayed) p.lastPlayed = a.created_at;
+            pupils.set(k, p);
+            if (a.won) { const m = best.get(k) || {}; m[a.level_key] = Math.max(m[a.level_key] || 0, a.stars); best.set(k, m); }
+          }
+          for (const [k, m] of best) { const p = pupils.get(k); p.stars = Math.max(p.stars, Object.values(m).reduce((x, y) => x + y, 0)); }
+          return json(res, 200, [...pupils.values()].sort((a, b) => a.name.localeCompare(b.name)));
+        }
+        if (method === 'DELETE' && arg) {
+          const pupil = str(decodeURIComponent(arg), 30).toLowerCase();
+          return (await store.deletePupil(code, pupil)) ? json(res, 200, { ok: true }) : json(res, 404, { error: 'Pupil not found' });
+        }
+      }
       if (method === 'PUT' && what === 'assignment') {
         const body = await parseBody(req);
         const levels = (Array.isArray(body.levels) ? body.levels : []).map(l => str(l, 8)).filter(l => LEVEL_RE.test(l)).slice(0, 20);

@@ -406,7 +406,9 @@
       <form id="ga-login" class="ga-form" onsubmit="event.preventDefault();guruLogin()">
         <input id="ga-email" type="email" maxlength="200" placeholder="Email" autocomplete="username" aria-label="Email">
         <input id="ga-pin" type="password" inputmode="numeric" maxlength="8" placeholder="Your PIN" autocomplete="current-password" aria-label="PIN">
+        <label class="ga-check"><input type="checkbox" id="ga-remember"> Remember me on this device</label>
         <button class="btn btn-primary" type="submit">Sign in</button>
+        <button type="button" class="ga-link" onclick="guruForgotPin()">Forgot your PIN?</button>
         <p class="ga-hint">New teacher? Tap <b>Register</b> to make your own account.</p>
       </form>
 
@@ -416,6 +418,8 @@
         <input id="ga-r-school" maxlength="80" placeholder="School (optional)" autocomplete="organization" aria-label="School">
         <input id="ga-r-pin" type="password" inputmode="numeric" maxlength="8" placeholder="Choose a PIN (4–8 numbers)" autocomplete="new-password" aria-label="Choose a PIN">
         <input id="ga-r-pin2" type="password" inputmode="numeric" maxlength="8" placeholder="Type your PIN again" autocomplete="new-password" aria-label="Type your PIN again">
+        <input id="ga-r-code" class="hidden" maxlength="40" placeholder="School sign-up code (ask your admin)" autocomplete="off" aria-label="School sign-up code">
+        <p id="ga-r-approval" class="ga-hint hidden">⏳ The school admin will approve your account before you can sign in.</p>
         <p class="ga-hint">🔒 You will sign in with your email and this PIN. Keep it secret from your pupils.</p>
         <button class="btn btn-primary" type="submit">Create my account</button>
       </form>
@@ -426,12 +430,68 @@
         <button class="btn btn-primary" type="submit">Enter</button>
       </form>
 
+      <form id="ga-change" class="ga-form hidden" onsubmit="event.preventDefault();guruChangePin(true)">
+        <p class="ga-hint">🔑 You signed in with a temporary PIN. Please choose your own new PIN.</p>
+        <input id="ga-c-old" type="password" inputmode="numeric" maxlength="8" placeholder="Temporary PIN" autocomplete="current-password" aria-label="Temporary PIN">
+        <input id="ga-c-new" type="password" inputmode="numeric" maxlength="8" placeholder="New PIN (4–8 numbers)" autocomplete="new-password" aria-label="New PIN">
+        <input id="ga-c-new2" type="password" inputmode="numeric" maxlength="8" placeholder="Type new PIN again" autocomplete="new-password" aria-label="Type new PIN again">
+        <button class="btn btn-primary" type="submit">Save my new PIN</button>
+      </form>
+
+      <div id="ga-pending" class="ga-form hidden">
+        <p class="ga-big">⏳</p>
+        <p class="ga-hint">Thank you! Your account is waiting for the school admin to approve it. You can sign in once it is approved.</p>
+      </div>
+
       <div id="guru-pin-error" role="alert"></div>
       <button type="button" class="ga-link" id="ga-admin-link" onclick="guruAuthTab(document.getElementById('ga-admin').classList.contains('hidden') ? 'admin' : 'login')">School admin? Use the admin PIN</button>
     </div>
 
     <!-- Main editor (hidden until PIN ok) -->
     <div id="guru-main" class="hidden">
+      <!-- MY ACCOUNT -->
+      <div class="guru-section ga-panel hidden" id="guru-account">
+        <h3>👤 My account</h3>
+        <div class="ga-grid">
+          <input id="acc-name" class="guru-input" maxlength="60" placeholder="Your name" aria-label="Your name">
+          <input id="acc-school" class="guru-input" maxlength="80" placeholder="School" aria-label="School">
+        </div>
+        <button class="btn btn-secondary ga-small" onclick="guruSaveProfile()">💾 Save name and school</button>
+        <h3 style="margin-top:14px;">🔑 Change my PIN</h3>
+        <div class="ga-grid">
+          <input id="acc-old" type="password" inputmode="numeric" maxlength="8" class="guru-input" placeholder="Current PIN" autocomplete="current-password" aria-label="Current PIN">
+          <input id="acc-new" type="password" inputmode="numeric" maxlength="8" class="guru-input" placeholder="New PIN (4–8 numbers)" autocomplete="new-password" aria-label="New PIN">
+          <input id="acc-new2" type="password" inputmode="numeric" maxlength="8" class="guru-input" placeholder="New PIN again" autocomplete="new-password" aria-label="New PIN again">
+        </div>
+        <button class="btn btn-secondary ga-small" onclick="guruChangePin(false)">🔑 Change PIN</button>
+        <div id="acc-msg" class="settings-hint" role="status"></div>
+      </div>
+
+      <!-- DASHBOARD -->
+      <div class="guru-section" id="guru-dashboard">
+        <h3>📊 My classes at a glance</h3>
+        <div id="dash-cards" class="dash-cards"><div class="settings-hint">Loading…</div></div>
+        <div id="dash-weak"></div>
+      </div>
+
+      <!-- SCHOOL ADMIN -->
+      <div class="guru-section hidden" id="guru-admin">
+        <h3>🛡️ School admin</h3>
+        <div class="ga-label">Who can register as a teacher?</div>
+        <div class="ga-radios" role="radiogroup">
+          <label><input type="radio" name="adm-mode" value="open" onchange="guruSignupModeChanged()"> Anyone</label>
+          <label><input type="radio" name="adm-mode" value="code" onchange="guruSignupModeChanged()"> Only with a school sign-up code</label>
+          <label><input type="radio" name="adm-mode" value="approval" onchange="guruSignupModeChanged()"> Anyone, but I approve each account</label>
+        </div>
+        <input id="adm-code" class="guru-input hidden" maxlength="40" placeholder="Sign-up code, e.g. SKTAMAN2026" aria-label="Sign-up code">
+        <button class="btn btn-secondary ga-small" onclick="guruSaveSignup()">💾 Save sign-up rule</button>
+        <div id="adm-signup-msg" class="settings-hint" role="status"></div>
+
+        <h3 style="margin-top:14px;">👩‍🏫 Teachers</h3>
+        <div id="adm-teachers" style="overflow-x:auto;"><div class="settings-hint">Loading…</div></div>
+        <div id="adm-msg" class="settings-hint" role="status"></div>
+      </div>
+
       <!-- Level tabs -->
       <div id="guru-tabs">
         <div class="guru-tab active" onclick="guruSelectLevel('1-1',this)">L1-1 am/is/are</div>
@@ -494,7 +554,30 @@
           <input id="guru-new-class-name" class="guru-input" style="flex:1;margin:0;" maxlength="60" placeholder="New class name, e.g. 3 Bestari">
           <button class="btn btn-primary" style="font-size:.85rem;padding:8px 12px;" onclick="guruCreateClass()">➕ Create</button>
         </div>
+        <label class="ga-check" style="margin-top:6px;"><input type="checkbox" id="guru-show-archived" onchange="loadGuruClasses()"> Show archived classes</label>
         <div id="guru-class-msg" class="settings-hint" style="margin-top:6px;"></div>
+
+        <div id="guru-class-manage" class="hidden">
+          <div class="ga-actions">
+            <button class="btn btn-secondary ga-small" onclick="guruShowQr()">📱 QR code</button>
+            <button class="btn btn-secondary ga-small" onclick="guruLoadPupils()">👥 Pupils</button>
+            <button class="btn btn-secondary ga-small owner-only" onclick="guruRenameClass()">✏️ Rename</button>
+            <button class="btn btn-secondary ga-small owner-only" id="guru-archive-btn" onclick="guruArchiveClass()">🗄️ Archive</button>
+            <button class="btn btn-secondary ga-small owner-only ga-danger" onclick="guruDeleteClass()">🗑️ Delete</button>
+          </div>
+          <div id="guru-shared-note" class="settings-hint hidden">🤝 This class is shared with you. Only the teacher who made it can rename, archive, delete or share it.</div>
+
+          <div id="guru-share" class="owner-only">
+            <div class="ga-label">🤝 Share this class with another teacher</div>
+            <div id="guru-co-list"></div>
+            <div style="display:flex;gap:8px;">
+              <input id="guru-share-email" class="guru-input" style="flex:1;margin:0;" type="email" maxlength="200" placeholder="Their account email" aria-label="Teacher email to share with">
+              <button class="btn btn-primary ga-small" onclick="guruShareClass()">Share</button>
+            </div>
+          </div>
+
+          <div id="guru-pupils"></div>
+        </div>
       </div>
 
       <!-- DEMO -->
@@ -628,6 +711,20 @@
     <button class="btn btn-secondary" style="flex:1;font-size:0.9rem;" onclick="showLeaderboard(currentLevelKey)">🏆 Score</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="showCertificate()">📜 Certificate</button>
     <button class="btn btn-secondary" style="flex:1;" onclick="showMenu()">🏠 Menu</button>
+  </div>
+</div>
+
+<!-- CLASS QR CODE -->
+<div class="overlay hidden" id="guru-qr-overlay">
+  <div class="fb-card" role="dialog" aria-labelledby="qr-title">
+    <h2 id="qr-title">Join my class</h2>
+    <p class="fb-sub" id="qr-class-name"></p>
+    <div id="qr-box" aria-label="QR code to join the class"></div>
+    <div id="qr-code-big"></div>
+    <p class="settings-hint" id="qr-link"></p>
+    <p class="fb-sub">Scan with a tablet or phone camera, then type your name.</p>
+    <button class="btn btn-primary" onclick="guruPrintQr()">🖨️ Print</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('guru-qr-overlay').classList.add('hidden')">Close</button>
   </div>
 </div>
 

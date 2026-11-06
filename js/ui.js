@@ -287,6 +287,19 @@ async function fetchClass(code) {
   return res.json();
 }
 
+// Scanning a class QR code opens /?join=CODE: show Settings with the code filled in
+window.addEventListener('load', () => {
+  const code = (new URLSearchParams(location.search).get('join') || '').toUpperCase();
+  if (!/^[A-Z0-9]{6}$/.test(code)) return;
+  history.replaceState(null, '', location.pathname);
+  setTimeout(() => {
+    showSettings();
+    document.getElementById('settings-classcode').value = code;
+    document.getElementById('settings-class-status').textContent = '👋 Type your name, then tap 🏫 Join class.';
+    document.getElementById('settings-name').focus();
+  }, 700);
+});
+
 async function joinClassFromSettings() {
   const code = document.getElementById('settings-classcode').value.trim().toUpperCase();
   const name = document.getElementById('settings-name').value.trim();
@@ -1130,6 +1143,7 @@ const ESCAPABLE = [
   ['review-overlay',       () => closeReview()],
   ['fb-form-overlay',      () => closeFeedbackForm()],
   ['fb-wall-overlay',      () => closeFeedbackWall()],
+  ['guru-qr-overlay',      () => document.getElementById('guru-qr-overlay').classList.add('hidden')],
   ['guru-overlay',         () => closeGuruMode()],
   ['mp-overlay',           () => closeMultiplayer()],
   ['coop-overlay',         () => closeCoopMenu()],
