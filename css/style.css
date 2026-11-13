@@ -2487,3 +2487,7 @@ button.counter.hw { border-color: rgba(6,214,160,.8); cursor: pointer; }
   animation: cs-breathe 3.2s ease-in-out infinite; filter: drop-shadow(0 10px 18px rgba(0,0,0,.45)); }
 .cs-char.big .cs-art { width: clamp(160px, 36vmin, 260px); height: clamp(160px, 36vmin, 260px); }
 .cs-bg-playground { background: linear-gradient(180deg, #7ec8e3 0%, #b9e6f5 45%, #c9f0c2 72%, #6fbf5a 100%); }
+
+/* Certificate buttons fit on phones */
+#cert-actions { flex-wrap: wrap; gap: 8px; padding: 0 12px; box-sizing: border-box; }
+#cert-actions button { flex: 1 1 90px; min-width: 0; padding-left: 8px; padding-right: 8px; font-size: 1rem; }

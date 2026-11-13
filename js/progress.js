@@ -103,6 +103,7 @@ function promptPlayerName(levelKey, score, stars) {
   pendingWin = { levelKey, score, stars };
   const input = document.getElementById('name-input');
   input.value = localStorage.getItem(pk('gr_player_name')) || ''; // bug8 fix: pre-fill saved name
+  if (input.value.trim()) { submitName(); return; }
   document.getElementById('name-overlay').classList.remove('hidden');
   setTimeout(() => input.focus(), 100);
 }
@@ -170,9 +171,30 @@ function maybeShowReview() {
   showReview(game);
 }
 
+// ── Progress certificate: total score, stars and levels so far ─────────────────
+function showProgressCertificate() {
+  if (!requirePlayerName(showProgressCertificate)) return;
+  const stars = getLevelStars();
+  const done = LEVEL_KEYS.filter(k => stars[k] > 0);
+  if (!done.length) { showToast('📜 Finish your first level to get a certificate!', 3500); return; }
+  const totalScore = parseInt(localStorage.getItem(pk('gr_total_score')) || '0', 10) || 0;
+  const totalStars = LEVEL_KEYS.reduce((s, k) => s + (stars[k] || 0), 0);
+  const lastWorld = (GRAMMAR_DB[done[done.length - 1]]?.world || '').replace(/[\u{1F000}-\u{1FFFF}\u{2700}-\u{27BF}\u{FE0F}]/gu, '').trim();
+  const name = currentProfile()?.name || localStorage.getItem(pk('gr_player_name')) || 'Player';
+  certData = null;
+  showCertificate({
+    progress: true, name, score: totalScore, stars: totalStars, maxStars: LEVEL_KEYS.length * 3,
+    levelsDone: done.length, levelsTotal: LEVEL_KEYS.length, world: lastWorld,
+    year: Math.max(...done.map(k => GRAMMAR_DB[k]?.year || 1)),
+    date: new Date().toLocaleDateString('en-MY', { year: 'numeric', month: 'long', day: 'numeric' }),
+  });
+}
+
 // ── Certificate ──────────────────────────────────────────────────────────────
+let shownCert = null; // the certificate on screen, for download and share
 function showCertificate(overrideData) {
   const d = overrideData || certData;
+  shownCert = d;
   if (!d) return;
   // Auto-submit to server so teacher can see it (fire-and-forget)
   if (!overrideData) {
@@ -292,13 +314,15 @@ function showCertificate(overrideData) {
   ctx.font = 'italic 19px Georgia, serif';
   ctx.fillStyle = 'rgba(255,255,255,0.65)';
   ctx.textAlign = 'center';
-  ctx.fillText('has successfully completed', W/2, 428);
+  ctx.fillText(d.progress ? 'has made great progress in' : 'has successfully completed', W/2, 428);
 
   // Level line
   ctx.font = 'bold 27px Arial, sans-serif';
   ctx.fillStyle = '#06D6A0';
-  const worldLabel = d.world ? `Level ${d.key}  —  ${d.world}` : `Level ${d.key}`;
-  ctx.fillText(worldLabel, W/2, 470);
+  const worldLabel = d.progress
+    ? `${d.levelsDone} of ${d.levelsTotal} levels${d.world ? `  —  up to ${d.world}` : ''}`
+    : d.world ? `Level ${d.key}  —  ${d.world}` : `Level ${d.key}`;
+  ctx.fillText(worldLabel, W/2, 470, W - 100);
 
   // Subtitle
   ctx.font = '15px Arial, sans-serif';
@@ -308,10 +332,14 @@ function showCertificate(overrideData) {
   // Stars (Unicode ★ ☆ — renders everywhere)
   ctx.font = '48px Arial, sans-serif';
   ctx.fillStyle = '#FFD166';
-  ctx.fillText('★'.repeat(d.stars) + '☆'.repeat(3 - d.stars), W/2, 564);
+  if (d.progress) {
+    ctx.fillText(`★ ${d.stars} / ${d.maxStars}`, W/2, 564);
+  } else {
+    ctx.fillText('★'.repeat(d.stars) + '☆'.repeat(3 - d.stars), W/2, 564);
+  }
 
   // Score badge
-  const scoreLabel = `Score: ${Number(d.score).toLocaleString()} points`;
+  const scoreLabel = d.progress ? `Total score: ${Number(d.score).toLocaleString()} points` : `Score: ${Number(d.score).toLocaleString()} points`;
   ctx.font = 'bold 23px Arial, sans-serif';
   ctx.fillStyle = '#FF8C42';
   ctx.fillText(scoreLabel, W/2, 608);
@@ -366,7 +394,7 @@ function closeCertificate() {
 
 function downloadCertificate() {
   const canvas = document.getElementById('cert-canvas');
-  const safeName = certData ? certData.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
+  const safeName = shownCert?.name ? shownCert.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
   const a = document.createElement('a');
   a.download = `GrammarBall_Certificate_${safeName}.png`;
   a.href = canvas.toDataURL('image/png');
@@ -375,7 +403,7 @@ function downloadCertificate() {
 
 async function shareCertificate() {
   const canvas = document.getElementById('cert-canvas');
-  const safeName = certData ? certData.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
+  const safeName = shownCert?.name ? shownCert.name.replace(/[^a-zA-Z0-9]/g,'_').slice(0,30) : 'student';
   const fileName = `GrammarBall_Certificate_${safeName}.png`;
 
   // Convert canvas to Blob then share

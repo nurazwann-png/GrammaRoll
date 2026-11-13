@@ -7,6 +7,7 @@ function startLevel(world, level) {
 
 function startLevelKey(key) {
   if (!GRAMMAR_DB[key]) { showToast('That level is not available yet!'); return; }
+  if (!requirePlayerName(() => startLevelKey(key))) return;
   // After finishing World 1, ask for a review once before World 2 begins
   if (key === '2-1' && !hasAskedFeedback()) {
     if (game) { game.state = 'paused'; game = null; }
@@ -396,6 +397,9 @@ async function switchProfile(id) {
   updateBallThumb();
   const p = currentProfile();
   if (p) showToast(`${p.avatar} Hi ${p.name}! Let's play.`);
+  const then = afterProfileChosen;
+  afterProfileChosen = null;
+  if (then) then();
 }
 
 function deleteProfile(id) {
@@ -411,6 +415,15 @@ function profileStars(id) {
   try { return parseInt(localStorage.getItem(`gr_total_stars@${id}`) || '0', 10); } catch (e) { return 0; }
 }
 
+let afterProfileChosen = null;
+// Players must have a name before playing; returns false (and asks for one) if they don't
+function requirePlayerName(then) {
+  if (currentProfile()) return true;
+  afterProfileChosen = then || null;
+  showProfilePicker();
+  return false;
+}
+
 function showProfilePicker(manage = false) {
   const el = qzOpenScreen('profile-overlay', '#8B5CF6', '#3b2a8a');
   const list = getProfiles();
@@ -419,7 +432,7 @@ function showProfilePicker(manage = false) {
     ${list.length && currentProfileId() ? '<button class="qz-close" onclick="closeProfilePicker()" aria-label="Close">✕</button>' : ''}
     <div class="qz-badge" style="background:linear-gradient(145deg,#8B5CF6,#EC4899);">👋</div>
     <h2 class="qz-title">Who's playing?</h2>
-    <p class="qz-sub">${list.length ? 'Tap your name to keep your own stars and badges.' : 'Make a player so your stars and badges are saved just for you.'}</p>
+    <p class="qz-sub">${list.length ? 'Tap your name to keep your own stars and badges.' : 'Type your name to start. It goes on your certificates too!'}</p>
     <div class="profile-grid">
       ${list.map(p => `<div class="profile-card ${p.id === currentProfileId() ? 'active' : ''}">
         <button class="profile-pick" data-id="${p.id}" aria-label="Play as ${esc(p.name)}">
@@ -439,7 +452,6 @@ function showProfilePicker(manage = false) {
     </div>
     <div class="qz-btn-row">
       ${list.length ? `<button class="btn btn-secondary" onclick="showProfilePicker(${!manage})">${manage ? '✓ Done' : '⚙️ Manage players'}</button>` : ''}
-      ${!currentProfileId() ? '<button class="btn btn-secondary" onclick="closeProfilePicker()">Just play</button>' : ''}
     </div>
   </div>`;
   el.querySelectorAll('.profile-pick').forEach(b => b.onclick = () => switchProfile(b.dataset.id));
